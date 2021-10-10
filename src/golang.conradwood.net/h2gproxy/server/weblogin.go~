@@ -1,0 +1,5 @@
+package main
+
+// serve weblogin page
+func (f *FProxy) WebLogin() {
+}

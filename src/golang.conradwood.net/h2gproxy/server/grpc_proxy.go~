@@ -1,0 +1,249 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	jm "golang.conradwood.net/apis/jsonapimultiplexer"
+	ic "golang.conradwood.net/apis/rpcinterceptor"
+	"golang.gurusys.co.uk/go-framework/client"
+	"golang.gurusys.co.uk/go-framework/tokens"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"io/ioutil"
+	"time"
+)
+
+var (
+	multi jm.JSONApiMultiplexerClient
+	rc    ic.RPCInterceptorServiceClient
+)
+
+type HTTPError struct {
+	ErrorCode           int
+	ErrorString         string
+	ExtendedErrorString string
+}
+
+// mapping as per https://cloud.google.com/apis/design/errors
+var grpcToHTTPMap = map[codes.Code]*HTTPError{
+
+	codes.OK:                 {200, "ok", ""},
+	codes.Unknown:            {500, "unknown method", ""},
+	codes.InvalidArgument:    {400, "invalid argument", ""},
+	codes.DeadlineExceeded:   {504, "deadline exceeded", ""},
+	codes.NotFound:           {404, "not found", ""},
+	codes.AlreadyExists:      {409, "resource already exists", ""},
+	codes.PermissionDenied:   {403, "insufficient permission", ""},
+	codes.ResourceExhausted:  {429, "out of resource quota", ""},
+	codes.FailedPrecondition: {400, "not possible in current system state", ""},
+	codes.Aborted:            {409, "concurrency conflict", ""},
+	codes.OutOfRange:         {400, "invalid range specified", ""},
+	codes.Unimplemented:      {501, "method not implemented", ""},
+	codes.Internal:           {500, "internal server error", ""},
+	codes.Unavailable:        {503, "service unavailable", ""},
+	codes.DataLoss:           {500, "internal server error", ""},
+	codes.Unauthenticated:    {401, "missing, invalid, or expired OAuth token", ""},
+}
+
+func create() error {
+	if multi != nil {
+		return nil
+	}
+	m := jm.NewJSONApiMultiplexerClient(client.Connect("jsonapimultiplexer.JSONApiMultiplexer"))
+	multi = m
+	return nil
+
+}
+
+// we forward via grpc...
+// returns TRUE: continue with non-json path | FALSE: stop processing request
+func JSONProxy(f *FProxy) bool {
+	if rc == nil {
+		rc = ic.NewRPCInterceptorServiceClient(client.Connect("rpcinterceptor.RPCInterceptorService"))
+	}
+	var err error
+	a := &authResult{}
+	if f.hf.def.NeedAuth {
+		a, err = json_auth(f)
+		if err != nil {
+			fmt.Printf("[jsonproxy] Failed to proceed with authentication (error: %s)\n", err)
+			return true
+		}
+
+		if !a.Authenticated() {
+			if *debug {
+				fmt.Printf("[jsonproxy] need auth for jsonproxy, but got none - deny access\n")
+			}
+			// if we tried and failed it's forbidden. otherwise send challenge
+			if a.GotCredentials() {
+				f.StatusCode = 403
+				f.w.WriteHeader(f.StatusCode)
+				f.w.Write([]byte("403 - access denied"))
+				f.LogResponse()
+				return false
+			}
+			f.StatusCode = 401
+			f.w.Header().Set("WWW-Authenticate", "Basic realm=\"Login\"")
+			f.w.WriteHeader(f.StatusCode)
+			f.w.Write([]byte("401 - authentication required"))
+			f.LogResponse()
+			return false
+		}
+
+	}
+	f.md = &ic.InMetadata{
+		RequestID:    "", // we want a new one
+		UserToken:    "", //do we?
+		ServiceToken: tokens.GetServiceTokenParameter(),
+	}
+	if a != nil && (a.User != nil) {
+		f.md.UserID = a.User.ID
+		f.user = a.User
+	}
+	ireq := &ic.InterceptRPCRequest{Service: "h2gproxy",
+		Method:     "jsonproxy",
+		InMetadata: f.md,
+	}
+	// we need a 'default' context to actually call intercept rpc
+	ctx := tokens.ContextWithToken()
+	r, err := rc.InterceptRPC(ctx, ireq)
+	if err != nil {
+		fmt.Printf("Failed to call intercept rpc: %s\n", err)
+		return false
+	}
+	f.requestid = r.RequestID
+	f.Started = time.Now()
+	GRPCCode, err := grpcproxy(r, f, a)
+	elapsed := time.Now().Sub(f.Started)
+	ms := elapsed.Nanoseconds() / 1000 / 1000
+	f.ResponseTimeMS = int(ms)
+
+	var httpError *HTTPError
+
+	if err != nil {
+		st := status.Convert(err)
+		message := st.Message()
+		code := st.Code()
+		msg := fmt.Sprintf("API Call (%s) failed: code=%d message=%s", f.String(), code, message)
+		fmt.Println(msg)
+
+		f.customHeaders(&ExtraInfo{Error: err, Message: msg})
+
+		httpError = grpcToHTTPMap[code]
+		if a.IsGuruUser() {
+			httpError.ExtendedErrorString = message
+		}
+		_ = GRPCCode
+		f.StatusCode = httpError.ErrorCode
+
+		f.w.WriteHeader(f.StatusCode)
+
+		resp, err := json.Marshal(httpError)
+		if err != nil {
+			fmt.Printf("Failed to marshal http error: %s\n", err)
+		}
+		f.w.Write(resp)
+	}
+
+	f.LogResponse()
+	return false // means we've done everything that needs doing
+}
+
+func grpcproxy(rp *ic.InterceptRPCResponse, f *FProxy, a *authResult) (GRPCCode uint32, err error) {
+	// rp may be nil (in case we failed to call rpcinterceptor)
+	err = create()
+	if err != nil {
+		fmt.Printf("Failed to create multiplexer client: %s\n", err)
+		return 0, err
+	}
+	/***************************************************************
+	// build the proto to call jsonapimultiplexer
+	***************************************************************/
+	// read the request:
+	body, err := ioutil.ReadAll(f.req.Body)
+	if err != nil {
+		return 0, err
+	}
+	err = f.req.ParseForm()
+	if err != nil {
+		return 0, err
+	}
+	sv := &jm.ServeRequest{Body: string(body)}
+	sv.Path = f.req.URL.Path
+	sv.Method = f.req.Method
+	// build up the grpc proto
+	for name, values := range f.req.Header {
+		h := &jm.Header{Name: name}
+		sv.Headers = append(sv.Headers, h)
+		h.Values = values
+	}
+	if f.user != nil {
+		sv.Headers = append(sv.Headers, &jm.Header{Name: "REMOTE_USER", Values: []string{f.user.Email}})
+		sv.Headers = append(sv.Headers, &jm.Header{Name: "REMOTE_ID", Values: []string{f.user.ID}})
+	}
+	// careful here - we do *not* accept multiple values for a given field.
+	for name, value := range f.req.Form {
+		if len(value) != 1 {
+			return 0, fmt.Errorf("Queryparameter %s specified %d times (rather than exactly 1)", name, len(value))
+		}
+		p := &jm.Parameter{Name: name, Value: value[0]}
+		sv.Parameters = append(sv.Parameters, p)
+	}
+	/***************************************************************
+	// build a useful context from authresult & intercept response
+	***************************************************************/
+	ctx := tokens.ContextWithToken()
+	nctx, err := createContext(ctx, f, a, rp)
+	if err != nil {
+		fmt.Printf("[jsonproxy] failed to create a new context: %s\n", err)
+	} else {
+		ctx = nctx
+	}
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if *debug {
+		fmt.Printf("[jsonproxy] Invoking with ctx = %#v\n", ctx)
+		fmt.Printf("[jsonproxy] (%v): Metadata = %v\n", ok, md)
+	}
+	f.ctx = ctx
+	resp, err := multi.Serve(ctx, sv)
+	if err != nil {
+		if *debug {
+			fmt.Printf("jsonapimultiplexer returned from Serve() with error: %s\n", err)
+		}
+
+		// must return on or other here, not both
+		if resp != nil {
+			return resp.GRPCCode, nil
+		} else {
+			return 0, err
+		}
+	}
+	if *debug {
+		fmt.Printf("jsonapimultiplexer returned httpresponsecode=%d and grpccode=%d (%s)\n", resp.HTTPResponseCode, resp.GRPCCode, resp.Text)
+	}
+	code := int(resp.HTTPResponseCode)
+	if code == 0 {
+		code = 200
+	}
+	f.StatusCode = code
+	mtype := "application/json"
+	if resp.MimeType != "" {
+		mtype = resp.MimeType
+	}
+	f.w.Header().Set("content-type", fmt.Sprintf("%s; charset=utf-8", mtype))
+	reqid := "NA"
+	if rp != nil {
+		reqid = rp.RequestID
+	}
+	if *debug {
+		fmt.Printf("Setting guru requestid header to \"%s\"\n", reqid)
+	}
+
+	f.w.Header().Set("X-Guru-RequestID", reqid)
+	f.w.Header().Set("X-LB-RequestID", reqid)
+	f.w.WriteHeader(code)
+
+	f.w.Write([]byte(resp.Text))
+	return 0, err
+}

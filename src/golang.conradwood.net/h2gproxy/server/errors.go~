@@ -1,0 +1,4 @@
+package main
+
+func (f *FProxy) ProcessError(err error, code int, msg string) {
+}
