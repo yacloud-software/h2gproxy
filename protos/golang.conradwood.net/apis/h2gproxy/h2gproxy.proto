@@ -1,0 +1,299 @@
+
+
+syntax = "proto3";
+
+package h2gproxy;
+option java_package = "net.conradwood.golang.apis.h2gproxy";
+import "golang.conradwood.net/apis/common/common.proto";
+
+message CreateConfigRequest {
+}
+message CreateConfigResponse {
+  string ConfigID = 1;
+}
+message ApplyConfigRequest {
+  string ConfigID = 1;
+}
+message ApplyConfigResponse {
+  bool Applied = 1;
+}
+
+message AddConfigResponse {
+}
+message AddConfigTCPRequest {
+  string ConfigID = 1;
+  int32 SourcePort = 2;
+  string TargetServicePath = 3;
+}
+
+/*******************************************************
+gRPC Proxies must serve this
+********************************************************/
+message Header {
+  string Name = 1;
+  repeated string Values = 2;
+}
+
+message Parameter {
+  string Name = 1;
+  string Value = 2;
+}
+
+/*******************************************************
+gRPC Streaming Proxies must serve this
+********************************************************/
+// a service providing a "download" to users must implement this
+service DownloadStreamer {
+  rpc StreamHTTP(StreamRequest) returns (stream StreamDataResponse);
+}
+message StreamDataResponse {
+  StreamResponse Response = 1; // entirely optional, any StreamResponses received AFTER Data is sent are ignored
+  bytes Data = 2;              // the data
+}
+
+// stream backends receive this from h2gproxy
+message StreamRequest {
+  repeated Header Headers = 1;
+  string Path = 3;   // e.g. "/api/v1/endpoint"
+  string Method = 4; // e.g. "POST"
+  repeated Parameter Parameters = 5;
+  string Host = 6;      // requested host, e.g. www.singingcat.net
+  string UserAgent = 7; // useragent for logging
+  string SourceIP = 8;  // source ip where request comes from (for logging)
+  string Query=9; //foo=bar
+  uint32 Port=10; // port this request came in on
+}
+// stream backends send this to H2GProxy
+message StreamResponse {
+  string Filename = 1; // if non-empty will suggest to the browser this filename (Content-Disposition header will be added)
+  uint64 Size = 2;     // size in bytes (may be 0 if not known in advance)
+  string MimeType = 3; // default application/octet-stream
+  map<string,string> ExtraHeaders=4; //optional
+  uint32 StatusCode=5; // if 0, 200 is assumed
+}
+message StreamDataRequest {
+  StreamRequest Request=1; // only set in the first request
+  bytes Data=2; // the body
+}
+
+/*******************************************************
+gRPC Unary Proxies must serve this
+********************************************************/
+
+// unary backends receive this from h2gproxy
+message ServeRequest {
+  repeated Header Headers = 1;
+  string Body = 2;
+  string Path = 3;   // e.g. "/api/v1/endpoint"
+  string Method = 4; // e.g. "POST"
+  repeated Parameter Parameters = 5;
+  string Host = 6;      // requested host, e.g. www.singingcat.net
+  string UserAgent = 7; // useragent for logging
+  string SourceIP = 8;  // source ip where request comes from (for logging)
+}
+message Cookie {
+  string Name = 1;
+  string Value = 2;
+  uint32 Expiry = 3;
+}
+message ServeResponse {
+  uint32 HTTPResponseCode = 1;
+  uint32 GRPCCode = 2;
+  //  string OBSOLETE_Text = 3;    // Deprecated!! the response to be served to the client
+  string MimeType = 4;         // default application/json
+  repeated Cookie Cookies = 5; // cookies to set
+  bytes Body = 6;              // the response to be served to the client
+}
+
+// also check config-submitter.go !!!
+
+message Config {
+  repeated AddConfigHTTPRequest Config = 1; // current configs
+}
+/*
+A configuration of an http endpoint
+ */
+message AddConfigHTTPRequest {
+  string ConfigID = 1;
+  // the url snippet to match on
+  string URLPath = 2;
+
+  // (we need either target or service)
+  // the optional url to forward to
+  string TargetHost = 3;
+  int32 TargetPort = 4;
+  // the service address to forward to
+  string TargetService = 5;
+
+  // we might need to rewrite the URL a bit to match what the target expects
+  string TargetURL = 6;
+  // me might need to set a specific host header to get what we want
+  string TargetHostname = 7;
+
+  // we strip the urlpath out of the request before
+  // passing it to the backend
+  // we optionally may insert this prefix
+  string PathPrefix = 8;
+
+  // and we might need random stupid headers
+  repeated string Header = 9;
+
+  // if true, proxy will enforce authentication
+  // before proxying to the target
+  bool NeedAuth = 10;
+
+  // below conditions will only match if user is authenticated
+  // so setting one of them and set NeedAuth == false is
+  // probably a bad idea
+
+  // for this entry to match, user must be in any of these groups
+  // if empty - any AUTHENTICATED request matches
+  repeated string Groups = 11;
+
+  // same as groups, but for users :)
+  repeated string Users = 12;
+
+  // if empty will match all hosts
+  string URLHostname = 13;
+
+  // either "ip" or "hostname"(default)
+  string ForwardedFor = 14;
+
+  // if non-nil 500 errors will be intercepted and a webpage served instead
+  string ErrorPage500 = 15;
+  // if non-nil 400 errors will be intercepted and a webpage served instead
+  string ErrorPage400 = 16;
+  // send a "fake" Authorization header to the backend? (e.g. gerrit needs this)
+  // an "Authorization:" header will be added to each request to the backend, encoding
+  // either the userid or the username (see UseUserNameForFakeAuth)
+  bool SendFakeAuthorization = 17;
+  // if nil, it'll set the original host as requested by the client. override if
+  // necessary
+  // special: set it to "targethost" and it will be set to whatever targethost
+  // matched
+  string ForwardedHost = 18;
+  // a name made up to identify this entry by humans
+  // e.g. for statistics and/or debugging
+  string ConfigName = 19;
+  // if empty - matches any protocol
+  // otherwise http/https
+  string ProtocolRequired = 20;
+  // allow authorization headers to be passed to the backend (e.g. hes needs
+  // this)
+  // this is potentially a very dangerous option - enable with caution
+  bool AllowAuthorizationFromClient = 21;
+  // another dangerous option: enable basic auth from the backend,
+  // bypassing SSO altogether. Use with caution!
+  bool ForceBackendAuthorization = 22;
+  // max requests "in flights" (== currently processing) for
+  // this backend (total over all instances)
+  // additional requests past this limit are dropped with error
+  int32 MaxInFlights = 23;
+  /*
+    if 0 h2gproxy will forward http requests to http-only backends (no grpc)<br/>
+    if 1 h2gproxy will parse the form and forward via grpc to json-api-multiplexer backend<br/>
+    if 2 h2gproxy will parse the form and forward via grpc to htmlserver backend<br/>
+    if 3 h2gproxy will parse the form and forward via grpc to weblogin backend<br/>
+    if 4 h2gproxy will forward to (any specified) streaming grpc api backend<br/>
+    if 5 h2gproxy will forward to (any specified) streaming grpc proxying api backend with raw http information. An entry of this type will match if URLHostname matches partially. Security risk (see readme!)<br/>
+  */
+  uint32 Api = 24;
+  // if true h2gproxy will intercept Redirect (301) from backends and rewrite them
+  // to match what the client sent (mainly for the many broken web frameworks out there)
+  bool RewriteRedirectHost = 25;
+  // choose between ["id"/"email"/"abbrev"] with FakeBackendAuthorization
+  string UserNameForFakeAuth = 26;
+  // max amount of requests per second
+  uint32 MaxPerSec = 27;
+  // this will only match if request comes from private ip
+  bool RFC1918Only = 28;
+  // normally, if we have a valid certificate for a hostname which
+  // a client requests via http, then we will automatically send a
+  // redirect to the corresponding https location
+  // with this option set to true we will serve the content over http
+  // instead
+  bool AcceptHTTP = 29;
+  // if we proxy a host (targethost), we normally use http (unless it's on port 443)
+  // this option will make it use https instead
+  bool ProxyForHTTPS = 30;
+  // how many seconds might this request run before timingout (context deadline)
+  uint32 MaxDuration = 31; 
+}
+
+message HostListEntry {
+  string Hostname = 1;     // the hostname, e.g. www.singingcat.net
+  bool GotCertificate = 2; // true if we have a valid certificate for this hostname
+  bool ServedHTTP = 3;     // true if we served it successfully via HTTP (a redirect to https counts as successful)
+  bool ServedHTTPS = 4;    // true if we served it successfully via HTTPS
+}
+
+message HostList {
+  repeated HostListEntry Hosts = 1;
+}
+
+message BodyData {
+  bytes Data = 1;
+}
+
+message ConfigureProberRequest {
+  bool ProberBackend = 1; // true: switches the prober backend on, false: switches it off
+}
+
+// the h2gproxyservice routes http requests to grpc backends (and other types of backends)
+service H2GProxyService {
+  // create a new config. This doesn't affect current operation until apply is
+  // called
+  rpc CreateConfig(CreateConfigRequest) returns (CreateConfigResponse);
+
+  // this applies a new config
+  rpc ApplyConfig(ApplyConfigRequest) returns (ApplyConfigResponse);
+  rpc AddConfigTCP(AddConfigTCPRequest) returns (AddConfigResponse);
+  rpc AddConfigHTTP(AddConfigHTTPRequest) returns (AddConfigResponse);
+  // get current config
+  rpc GetConfig(common.Void) returns (Config);
+  // get all hosts for which we at least once successfully served something and/or for which we have a valid certificate
+  rpc GetKnownHosts(common.Void) returns (HostList);
+  // implemented for probers
+  rpc BiStreamHTTP(stream StreamDataRequest) returns (stream StreamDataResponse);
+  // implemented for probers
+  rpc StreamHTTP(StreamRequest) returns (stream StreamDataResponse);
+  // implemented for probers
+  rpc ServeHTML(ServeRequest) returns (ServeResponse);
+  // implemented for probers
+  rpc Serve(ServeRequest) returns (ServeResponse);
+  // switch prober backend on or off (useful if a running h2gproxy needs to be probed)
+  // this rpc is limited to root users
+  rpc ConfigureProber(ConfigureProberRequest) returns (common.Void);
+  // we can get some meta information about proxied tcp connections here
+  rpc GetTCPMeta(TCPMetaRequest) returns (TCPSession);
+  // list of currently proxied tcp requests
+  rpc GetTCPSessions(common.Void) returns (TCPSessionList);
+}
+message TCPSession {
+  // the port an external client connects to. This is what h2gproxy listens on
+  uint32 InboundPort = 1;
+  // the config attached to the inbound port
+  AddConfigHTTPRequest Config = 2;
+  // the ephemeral port assigned by the OS for the connection to the proxy target
+  uint32 ProxyOutboundPort = 3;
+  // the target we connected this session to
+  uint32 ProxyTargetPort = 4;
+  // the target we connected this session to
+  string ProxyTargetHost = 5;
+  string PeerHost = 6;
+  uint32 PeerPort = 7;
+}
+message TCPSessionList {
+  repeated TCPSession Sessions = 1;
+}
+/*
+ * TCP defines a connection by {IP1, Port1, IP2, Port2 }. This means, it is possible (albeit in practice not
+ * wide spread) that a ProxyOutboundPort is reused if connecting to different instances.
+ * this is the connection in the datacenter
+ */
+message TCPMetaRequest {
+  uint32 ProxyOutboundPort = 1;
+  string ProxyOutboundHost = 2;
+  uint32 ProxyTargetPort = 3;
+  string ProxyTargetHost = 4;
+}
