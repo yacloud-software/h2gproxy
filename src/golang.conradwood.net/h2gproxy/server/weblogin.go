@@ -15,6 +15,7 @@ import (
 )
 
 var (
+	ssodomain       = flag.String("sso_domain", "yacloud.eu", "set this to your domain, it needs to resolve www. and sso. to redirect to ")
 	override_cookie = flag.Bool("cookie_extra_short_lifetime", false, "if set, the cookie will only be valid for 2 seconds, annoying all users (but useful for developing and testing the cookie auth code)")
 	wl              weblogin.WebloginClient
 	debug_wl        = flag.Bool("debug_weblogin", false, "debug weblogin calls")
@@ -285,11 +286,11 @@ func webloginGetRedirectTarget(f *FProxy) string {
 	ctx := tokens.ContextWithToken()
 	wr, err := wl.SaveState(ctx, wreq)
 	if err != nil {
-		return "https://www.yacloud.eu/?linkid=errorpage&title=LoginUnavailable"
+		return fmt.Sprintf("https://www.%s/?linkid=errorpage&title=LoginUnavailable", *ssodomain)
 	}
 	//	pname := "weblogin_state_yacloud"
 	pname := wr.URLStateName
-	return fmt.Sprintf("https://sso.yacloud.eu/weblogin/login?%s=%s", pname, wr.YacloudWebloginState)
+	return fmt.Sprintf("https://sso.%s/weblogin/login?%s=%s", *ssodomain, pname, wr.YacloudWebloginState)
 }
 
 func GetSignedUser(ctx context.Context, user *apb.User) (*apb.SignedUser, error) {
