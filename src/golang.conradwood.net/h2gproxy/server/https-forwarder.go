@@ -40,17 +40,14 @@ func cert_refresher() {
 	if certManager == nil {
 		certManager = cm.GetCertManagerClient()
 	}
+	t := time.Duration(3) * time.Second
 	for {
-		if got_certs_once {
-			time.Sleep(time.Duration(8) * time.Hour)
-		} else {
-			time.Sleep(time.Duration(3) * time.Second)
-		}
+		time.Sleep(t)
 		err := cert_refresh()
 		if err != nil {
 			fmt.Printf("Failed to refresh certs: %s\n", utils.ErrorString(err))
 		} else {
-			got_certs_once = true
+			t = time.Duration(600) * time.Second
 		}
 	}
 }
