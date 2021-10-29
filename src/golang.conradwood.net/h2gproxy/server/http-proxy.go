@@ -371,7 +371,7 @@ func (f *FProxy) execute() {
 	}
 
 	// OPTIONS must be handled differently - they are not authenticated, but need to be replied to
-	fmt.Printf("Method: \"%s\"\n", f.req.Method)
+	//	fmt.Printf("Method: \"%s\"\n", f.req.Method)
 	if strings.ToLower(f.req.Method) == "options" {
 		option_handler(f)
 		return
