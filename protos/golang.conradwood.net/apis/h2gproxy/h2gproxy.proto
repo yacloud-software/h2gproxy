@@ -217,7 +217,9 @@ message AddConfigHTTPRequest {
   // this option will make it use https instead
   bool ProxyForHTTPS = 30;
   // how many seconds might this request run before timingout (context deadline)
-  uint32 MaxDuration = 31; 
+  uint32 MaxDuration = 31;
+  // for certain configurations, such as apis or proxies we might only want to do basic auth or tokens or
+  bool DisableFormBasedAuth=32;
 }
 
 message HostListEntry {
