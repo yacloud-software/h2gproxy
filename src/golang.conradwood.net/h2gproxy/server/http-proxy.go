@@ -1169,7 +1169,15 @@ func (f *FProxy) needsBasicAuth() bool {
 	if f.hf.def.ForceBackendAuthorization {
 		return true
 	}
+	if f.hf.def.DisableFormBasedAuth {
+		return true
+	}
 	s := r.Header.Get("User-Agent")
+	/*
+		if strings.Contains(s, "Go-http-client") {
+			return true
+		}
+	*/
 	if strings.HasPrefix(s, "Wget") || strings.HasPrefix(s, "git") {
 		return true
 	}
