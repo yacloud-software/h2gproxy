@@ -264,6 +264,10 @@ func findBestMatch(req *http.Request, proto string) *HTTPForwarder {
 		if len(res.def.URLHostname) > len(r.def.URLHostname) {
 			// if we got one with match on url, then prefer that
 			continue
+		} else if len(res.def.URLHostname) < len(r.def.URLHostname) {
+			// if this one matches a longer portion of the url, use it
+			res = r
+			continue
 		}
 		if len(r.def.ProtocolRequired) > len(res.def.ProtocolRequired) {
 			res = r
@@ -274,6 +278,7 @@ func findBestMatch(req *http.Request, proto string) *HTTPForwarder {
 		if isPrivateIP(req.RemoteAddr) && (r.def.RFC1918Only && !res.def.RFC1918Only) {
 			res = r
 		}
+
 		if len(r.def.URLPath) == len(res.def.URLPath) {
 			if (res.def.URLHostname == "") && (r.def.URLHostname != "") {
 				res = r
