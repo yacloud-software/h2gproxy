@@ -801,7 +801,9 @@ func (f *FProxy) responseHandler2(resp *http.Response) (err error) {
 	}
 	if *enBasicAuth {
 		if f.loginProxy {
-			fmt.Printf("Login-Response from \"%s:%d\": %03d\n", host, port, resp.StatusCode)
+			if *debug {
+				fmt.Printf("Login-Response from \"%s:%d\": %03d\n", host, port, resp.StatusCode)
+			}
 			return nil
 		}
 	}
