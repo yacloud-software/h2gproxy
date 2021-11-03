@@ -261,6 +261,10 @@ func findBestMatch(req *http.Request, proto string) *HTTPForwarder {
 			res = r
 			continue
 		}
+		if len(res.def.URLHostname) > len(r.def.URLHostname) {
+			// if we got one with match on url, then prefer that
+			continue
+		}
 		if len(r.def.ProtocolRequired) > len(res.def.ProtocolRequired) {
 			res = r
 		}
