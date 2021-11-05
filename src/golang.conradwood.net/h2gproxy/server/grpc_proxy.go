@@ -347,7 +347,7 @@ func (g *GRPCProxy) late_authenticate() bool {
 		}
 		g.f.SetHeader("WWW-Authenticate", "Basic realm=\"Login\"")
 		g.f.SetStatus(401)
-		g.f.Write([]byte("We cannot authenticate your useragent just yet. you may try passing apikey=XXX as a url parameter."))
+		g.f.Write([]byte("[grpcproxy] authentication required. you may try passing apikey=XXX as a url parameter or add your credentials to .netrc"))
 		return false
 	}
 
