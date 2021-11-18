@@ -90,7 +90,7 @@ func doesMatch(r *http.Request, hf *HTTPForwarder, proto string) bool {
 
 	if hf.def.Api == 5 {
 		// fuzzy urlhostname proxy  match
-		if (hf.def.URLHostname != "") && (!strings.HasSuffix(hostName, hf.def.URLHostname)) {
+		if (hf.def.URLHostname != "") && (!strings.HasSuffix(hostName, hf.def.URLHostname)) && !fuzzy_match(hf.def.URLHostname, hostName) {
 			if *debug_match {
 				fmt.Printf("hostname \"%s\" does not fuzzy match %s\n", hostName, hf.def.URLHostname)
 			}
