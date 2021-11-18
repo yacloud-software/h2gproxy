@@ -135,7 +135,7 @@ func fuzzy_match(match, hostname string) bool {
 		//trailing
 		return strings.HasPrefix(hostname, match[:len(match)-1])
 	} else {
-		fmt.Printf("Match \"%s\" not support, asterisk must be either leading or trailing\n")
+		fmt.Printf("Match \"%s\" not support, asterisk must be either leading or trailing\n", match)
 	}
 	return false
 }
