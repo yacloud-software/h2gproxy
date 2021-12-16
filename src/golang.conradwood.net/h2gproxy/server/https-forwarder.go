@@ -86,10 +86,15 @@ func cert_refresh() error {
 		if block == nil {
 			fmt.Printf("[certs] certificate %s has no CA certificate\n", cert.Cert.Host)
 		} else {
-			_, xerr := x509.ParseCertificate(block.Bytes)
+			xcert, xerr := x509.ParseCertificate(block.Bytes)
 			if xerr != nil {
 				fmt.Printf("[certs] Cannot parse certificate %s: %s\n", cert.Cert.Host, err)
 				return err
+			}
+			now := time.Now()
+			if now.After(xcert.NotAfter) {
+				fmt.Printf("[certs] certificate for \"%s\" expired on %v\n", c.Hostname, xcert.NotAfter)
+				continue
 			}
 
 			b := &bytes.Buffer{}

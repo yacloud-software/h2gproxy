@@ -177,27 +177,29 @@ func apply(cfg *Config) error {
 	}
 	if !wl {
 		// explicitly add /weblogin/
-		hf := &HTTPForwarder{def: &pb.AddConfigHTTPRequest{
-			URLPath:       "/weblogin/",
-			TargetService: WEBLOGIN,
-			ConfigName:    "weblogin",
-			MaxInFlights:  5,
-			MaxPerSec:     10,
-			Api:           3,
-		}}
+		hf := &HTTPForwarder{isAbsolute: true,
+			def: &pb.AddConfigHTTPRequest{
+				URLPath:       "/weblogin/",
+				TargetService: WEBLOGIN,
+				ConfigName:    "weblogin",
+				MaxInFlights:  5,
+				MaxPerSec:     10,
+				Api:           3,
+			}}
 		cfg.httpforwarders = append(cfg.httpforwarders, hf)
 	}
 
 	// and add "acme"
-	hf := &HTTPForwarder{def: &pb.AddConfigHTTPRequest{
-		URLPath:       "/.well-known/acme-challenge",
-		TargetService: ACMESERVICE,
-		ConfigName:    "acme",
-		MaxInFlights:  5,
-		MaxPerSec:     10,
-		Api:           2,
-		NeedAuth:      false,
-	}}
+	hf := &HTTPForwarder{isAbsolute: true,
+		def: &pb.AddConfigHTTPRequest{
+			URLPath:       "/.well-known/acme-challenge",
+			TargetService: ACMESERVICE,
+			ConfigName:    "acme",
+			MaxInFlights:  5,
+			MaxPerSec:     10,
+			Api:           2,
+			NeedAuth:      false,
+		}}
 	cfg.httpforwarders = append(cfg.httpforwarders, hf)
 
 	if *activate_probe_backend || *run_probes {

@@ -16,6 +16,11 @@ func findBestMatch(req *http.Request, proto string) *HTTPForwarder {
 		if !doesMatch(req, r, proto) {
 			continue
 		}
+		if r.isAbsolute {
+			// if it does match an absolute one, return it immediately
+			res = r
+			break
+		}
 		if *debug_match {
 			fmt.Printf("possible match: url %s matches %s\n", req.URL, r.String())
 		}

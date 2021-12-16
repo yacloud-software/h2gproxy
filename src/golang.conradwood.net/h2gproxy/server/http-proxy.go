@@ -155,6 +155,7 @@ type HTTPForwarder struct {
 	currentlyBusy    bool
 	persec_idx       int32  // counter of requests per second for this second
 	persec_ctr       uint32 // how many requests in the second persec_idx so far?
+	isAbsolute       bool   // true for things like weblogin and acme to get priority
 }
 
 func (h *HTTPForwarder) ApiTypeName() string {
