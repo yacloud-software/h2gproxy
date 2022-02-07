@@ -36,7 +36,7 @@ func (f *FProxy) add_session_cookie(response *h2gproxy.ServeResponse, serr error
 			Value:  tk.Token,
 			Expiry: uint32(time.Now().Add(time.Duration(30) * time.Minute).Unix()),
 		})
-
+		return response, serr
 	} else if err != nil {
 		// for a reason other than Not-exists, we could not get the cookie:
 		fmt.Printf("failed to get session cookie: %s\n", utils.ErrorString(err))
@@ -46,12 +46,11 @@ func (f *FProxy) add_session_cookie(response *h2gproxy.ServeResponse, serr error
 		fmt.Printf("no cookie and weird error. err=%s!\n", err)
 		return response, serr
 	}
-	// we got a cookie
+	// we got a cookie (to be fair, this would be better executer at the BEGINNING of the request)
 	_, err = am.KeepAliveSession(f.ctx, &au.SessionToken{Token: c.Value})
 	if err != nil {
 		fmt.Printf("Failed to keep session alive: %s\n", utils.ErrorString(err))
 	}
-
 	return response, serr
 }
 func (f *FProxy) with_session_cookie(response *h2gproxy.ServeResponse, err error) (*h2gproxy.ServeResponse, error) {
