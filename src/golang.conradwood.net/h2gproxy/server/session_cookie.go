@@ -24,7 +24,7 @@ func (f *FProxy) add_session_cookie(response *h2gproxy.ServeResponse, serr error
 		return response, serr
 	}
 	c, err := f.req.Cookie(SESSION_COOKIE_NAME)
-	if err == http.ErrNoCookie {
+	if err == http.ErrNoCookie || ((err == nil) && (c == nil)) {
 		tk, err := am.CreateSession(f.ctx, &common.Void{})
 		if err != nil {
 			fmt.Printf("Could not get session: %s\n", utils.ErrorString(err))
@@ -41,7 +41,7 @@ func (f *FProxy) add_session_cookie(response *h2gproxy.ServeResponse, serr error
 		return response, serr
 	}
 	if c == nil {
-		fmt.Printf("no cookie!\n")
+		fmt.Printf("no cookie and weird error. err=%s!\n", err)
 		return response, serr
 	}
 	// we got a cookie
