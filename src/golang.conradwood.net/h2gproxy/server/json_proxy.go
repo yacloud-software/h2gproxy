@@ -65,7 +65,7 @@ func (j *web_proxy) Serve(ctx context.Context, in *h2gproxy.ServeRequest) (*h2gp
 
 	//	fmt.Printf("foo: %#v\n", j.f.hf.def.TargetService)
 	html := getservice(t)
-	return html.ServeHTML(ctx, in)
+	return j.f.with_session_cookie(html.ServeHTML(ctx, in))
 }
 
 type Ihtmlserve interface {

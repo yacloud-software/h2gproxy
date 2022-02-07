@@ -271,6 +271,7 @@ func (g *GRPCProxy) grpcproxy(rp *ic.InterceptRPCResponse, a *authResult) (conte
 	// make the RPC Call
 	***************************************************************/
 	resp, err := g.p.Serve(ctx, sv)
+	g.f.add_session_cookie(resp, err)
 	if err != nil {
 		if *debug {
 			fmt.Printf("[grpcproxy] returned from Serve() with error: %s\n", utils.ErrorString(err))

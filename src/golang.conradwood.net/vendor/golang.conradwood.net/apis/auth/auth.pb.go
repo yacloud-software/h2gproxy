@@ -2,17 +2,120 @@
 // source: golang.conradwood.net/apis/auth/auth.proto
 // DO NOT EDIT!
 
+/*
+Package auth is a generated protocol buffer package.
+
+It is generated from these files:
+	golang.conradwood.net/apis/auth/auth.proto
+
+It has these top-level messages:
+	AuthResponse
+	SignedAuthResponse
+	SignedUser
+	User
+	LinkGroupOrganisation
+	Organisation
+	Group
+	GroupList
+	AddToGroupRequest
+	RemoveFromGroupRequest
+	ListGroupRequest
+	UserListResponse
+	UpdatePasswordRequest
+	ElevateAccessRequest
+	ForceUpdatePasswordRequest
+	EditAnyUserRequest
+	EditSelfRequest
+	CreateGroup
+	CreateGroupRequest
+	CreateGroupResponse
+	GetGroupRequest
+	GetGroupResponse
+	GroupDescriptionRequest
+	CreateServiceRequest
+	NewService
+	ResetRequest
+	ExpireTokenRequest
+	VerifyEmailRequest
+	VerifyEmailResponse
+	GetTokenRequest
+	TokenResponse
+	UserList
+	SessionToken
+	ByAbbrevRequest
+	RemoteStoreRequest
+	RemoteUserRequest
+	RemoteUser
+	RemoteUserDetail
+	SudoRequest
+	TokenCompromisedRequest
+	NewToken
+	VerifyRequest
+	VerifyResponse
+	ByIDRequest
+	VerifyPasswordResponse
+	CreateUserRequest
+	ByEmailRequest
+	UserEmailAddressList
+	ListAllGroupsRequest
+	NewPasswordResponse
+	UserDef
+	AddTokenRequest
+	KeyResponse
+	AuthenticatePasswordRequest
+	AuthenticateTokenRequest
+	UserDetail
+	UserTokens
+	GroupDB
+	EmailVerifyPins
+	SudoStatus
+*/
 package auth
 
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import _ "golang.conradwood.net/apis/common"
+import common "golang.conradwood.net/apis/common"
+
+import (
+	context "golang.org/x/net/context"
+	grpc "google.golang.org/grpc"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
+type TokenType int32
+
+const (
+	TokenType_UNDEFINED TokenType = 0
+	TokenType_PERMANENT TokenType = 1
+	TokenType_SESSION   TokenType = 2
+)
+
+var TokenType_name = map[int32]string{
+	0: "UNDEFINED",
+	1: "PERMANENT",
+	2: "SESSION",
+}
+var TokenType_value = map[string]int32{
+	"UNDEFINED": 0,
+	"PERMANENT": 1,
+	"SESSION":   2,
+}
+
+func (x TokenType) String() string {
+	return proto.EnumName(TokenType_name, int32(x))
+}
+func (TokenType) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
 type AuthResponse struct {
 	Valid         bool   `protobuf:"varint,1,opt,name=Valid" json:"Valid,omitempty"`
@@ -25,7 +128,7 @@ type AuthResponse struct {
 func (m *AuthResponse) Reset()                    { *m = AuthResponse{} }
 func (m *AuthResponse) String() string            { return proto.CompactTextString(m) }
 func (*AuthResponse) ProtoMessage()               {}
-func (*AuthResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{0} }
+func (*AuthResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
 func (m *AuthResponse) GetValid() bool {
 	if m != nil {
@@ -73,7 +176,7 @@ type SignedAuthResponse struct {
 func (m *SignedAuthResponse) Reset()                    { *m = SignedAuthResponse{} }
 func (m *SignedAuthResponse) String() string            { return proto.CompactTextString(m) }
 func (*SignedAuthResponse) ProtoMessage()               {}
-func (*SignedAuthResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{1} }
+func (*SignedAuthResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
 func (m *SignedAuthResponse) GetValid() bool {
 	if m != nil {
@@ -123,7 +226,7 @@ type SignedUser struct {
 func (m *SignedUser) Reset()                    { *m = SignedUser{} }
 func (m *SignedUser) String() string            { return proto.CompactTextString(m) }
 func (*SignedUser) ProtoMessage()               {}
-func (*SignedUser) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{2} }
+func (*SignedUser) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
 func (m *SignedUser) GetUser() []byte {
 	if m != nil {
@@ -163,12 +266,13 @@ type User struct {
 	SignatureID      []byte `protobuf:"bytes,13,opt,name=SignatureID,proto3" json:"SignatureID,omitempty"`
 	SignatureFull    []byte `protobuf:"bytes,14,opt,name=SignatureFull,proto3" json:"SignatureFull,omitempty"`
 	OrganisationID   string `protobuf:"bytes,15,opt,name=OrganisationID" json:"OrganisationID,omitempty"`
+	Created          uint32 `protobuf:"varint,16,opt,name=Created" json:"Created,omitempty"`
 }
 
 func (m *User) Reset()                    { *m = User{} }
 func (m *User) String() string            { return proto.CompactTextString(m) }
 func (*User) ProtoMessage()               {}
-func (*User) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{3} }
+func (*User) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
 func (m *User) GetID() string {
 	if m != nil {
@@ -275,6 +379,13 @@ func (m *User) GetOrganisationID() string {
 	return ""
 }
 
+func (m *User) GetCreated() uint32 {
+	if m != nil {
+		return m.Created
+	}
+	return 0
+}
+
 type LinkGroupOrganisation struct {
 	ID      uint64 `protobuf:"varint,1,opt,name=ID" json:"ID,omitempty"`
 	OrgID   uint64 `protobuf:"varint,2,opt,name=OrgID" json:"OrgID,omitempty"`
@@ -284,7 +395,7 @@ type LinkGroupOrganisation struct {
 func (m *LinkGroupOrganisation) Reset()                    { *m = LinkGroupOrganisation{} }
 func (m *LinkGroupOrganisation) String() string            { return proto.CompactTextString(m) }
 func (*LinkGroupOrganisation) ProtoMessage()               {}
-func (*LinkGroupOrganisation) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{4} }
+func (*LinkGroupOrganisation) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
 
 func (m *LinkGroupOrganisation) GetID() uint64 {
 	if m != nil {
@@ -315,7 +426,7 @@ type Organisation struct {
 func (m *Organisation) Reset()                    { *m = Organisation{} }
 func (m *Organisation) String() string            { return proto.CompactTextString(m) }
 func (*Organisation) ProtoMessage()               {}
-func (*Organisation) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{5} }
+func (*Organisation) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
 
 func (m *Organisation) GetID() uint64 {
 	if m != nil {
@@ -341,7 +452,7 @@ type Group struct {
 func (m *Group) Reset()                    { *m = Group{} }
 func (m *Group) String() string            { return proto.CompactTextString(m) }
 func (*Group) ProtoMessage()               {}
-func (*Group) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{6} }
+func (*Group) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
 
 func (m *Group) GetID() string {
 	if m != nil {
@@ -371,7 +482,7 @@ type GroupList struct {
 func (m *GroupList) Reset()                    { *m = GroupList{} }
 func (m *GroupList) String() string            { return proto.CompactTextString(m) }
 func (*GroupList) ProtoMessage()               {}
-func (*GroupList) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{7} }
+func (*GroupList) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
 
 func (m *GroupList) GetGroups() []*Group {
 	if m != nil {
@@ -388,7 +499,7 @@ type AddToGroupRequest struct {
 func (m *AddToGroupRequest) Reset()                    { *m = AddToGroupRequest{} }
 func (m *AddToGroupRequest) String() string            { return proto.CompactTextString(m) }
 func (*AddToGroupRequest) ProtoMessage()               {}
-func (*AddToGroupRequest) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{8} }
+func (*AddToGroupRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
 
 func (m *AddToGroupRequest) GetUserID() string {
 	if m != nil {
@@ -412,7 +523,7 @@ type RemoveFromGroupRequest struct {
 func (m *RemoveFromGroupRequest) Reset()                    { *m = RemoveFromGroupRequest{} }
 func (m *RemoveFromGroupRequest) String() string            { return proto.CompactTextString(m) }
 func (*RemoveFromGroupRequest) ProtoMessage()               {}
-func (*RemoveFromGroupRequest) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{9} }
+func (*RemoveFromGroupRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
 
 func (m *RemoveFromGroupRequest) GetUserID() string {
 	if m != nil {
@@ -436,7 +547,7 @@ type ListGroupRequest struct {
 func (m *ListGroupRequest) Reset()                    { *m = ListGroupRequest{} }
 func (m *ListGroupRequest) String() string            { return proto.CompactTextString(m) }
 func (*ListGroupRequest) ProtoMessage()               {}
-func (*ListGroupRequest) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{10} }
+func (*ListGroupRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
 
 func (m *ListGroupRequest) GetGroupID() string {
 	if m != nil {
@@ -459,13 +570,1202 @@ type UserListResponse struct {
 func (m *UserListResponse) Reset()                    { *m = UserListResponse{} }
 func (m *UserListResponse) String() string            { return proto.CompactTextString(m) }
 func (*UserListResponse) ProtoMessage()               {}
-func (*UserListResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{11} }
+func (*UserListResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
 
 func (m *UserListResponse) GetUsers() []*User {
 	if m != nil {
 		return m.Users
 	}
 	return nil
+}
+
+type UpdatePasswordRequest struct {
+	NewPassword string `protobuf:"bytes,1,opt,name=NewPassword" json:"NewPassword,omitempty"`
+}
+
+func (m *UpdatePasswordRequest) Reset()                    { *m = UpdatePasswordRequest{} }
+func (m *UpdatePasswordRequest) String() string            { return proto.CompactTextString(m) }
+func (*UpdatePasswordRequest) ProtoMessage()               {}
+func (*UpdatePasswordRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
+
+func (m *UpdatePasswordRequest) GetNewPassword() string {
+	if m != nil {
+		return m.NewPassword
+	}
+	return ""
+}
+
+type ElevateAccessRequest struct {
+	// groupids I want to be part of. If this contains existing groups, the call will be rejected.
+	GroupIDs []string `protobuf:"bytes,1,rep,name=GroupIDs" json:"GroupIDs,omitempty"`
+	// after this many seconds have elapsed the access will be downgraded again
+	DurationSecs uint32 `protobuf:"varint,2,opt,name=DurationSecs" json:"DurationSecs,omitempty"`
+}
+
+func (m *ElevateAccessRequest) Reset()                    { *m = ElevateAccessRequest{} }
+func (m *ElevateAccessRequest) String() string            { return proto.CompactTextString(m) }
+func (*ElevateAccessRequest) ProtoMessage()               {}
+func (*ElevateAccessRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
+
+func (m *ElevateAccessRequest) GetGroupIDs() []string {
+	if m != nil {
+		return m.GroupIDs
+	}
+	return nil
+}
+
+func (m *ElevateAccessRequest) GetDurationSecs() uint32 {
+	if m != nil {
+		return m.DurationSecs
+	}
+	return 0
+}
+
+type ForceUpdatePasswordRequest struct {
+	UserID      string `protobuf:"bytes,1,opt,name=UserID" json:"UserID,omitempty"`
+	NewPassword string `protobuf:"bytes,2,opt,name=NewPassword" json:"NewPassword,omitempty"`
+}
+
+func (m *ForceUpdatePasswordRequest) Reset()                    { *m = ForceUpdatePasswordRequest{} }
+func (m *ForceUpdatePasswordRequest) String() string            { return proto.CompactTextString(m) }
+func (*ForceUpdatePasswordRequest) ProtoMessage()               {}
+func (*ForceUpdatePasswordRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{14} }
+
+func (m *ForceUpdatePasswordRequest) GetUserID() string {
+	if m != nil {
+		return m.UserID
+	}
+	return ""
+}
+
+func (m *ForceUpdatePasswordRequest) GetNewPassword() string {
+	if m != nil {
+		return m.NewPassword
+	}
+	return ""
+}
+
+// authorised by "root_auth_admin" group members
+type EditAnyUserRequest struct {
+	UserID    string `protobuf:"bytes,1,opt,name=UserID" json:"UserID,omitempty"`
+	FirstName string `protobuf:"bytes,2,opt,name=FirstName" json:"FirstName,omitempty"`
+	LastName  string `protobuf:"bytes,3,opt,name=LastName" json:"LastName,omitempty"`
+}
+
+func (m *EditAnyUserRequest) Reset()                    { *m = EditAnyUserRequest{} }
+func (m *EditAnyUserRequest) String() string            { return proto.CompactTextString(m) }
+func (*EditAnyUserRequest) ProtoMessage()               {}
+func (*EditAnyUserRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{15} }
+
+func (m *EditAnyUserRequest) GetUserID() string {
+	if m != nil {
+		return m.UserID
+	}
+	return ""
+}
+
+func (m *EditAnyUserRequest) GetFirstName() string {
+	if m != nil {
+		return m.FirstName
+	}
+	return ""
+}
+
+func (m *EditAnyUserRequest) GetLastName() string {
+	if m != nil {
+		return m.LastName
+	}
+	return ""
+}
+
+type EditSelfRequest struct {
+	FirstName string `protobuf:"bytes,1,opt,name=FirstName" json:"FirstName,omitempty"`
+	LastName  string `protobuf:"bytes,2,opt,name=LastName" json:"LastName,omitempty"`
+}
+
+func (m *EditSelfRequest) Reset()                    { *m = EditSelfRequest{} }
+func (m *EditSelfRequest) String() string            { return proto.CompactTextString(m) }
+func (*EditSelfRequest) ProtoMessage()               {}
+func (*EditSelfRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{16} }
+
+func (m *EditSelfRequest) GetFirstName() string {
+	if m != nil {
+		return m.FirstName
+	}
+	return ""
+}
+
+func (m *EditSelfRequest) GetLastName() string {
+	if m != nil {
+		return m.LastName
+	}
+	return ""
+}
+
+// CreateGroup holds the details required for creating a group
+type CreateGroup struct {
+	Name        string `protobuf:"bytes,1,opt,name=Name" json:"Name,omitempty"`
+	Description string `protobuf:"bytes,4,opt,name=Description" json:"Description,omitempty"`
+}
+
+func (m *CreateGroup) Reset()                    { *m = CreateGroup{} }
+func (m *CreateGroup) String() string            { return proto.CompactTextString(m) }
+func (*CreateGroup) ProtoMessage()               {}
+func (*CreateGroup) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{17} }
+
+func (m *CreateGroup) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *CreateGroup) GetDescription() string {
+	if m != nil {
+		return m.Description
+	}
+	return ""
+}
+
+// CreateGroupRequest holds the details of a request to create a group
+type CreateGroupRequest struct {
+	CreateGroup *CreateGroup `protobuf:"bytes,1,opt,name=CreateGroup" json:"CreateGroup,omitempty"`
+}
+
+func (m *CreateGroupRequest) Reset()                    { *m = CreateGroupRequest{} }
+func (m *CreateGroupRequest) String() string            { return proto.CompactTextString(m) }
+func (*CreateGroupRequest) ProtoMessage()               {}
+func (*CreateGroupRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{18} }
+
+func (m *CreateGroupRequest) GetCreateGroup() *CreateGroup {
+	if m != nil {
+		return m.CreateGroup
+	}
+	return nil
+}
+
+// CreateGroupResponse returns the details of a group that has been created
+type CreateGroupResponse struct {
+	Group *Group `protobuf:"bytes,1,opt,name=Group" json:"Group,omitempty"`
+}
+
+func (m *CreateGroupResponse) Reset()                    { *m = CreateGroupResponse{} }
+func (m *CreateGroupResponse) String() string            { return proto.CompactTextString(m) }
+func (*CreateGroupResponse) ProtoMessage()               {}
+func (*CreateGroupResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{19} }
+
+func (m *CreateGroupResponse) GetGroup() *Group {
+	if m != nil {
+		return m.Group
+	}
+	return nil
+}
+
+type GetGroupRequest struct {
+	ID string `protobuf:"bytes,1,opt,name=ID" json:"ID,omitempty"`
+}
+
+func (m *GetGroupRequest) Reset()                    { *m = GetGroupRequest{} }
+func (m *GetGroupRequest) String() string            { return proto.CompactTextString(m) }
+func (*GetGroupRequest) ProtoMessage()               {}
+func (*GetGroupRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{20} }
+
+func (m *GetGroupRequest) GetID() string {
+	if m != nil {
+		return m.ID
+	}
+	return ""
+}
+
+type GetGroupResponse struct {
+	Group *Group `protobuf:"bytes,1,opt,name=Group" json:"Group,omitempty"`
+}
+
+func (m *GetGroupResponse) Reset()                    { *m = GetGroupResponse{} }
+func (m *GetGroupResponse) String() string            { return proto.CompactTextString(m) }
+func (*GetGroupResponse) ProtoMessage()               {}
+func (*GetGroupResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{21} }
+
+func (m *GetGroupResponse) GetGroup() *Group {
+	if m != nil {
+		return m.Group
+	}
+	return nil
+}
+
+type GroupDescriptionRequest struct {
+	GroupID     string `protobuf:"bytes,1,opt,name=GroupID" json:"GroupID,omitempty"`
+	Description string `protobuf:"bytes,2,opt,name=Description" json:"Description,omitempty"`
+}
+
+func (m *GroupDescriptionRequest) Reset()                    { *m = GroupDescriptionRequest{} }
+func (m *GroupDescriptionRequest) String() string            { return proto.CompactTextString(m) }
+func (*GroupDescriptionRequest) ProtoMessage()               {}
+func (*GroupDescriptionRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{22} }
+
+func (m *GroupDescriptionRequest) GetGroupID() string {
+	if m != nil {
+		return m.GroupID
+	}
+	return ""
+}
+
+func (m *GroupDescriptionRequest) GetDescription() string {
+	if m != nil {
+		return m.Description
+	}
+	return ""
+}
+
+type CreateServiceRequest struct {
+	ServiceName string `protobuf:"bytes,1,opt,name=ServiceName" json:"ServiceName,omitempty"`
+	Token       string `protobuf:"bytes,2,opt,name=Token" json:"Token,omitempty"`
+}
+
+func (m *CreateServiceRequest) Reset()                    { *m = CreateServiceRequest{} }
+func (m *CreateServiceRequest) String() string            { return proto.CompactTextString(m) }
+func (*CreateServiceRequest) ProtoMessage()               {}
+func (*CreateServiceRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{23} }
+
+func (m *CreateServiceRequest) GetServiceName() string {
+	if m != nil {
+		return m.ServiceName
+	}
+	return ""
+}
+
+func (m *CreateServiceRequest) GetToken() string {
+	if m != nil {
+		return m.Token
+	}
+	return ""
+}
+
+type NewService struct {
+	User  *User  `protobuf:"bytes,1,opt,name=User" json:"User,omitempty"`
+	Token string `protobuf:"bytes,2,opt,name=Token" json:"Token,omitempty"`
+}
+
+func (m *NewService) Reset()                    { *m = NewService{} }
+func (m *NewService) String() string            { return proto.CompactTextString(m) }
+func (*NewService) ProtoMessage()               {}
+func (*NewService) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{24} }
+
+func (m *NewService) GetUser() *User {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
+func (m *NewService) GetToken() string {
+	if m != nil {
+		return m.Token
+	}
+	return ""
+}
+
+type ResetRequest struct {
+	Email string `protobuf:"bytes,1,opt,name=Email" json:"Email,omitempty"`
+}
+
+func (m *ResetRequest) Reset()                    { *m = ResetRequest{} }
+func (m *ResetRequest) String() string            { return proto.CompactTextString(m) }
+func (*ResetRequest) ProtoMessage()               {}
+func (*ResetRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{25} }
+
+func (m *ResetRequest) GetEmail() string {
+	if m != nil {
+		return m.Email
+	}
+	return ""
+}
+
+type ExpireTokenRequest struct {
+	Token string `protobuf:"bytes,1,opt,name=Token" json:"Token,omitempty"`
+}
+
+func (m *ExpireTokenRequest) Reset()                    { *m = ExpireTokenRequest{} }
+func (m *ExpireTokenRequest) String() string            { return proto.CompactTextString(m) }
+func (*ExpireTokenRequest) ProtoMessage()               {}
+func (*ExpireTokenRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{26} }
+
+func (m *ExpireTokenRequest) GetToken() string {
+	if m != nil {
+		return m.Token
+	}
+	return ""
+}
+
+type VerifyEmailRequest struct {
+	Pin string `protobuf:"bytes,1,opt,name=Pin" json:"Pin,omitempty"`
+}
+
+func (m *VerifyEmailRequest) Reset()                    { *m = VerifyEmailRequest{} }
+func (m *VerifyEmailRequest) String() string            { return proto.CompactTextString(m) }
+func (*VerifyEmailRequest) ProtoMessage()               {}
+func (*VerifyEmailRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{27} }
+
+func (m *VerifyEmailRequest) GetPin() string {
+	if m != nil {
+		return m.Pin
+	}
+	return ""
+}
+
+type VerifyEmailResponse struct {
+	Verified bool `protobuf:"varint,1,opt,name=Verified" json:"Verified,omitempty"`
+}
+
+func (m *VerifyEmailResponse) Reset()                    { *m = VerifyEmailResponse{} }
+func (m *VerifyEmailResponse) String() string            { return proto.CompactTextString(m) }
+func (*VerifyEmailResponse) ProtoMessage()               {}
+func (*VerifyEmailResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{28} }
+
+func (m *VerifyEmailResponse) GetVerified() bool {
+	if m != nil {
+		return m.Verified
+	}
+	return false
+}
+
+type GetTokenRequest struct {
+	DurationSecs uint64 `protobuf:"varint,1,opt,name=DurationSecs" json:"DurationSecs,omitempty"`
+}
+
+func (m *GetTokenRequest) Reset()                    { *m = GetTokenRequest{} }
+func (m *GetTokenRequest) String() string            { return proto.CompactTextString(m) }
+func (*GetTokenRequest) ProtoMessage()               {}
+func (*GetTokenRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{29} }
+
+func (m *GetTokenRequest) GetDurationSecs() uint64 {
+	if m != nil {
+		return m.DurationSecs
+	}
+	return 0
+}
+
+type TokenResponse struct {
+	Expiry uint32 `protobuf:"varint,1,opt,name=Expiry" json:"Expiry,omitempty"`
+	Token  string `protobuf:"bytes,2,opt,name=Token" json:"Token,omitempty"`
+}
+
+func (m *TokenResponse) Reset()                    { *m = TokenResponse{} }
+func (m *TokenResponse) String() string            { return proto.CompactTextString(m) }
+func (*TokenResponse) ProtoMessage()               {}
+func (*TokenResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{30} }
+
+func (m *TokenResponse) GetExpiry() uint32 {
+	if m != nil {
+		return m.Expiry
+	}
+	return 0
+}
+
+func (m *TokenResponse) GetToken() string {
+	if m != nil {
+		return m.Token
+	}
+	return ""
+}
+
+type UserList struct {
+	Users []*SignedUser `protobuf:"bytes,1,rep,name=Users" json:"Users,omitempty"`
+}
+
+func (m *UserList) Reset()                    { *m = UserList{} }
+func (m *UserList) String() string            { return proto.CompactTextString(m) }
+func (*UserList) ProtoMessage()               {}
+func (*UserList) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{31} }
+
+func (m *UserList) GetUsers() []*SignedUser {
+	if m != nil {
+		return m.Users
+	}
+	return nil
+}
+
+type SessionToken struct {
+	Token string `protobuf:"bytes,1,opt,name=Token" json:"Token,omitempty"`
+}
+
+func (m *SessionToken) Reset()                    { *m = SessionToken{} }
+func (m *SessionToken) String() string            { return proto.CompactTextString(m) }
+func (*SessionToken) ProtoMessage()               {}
+func (*SessionToken) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{32} }
+
+func (m *SessionToken) GetToken() string {
+	if m != nil {
+		return m.Token
+	}
+	return ""
+}
+
+type ByAbbrevRequest struct {
+	Abbrev string `protobuf:"bytes,1,opt,name=Abbrev" json:"Abbrev,omitempty"`
+}
+
+func (m *ByAbbrevRequest) Reset()                    { *m = ByAbbrevRequest{} }
+func (m *ByAbbrevRequest) String() string            { return proto.CompactTextString(m) }
+func (*ByAbbrevRequest) ProtoMessage()               {}
+func (*ByAbbrevRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{33} }
+
+func (m *ByAbbrevRequest) GetAbbrev() string {
+	if m != nil {
+		return m.Abbrev
+	}
+	return ""
+}
+
+type RemoteStoreRequest struct {
+	UserID       string `protobuf:"bytes,1,opt,name=UserID" json:"UserID,omitempty"`
+	OurToken     string `protobuf:"bytes,2,opt,name=OurToken" json:"OurToken,omitempty"`
+	RemoteUserID string `protobuf:"bytes,3,opt,name=RemoteUserID" json:"RemoteUserID,omitempty"`
+	Provider     string `protobuf:"bytes,4,opt,name=Provider" json:"Provider,omitempty"`
+}
+
+func (m *RemoteStoreRequest) Reset()                    { *m = RemoteStoreRequest{} }
+func (m *RemoteStoreRequest) String() string            { return proto.CompactTextString(m) }
+func (*RemoteStoreRequest) ProtoMessage()               {}
+func (*RemoteStoreRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{34} }
+
+func (m *RemoteStoreRequest) GetUserID() string {
+	if m != nil {
+		return m.UserID
+	}
+	return ""
+}
+
+func (m *RemoteStoreRequest) GetOurToken() string {
+	if m != nil {
+		return m.OurToken
+	}
+	return ""
+}
+
+func (m *RemoteStoreRequest) GetRemoteUserID() string {
+	if m != nil {
+		return m.RemoteUserID
+	}
+	return ""
+}
+
+func (m *RemoteStoreRequest) GetProvider() string {
+	if m != nil {
+		return m.Provider
+	}
+	return ""
+}
+
+type RemoteUserRequest struct {
+	OurToken string `protobuf:"bytes,1,opt,name=OurToken" json:"OurToken,omitempty"`
+}
+
+func (m *RemoteUserRequest) Reset()                    { *m = RemoteUserRequest{} }
+func (m *RemoteUserRequest) String() string            { return proto.CompactTextString(m) }
+func (*RemoteUserRequest) ProtoMessage()               {}
+func (*RemoteUserRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{35} }
+
+func (m *RemoteUserRequest) GetOurToken() string {
+	if m != nil {
+		return m.OurToken
+	}
+	return ""
+}
+
+type RemoteUser struct {
+	User    *User               `protobuf:"bytes,1,opt,name=User" json:"User,omitempty"`
+	Details []*RemoteUserDetail `protobuf:"bytes,2,rep,name=Details" json:"Details,omitempty"`
+}
+
+func (m *RemoteUser) Reset()                    { *m = RemoteUser{} }
+func (m *RemoteUser) String() string            { return proto.CompactTextString(m) }
+func (*RemoteUser) ProtoMessage()               {}
+func (*RemoteUser) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{36} }
+
+func (m *RemoteUser) GetUser() *User {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
+func (m *RemoteUser) GetDetails() []*RemoteUserDetail {
+	if m != nil {
+		return m.Details
+	}
+	return nil
+}
+
+type RemoteUserDetail struct {
+	ID           uint64 `protobuf:"varint,1,opt,name=ID" json:"ID,omitempty"`
+	UserID       string `protobuf:"bytes,2,opt,name=UserID" json:"UserID,omitempty"`
+	Provider     string `protobuf:"bytes,3,opt,name=Provider" json:"Provider,omitempty"`
+	OurToken     string `protobuf:"bytes,4,opt,name=OurToken" json:"OurToken,omitempty"`
+	Created      uint32 `protobuf:"varint,5,opt,name=Created" json:"Created,omitempty"`
+	RemoteUserID string `protobuf:"bytes,6,opt,name=RemoteUserID" json:"RemoteUserID,omitempty"`
+}
+
+func (m *RemoteUserDetail) Reset()                    { *m = RemoteUserDetail{} }
+func (m *RemoteUserDetail) String() string            { return proto.CompactTextString(m) }
+func (*RemoteUserDetail) ProtoMessage()               {}
+func (*RemoteUserDetail) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{37} }
+
+func (m *RemoteUserDetail) GetID() uint64 {
+	if m != nil {
+		return m.ID
+	}
+	return 0
+}
+
+func (m *RemoteUserDetail) GetUserID() string {
+	if m != nil {
+		return m.UserID
+	}
+	return ""
+}
+
+func (m *RemoteUserDetail) GetProvider() string {
+	if m != nil {
+		return m.Provider
+	}
+	return ""
+}
+
+func (m *RemoteUserDetail) GetOurToken() string {
+	if m != nil {
+		return m.OurToken
+	}
+	return ""
+}
+
+func (m *RemoteUserDetail) GetCreated() uint32 {
+	if m != nil {
+		return m.Created
+	}
+	return 0
+}
+
+func (m *RemoteUserDetail) GetRemoteUserID() string {
+	if m != nil {
+		return m.RemoteUserID
+	}
+	return ""
+}
+
+type SudoRequest struct {
+	UserID string `protobuf:"bytes,1,opt,name=UserID" json:"UserID,omitempty"`
+	Reason string `protobuf:"bytes,2,opt,name=Reason" json:"Reason,omitempty"`
+}
+
+func (m *SudoRequest) Reset()                    { *m = SudoRequest{} }
+func (m *SudoRequest) String() string            { return proto.CompactTextString(m) }
+func (*SudoRequest) ProtoMessage()               {}
+func (*SudoRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{38} }
+
+func (m *SudoRequest) GetUserID() string {
+	if m != nil {
+		return m.UserID
+	}
+	return ""
+}
+
+func (m *SudoRequest) GetReason() string {
+	if m != nil {
+		return m.Reason
+	}
+	return ""
+}
+
+type TokenCompromisedRequest struct {
+	Token string `protobuf:"bytes,1,opt,name=Token" json:"Token,omitempty"`
+}
+
+func (m *TokenCompromisedRequest) Reset()                    { *m = TokenCompromisedRequest{} }
+func (m *TokenCompromisedRequest) String() string            { return proto.CompactTextString(m) }
+func (*TokenCompromisedRequest) ProtoMessage()               {}
+func (*TokenCompromisedRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{39} }
+
+func (m *TokenCompromisedRequest) GetToken() string {
+	if m != nil {
+		return m.Token
+	}
+	return ""
+}
+
+type NewToken struct {
+	Token string `protobuf:"bytes,1,opt,name=Token" json:"Token,omitempty"`
+}
+
+func (m *NewToken) Reset()                    { *m = NewToken{} }
+func (m *NewToken) String() string            { return proto.CompactTextString(m) }
+func (*NewToken) ProtoMessage()               {}
+func (*NewToken) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{40} }
+
+func (m *NewToken) GetToken() string {
+	if m != nil {
+		return m.Token
+	}
+	return ""
+}
+
+type VerifyRequest struct {
+	Token string `protobuf:"bytes,1,opt,name=Token" json:"Token,omitempty"`
+}
+
+func (m *VerifyRequest) Reset()                    { *m = VerifyRequest{} }
+func (m *VerifyRequest) String() string            { return proto.CompactTextString(m) }
+func (*VerifyRequest) ProtoMessage()               {}
+func (*VerifyRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{41} }
+
+func (m *VerifyRequest) GetToken() string {
+	if m != nil {
+		return m.Token
+	}
+	return ""
+}
+
+type VerifyResponse struct {
+	Valid bool  `protobuf:"varint,1,opt,name=Valid" json:"Valid,omitempty"`
+	User  *User `protobuf:"bytes,2,opt,name=User" json:"User,omitempty"`
+}
+
+func (m *VerifyResponse) Reset()                    { *m = VerifyResponse{} }
+func (m *VerifyResponse) String() string            { return proto.CompactTextString(m) }
+func (*VerifyResponse) ProtoMessage()               {}
+func (*VerifyResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{42} }
+
+func (m *VerifyResponse) GetValid() bool {
+	if m != nil {
+		return m.Valid
+	}
+	return false
+}
+
+func (m *VerifyResponse) GetUser() *User {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
+type ByIDRequest struct {
+	UserID string `protobuf:"bytes,1,opt,name=UserID" json:"UserID,omitempty"`
+}
+
+func (m *ByIDRequest) Reset()                    { *m = ByIDRequest{} }
+func (m *ByIDRequest) String() string            { return proto.CompactTextString(m) }
+func (*ByIDRequest) ProtoMessage()               {}
+func (*ByIDRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{43} }
+
+func (m *ByIDRequest) GetUserID() string {
+	if m != nil {
+		return m.UserID
+	}
+	return ""
+}
+
+type VerifyPasswordResponse struct {
+	User  *User  `protobuf:"bytes,1,opt,name=User" json:"User,omitempty"`
+	Token string `protobuf:"bytes,2,opt,name=Token" json:"Token,omitempty"`
+}
+
+func (m *VerifyPasswordResponse) Reset()                    { *m = VerifyPasswordResponse{} }
+func (m *VerifyPasswordResponse) String() string            { return proto.CompactTextString(m) }
+func (*VerifyPasswordResponse) ProtoMessage()               {}
+func (*VerifyPasswordResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{44} }
+
+func (m *VerifyPasswordResponse) GetUser() *User {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
+func (m *VerifyPasswordResponse) GetToken() string {
+	if m != nil {
+		return m.Token
+	}
+	return ""
+}
+
+type CreateUserRequest struct {
+	Email         string `protobuf:"bytes,1,opt,name=Email" json:"Email,omitempty"`
+	FirstName     string `protobuf:"bytes,2,opt,name=FirstName" json:"FirstName,omitempty"`
+	LastName      string `protobuf:"bytes,3,opt,name=LastName" json:"LastName,omitempty"`
+	Password      string `protobuf:"bytes,4,opt,name=Password" json:"Password,omitempty"`
+	Abbrev        string `protobuf:"bytes,5,opt,name=Abbrev" json:"Abbrev,omitempty"`
+	EmailVerified bool   `protobuf:"varint,6,opt,name=EmailVerified" json:"EmailVerified,omitempty"`
+}
+
+func (m *CreateUserRequest) Reset()                    { *m = CreateUserRequest{} }
+func (m *CreateUserRequest) String() string            { return proto.CompactTextString(m) }
+func (*CreateUserRequest) ProtoMessage()               {}
+func (*CreateUserRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{45} }
+
+func (m *CreateUserRequest) GetEmail() string {
+	if m != nil {
+		return m.Email
+	}
+	return ""
+}
+
+func (m *CreateUserRequest) GetFirstName() string {
+	if m != nil {
+		return m.FirstName
+	}
+	return ""
+}
+
+func (m *CreateUserRequest) GetLastName() string {
+	if m != nil {
+		return m.LastName
+	}
+	return ""
+}
+
+func (m *CreateUserRequest) GetPassword() string {
+	if m != nil {
+		return m.Password
+	}
+	return ""
+}
+
+func (m *CreateUserRequest) GetAbbrev() string {
+	if m != nil {
+		return m.Abbrev
+	}
+	return ""
+}
+
+func (m *CreateUserRequest) GetEmailVerified() bool {
+	if m != nil {
+		return m.EmailVerified
+	}
+	return false
+}
+
+type ByEmailRequest struct {
+	Email string `protobuf:"bytes,1,opt,name=Email" json:"Email,omitempty"`
+}
+
+func (m *ByEmailRequest) Reset()                    { *m = ByEmailRequest{} }
+func (m *ByEmailRequest) String() string            { return proto.CompactTextString(m) }
+func (*ByEmailRequest) ProtoMessage()               {}
+func (*ByEmailRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{46} }
+
+func (m *ByEmailRequest) GetEmail() string {
+	if m != nil {
+		return m.Email
+	}
+	return ""
+}
+
+type UserEmailAddressList struct {
+	Emails []string `protobuf:"bytes,1,rep,name=Emails" json:"Emails,omitempty"`
+}
+
+func (m *UserEmailAddressList) Reset()                    { *m = UserEmailAddressList{} }
+func (m *UserEmailAddressList) String() string            { return proto.CompactTextString(m) }
+func (*UserEmailAddressList) ProtoMessage()               {}
+func (*UserEmailAddressList) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{47} }
+
+func (m *UserEmailAddressList) GetEmails() []string {
+	if m != nil {
+		return m.Emails
+	}
+	return nil
+}
+
+type ListAllGroupsRequest struct {
+}
+
+func (m *ListAllGroupsRequest) Reset()                    { *m = ListAllGroupsRequest{} }
+func (m *ListAllGroupsRequest) String() string            { return proto.CompactTextString(m) }
+func (*ListAllGroupsRequest) ProtoMessage()               {}
+func (*ListAllGroupsRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{48} }
+
+type NewPasswordResponse struct {
+	Password string `protobuf:"bytes,1,opt,name=Password" json:"Password,omitempty"`
+}
+
+func (m *NewPasswordResponse) Reset()                    { *m = NewPasswordResponse{} }
+func (m *NewPasswordResponse) String() string            { return proto.CompactTextString(m) }
+func (*NewPasswordResponse) ProtoMessage()               {}
+func (*NewPasswordResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{49} }
+
+func (m *NewPasswordResponse) GetPassword() string {
+	if m != nil {
+		return m.Password
+	}
+	return ""
+}
+
+type UserDef struct {
+	UserID string `protobuf:"bytes,1,opt,name=UserID" json:"UserID,omitempty"`
+}
+
+func (m *UserDef) Reset()                    { *m = UserDef{} }
+func (m *UserDef) String() string            { return proto.CompactTextString(m) }
+func (*UserDef) ProtoMessage()               {}
+func (*UserDef) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{50} }
+
+func (m *UserDef) GetUserID() string {
+	if m != nil {
+		return m.UserID
+	}
+	return ""
+}
+
+type AddTokenRequest struct {
+	UserID          string `protobuf:"bytes,1,opt,name=UserID" json:"UserID,omitempty"`
+	Token           string `protobuf:"bytes,2,opt,name=Token" json:"Token,omitempty"`
+	ExpiryTimestamp uint32 `protobuf:"varint,3,opt,name=ExpiryTimestamp" json:"ExpiryTimestamp,omitempty"`
+}
+
+func (m *AddTokenRequest) Reset()                    { *m = AddTokenRequest{} }
+func (m *AddTokenRequest) String() string            { return proto.CompactTextString(m) }
+func (*AddTokenRequest) ProtoMessage()               {}
+func (*AddTokenRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{51} }
+
+func (m *AddTokenRequest) GetUserID() string {
+	if m != nil {
+		return m.UserID
+	}
+	return ""
+}
+
+func (m *AddTokenRequest) GetToken() string {
+	if m != nil {
+		return m.Token
+	}
+	return ""
+}
+
+func (m *AddTokenRequest) GetExpiryTimestamp() uint32 {
+	if m != nil {
+		return m.ExpiryTimestamp
+	}
+	return 0
+}
+
+type KeyResponse struct {
+	Key       []byte `protobuf:"bytes,1,opt,name=Key,proto3" json:"Key,omitempty"`
+	CloudName string `protobuf:"bytes,2,opt,name=CloudName" json:"CloudName,omitempty"`
+}
+
+func (m *KeyResponse) Reset()                    { *m = KeyResponse{} }
+func (m *KeyResponse) String() string            { return proto.CompactTextString(m) }
+func (*KeyResponse) ProtoMessage()               {}
+func (*KeyResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{52} }
+
+func (m *KeyResponse) GetKey() []byte {
+	if m != nil {
+		return m.Key
+	}
+	return nil
+}
+
+func (m *KeyResponse) GetCloudName() string {
+	if m != nil {
+		return m.CloudName
+	}
+	return ""
+}
+
+type AuthenticatePasswordRequest struct {
+	Email    string `protobuf:"bytes,1,opt,name=Email" json:"Email,omitempty"`
+	Password string `protobuf:"bytes,2,opt,name=Password" json:"Password,omitempty"`
+}
+
+func (m *AuthenticatePasswordRequest) Reset()                    { *m = AuthenticatePasswordRequest{} }
+func (m *AuthenticatePasswordRequest) String() string            { return proto.CompactTextString(m) }
+func (*AuthenticatePasswordRequest) ProtoMessage()               {}
+func (*AuthenticatePasswordRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{53} }
+
+func (m *AuthenticatePasswordRequest) GetEmail() string {
+	if m != nil {
+		return m.Email
+	}
+	return ""
+}
+
+func (m *AuthenticatePasswordRequest) GetPassword() string {
+	if m != nil {
+		return m.Password
+	}
+	return ""
+}
+
+type AuthenticateTokenRequest struct {
+	Token string `protobuf:"bytes,1,opt,name=Token" json:"Token,omitempty"`
+}
+
+func (m *AuthenticateTokenRequest) Reset()                    { *m = AuthenticateTokenRequest{} }
+func (m *AuthenticateTokenRequest) String() string            { return proto.CompactTextString(m) }
+func (*AuthenticateTokenRequest) ProtoMessage()               {}
+func (*AuthenticateTokenRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{54} }
+
+func (m *AuthenticateTokenRequest) GetToken() string {
+	if m != nil {
+		return m.Token
+	}
+	return ""
+}
+
+//
+// id            | bigint                      |           | not null |
+// email         | character varying(1000)     |           | not null |
+// emailverified | integer                     |           | not null |
+// firstname     | character varying(1000)     |           | not null |
+// lastname      | character varying(1000)     |           | not null |
+// password      | character varying(1000)     |           | not null |
+// created       | timestamp without time zone |           | not null |
+// lastmodified  | timestamp without time zone |           | not null |
+// creator_id    | bigint                      |           | not null |
+// modifiedby_id | bigint                      |           | not null |
+// admin         | boolean                     |           | not null |
+type UserDetail struct {
+	ID            uint64 `protobuf:"varint,1,opt,name=ID" json:"ID,omitempty"`
+	Email         string `protobuf:"bytes,2,opt,name=Email" json:"Email,omitempty"`
+	FirstName     string `protobuf:"bytes,3,opt,name=FirstName" json:"FirstName,omitempty"`
+	LastName      string `protobuf:"bytes,4,opt,name=LastName" json:"LastName,omitempty"`
+	Password      string `protobuf:"bytes,5,opt,name=Password" json:"Password,omitempty"`
+	Admin         bool   `protobuf:"varint,6,opt,name=Admin" json:"Admin,omitempty"`
+	EmailVerified uint32 `protobuf:"varint,7,opt,name=EmailVerified" json:"EmailVerified,omitempty"`
+}
+
+func (m *UserDetail) Reset()                    { *m = UserDetail{} }
+func (m *UserDetail) String() string            { return proto.CompactTextString(m) }
+func (*UserDetail) ProtoMessage()               {}
+func (*UserDetail) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{55} }
+
+func (m *UserDetail) GetID() uint64 {
+	if m != nil {
+		return m.ID
+	}
+	return 0
+}
+
+func (m *UserDetail) GetEmail() string {
+	if m != nil {
+		return m.Email
+	}
+	return ""
+}
+
+func (m *UserDetail) GetFirstName() string {
+	if m != nil {
+		return m.FirstName
+	}
+	return ""
+}
+
+func (m *UserDetail) GetLastName() string {
+	if m != nil {
+		return m.LastName
+	}
+	return ""
+}
+
+func (m *UserDetail) GetPassword() string {
+	if m != nil {
+		return m.Password
+	}
+	return ""
+}
+
+func (m *UserDetail) GetAdmin() bool {
+	if m != nil {
+		return m.Admin
+	}
+	return false
+}
+
+func (m *UserDetail) GetEmailVerified() uint32 {
+	if m != nil {
+		return m.EmailVerified
+	}
+	return 0
+}
+
+type UserTokens struct {
+	ID        uint64    `protobuf:"varint,1,opt,name=ID" json:"ID,omitempty"`
+	UserID    uint64    `protobuf:"varint,2,opt,name=UserID" json:"UserID,omitempty"`
+	Token     string    `protobuf:"bytes,3,opt,name=Token" json:"Token,omitempty"`
+	Created   uint32    `protobuf:"varint,4,opt,name=Created" json:"Created,omitempty"`
+	Expiry    uint32    `protobuf:"varint,5,opt,name=Expiry" json:"Expiry,omitempty"`
+	TokenType TokenType `protobuf:"varint,6,opt,name=TokenType,enum=auth.TokenType" json:"TokenType,omitempty"`
+}
+
+func (m *UserTokens) Reset()                    { *m = UserTokens{} }
+func (m *UserTokens) String() string            { return proto.CompactTextString(m) }
+func (*UserTokens) ProtoMessage()               {}
+func (*UserTokens) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{56} }
+
+func (m *UserTokens) GetID() uint64 {
+	if m != nil {
+		return m.ID
+	}
+	return 0
+}
+
+func (m *UserTokens) GetUserID() uint64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
+
+func (m *UserTokens) GetToken() string {
+	if m != nil {
+		return m.Token
+	}
+	return ""
+}
+
+func (m *UserTokens) GetCreated() uint32 {
+	if m != nil {
+		return m.Created
+	}
+	return 0
+}
+
+func (m *UserTokens) GetExpiry() uint32 {
+	if m != nil {
+		return m.Expiry
+	}
+	return 0
+}
+
+func (m *UserTokens) GetTokenType() TokenType {
+	if m != nil {
+		return m.TokenType
+	}
+	return TokenType_UNDEFINED
+}
+
+type GroupDB struct {
+	ID          uint64 `protobuf:"varint,1,opt,name=ID" json:"ID,omitempty"`
+	Name        string `protobuf:"bytes,2,opt,name=Name" json:"Name,omitempty"`
+	Description string `protobuf:"bytes,3,opt,name=Description" json:"Description,omitempty"`
+}
+
+func (m *GroupDB) Reset()                    { *m = GroupDB{} }
+func (m *GroupDB) String() string            { return proto.CompactTextString(m) }
+func (*GroupDB) ProtoMessage()               {}
+func (*GroupDB) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{57} }
+
+func (m *GroupDB) GetID() uint64 {
+	if m != nil {
+		return m.ID
+	}
+	return 0
+}
+
+func (m *GroupDB) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *GroupDB) GetDescription() string {
+	if m != nil {
+		return m.Description
+	}
+	return ""
+}
+
+type EmailVerifyPins struct {
+	ID       uint64 `protobuf:"varint,1,opt,name=ID" json:"ID,omitempty"`
+	UserID   uint64 `protobuf:"varint,2,opt,name=UserID" json:"UserID,omitempty"`
+	Pin      string `protobuf:"bytes,3,opt,name=Pin" json:"Pin,omitempty"`
+	Created  uint64 `protobuf:"varint,4,opt,name=Created" json:"Created,omitempty"`
+	Accepted uint64 `protobuf:"varint,5,opt,name=Accepted" json:"Accepted,omitempty"`
+}
+
+func (m *EmailVerifyPins) Reset()                    { *m = EmailVerifyPins{} }
+func (m *EmailVerifyPins) String() string            { return proto.CompactTextString(m) }
+func (*EmailVerifyPins) ProtoMessage()               {}
+func (*EmailVerifyPins) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{58} }
+
+func (m *EmailVerifyPins) GetID() uint64 {
+	if m != nil {
+		return m.ID
+	}
+	return 0
+}
+
+func (m *EmailVerifyPins) GetUserID() uint64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
+
+func (m *EmailVerifyPins) GetPin() string {
+	if m != nil {
+		return m.Pin
+	}
+	return ""
+}
+
+func (m *EmailVerifyPins) GetCreated() uint64 {
+	if m != nil {
+		return m.Created
+	}
+	return 0
+}
+
+func (m *EmailVerifyPins) GetAccepted() uint64 {
+	if m != nil {
+		return m.Accepted
+	}
+	return 0
+}
+
+type SudoStatus struct {
+	ID uint64 `protobuf:"varint,1,opt,name=ID" json:"ID,omitempty"`
+	// which user has sudoed
+	UserID uint64 `protobuf:"varint,2,opt,name=UserID" json:"UserID,omitempty"`
+	// to which group? typcially root
+	GroupID string `protobuf:"bytes,3,opt,name=GroupID" json:"GroupID,omitempty"`
+	// for how long?
+	Expiry uint32 `protobuf:"varint,4,opt,name=Expiry" json:"Expiry,omitempty"`
+}
+
+func (m *SudoStatus) Reset()                    { *m = SudoStatus{} }
+func (m *SudoStatus) String() string            { return proto.CompactTextString(m) }
+func (*SudoStatus) ProtoMessage()               {}
+func (*SudoStatus) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{59} }
+
+func (m *SudoStatus) GetID() uint64 {
+	if m != nil {
+		return m.ID
+	}
+	return 0
+}
+
+func (m *SudoStatus) GetUserID() uint64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
+
+func (m *SudoStatus) GetGroupID() string {
+	if m != nil {
+		return m.GroupID
+	}
+	return ""
+}
+
+func (m *SudoStatus) GetExpiry() uint32 {
+	if m != nil {
+		return m.Expiry
+	}
+	return 0
 }
 
 func init() {
@@ -481,52 +1781,1423 @@ func init() {
 	proto.RegisterType((*RemoveFromGroupRequest)(nil), "auth.RemoveFromGroupRequest")
 	proto.RegisterType((*ListGroupRequest)(nil), "auth.ListGroupRequest")
 	proto.RegisterType((*UserListResponse)(nil), "auth.UserListResponse")
+	proto.RegisterType((*UpdatePasswordRequest)(nil), "auth.UpdatePasswordRequest")
+	proto.RegisterType((*ElevateAccessRequest)(nil), "auth.ElevateAccessRequest")
+	proto.RegisterType((*ForceUpdatePasswordRequest)(nil), "auth.ForceUpdatePasswordRequest")
+	proto.RegisterType((*EditAnyUserRequest)(nil), "auth.EditAnyUserRequest")
+	proto.RegisterType((*EditSelfRequest)(nil), "auth.EditSelfRequest")
+	proto.RegisterType((*CreateGroup)(nil), "auth.CreateGroup")
+	proto.RegisterType((*CreateGroupRequest)(nil), "auth.CreateGroupRequest")
+	proto.RegisterType((*CreateGroupResponse)(nil), "auth.CreateGroupResponse")
+	proto.RegisterType((*GetGroupRequest)(nil), "auth.GetGroupRequest")
+	proto.RegisterType((*GetGroupResponse)(nil), "auth.GetGroupResponse")
+	proto.RegisterType((*GroupDescriptionRequest)(nil), "auth.GroupDescriptionRequest")
+	proto.RegisterType((*CreateServiceRequest)(nil), "auth.CreateServiceRequest")
+	proto.RegisterType((*NewService)(nil), "auth.NewService")
+	proto.RegisterType((*ResetRequest)(nil), "auth.ResetRequest")
+	proto.RegisterType((*ExpireTokenRequest)(nil), "auth.ExpireTokenRequest")
+	proto.RegisterType((*VerifyEmailRequest)(nil), "auth.VerifyEmailRequest")
+	proto.RegisterType((*VerifyEmailResponse)(nil), "auth.VerifyEmailResponse")
+	proto.RegisterType((*GetTokenRequest)(nil), "auth.GetTokenRequest")
+	proto.RegisterType((*TokenResponse)(nil), "auth.TokenResponse")
+	proto.RegisterType((*UserList)(nil), "auth.UserList")
+	proto.RegisterType((*SessionToken)(nil), "auth.SessionToken")
+	proto.RegisterType((*ByAbbrevRequest)(nil), "auth.ByAbbrevRequest")
+	proto.RegisterType((*RemoteStoreRequest)(nil), "auth.RemoteStoreRequest")
+	proto.RegisterType((*RemoteUserRequest)(nil), "auth.RemoteUserRequest")
+	proto.RegisterType((*RemoteUser)(nil), "auth.RemoteUser")
+	proto.RegisterType((*RemoteUserDetail)(nil), "auth.RemoteUserDetail")
+	proto.RegisterType((*SudoRequest)(nil), "auth.SudoRequest")
+	proto.RegisterType((*TokenCompromisedRequest)(nil), "auth.TokenCompromisedRequest")
+	proto.RegisterType((*NewToken)(nil), "auth.NewToken")
+	proto.RegisterType((*VerifyRequest)(nil), "auth.VerifyRequest")
+	proto.RegisterType((*VerifyResponse)(nil), "auth.VerifyResponse")
+	proto.RegisterType((*ByIDRequest)(nil), "auth.ByIDRequest")
+	proto.RegisterType((*VerifyPasswordResponse)(nil), "auth.VerifyPasswordResponse")
+	proto.RegisterType((*CreateUserRequest)(nil), "auth.CreateUserRequest")
+	proto.RegisterType((*ByEmailRequest)(nil), "auth.ByEmailRequest")
+	proto.RegisterType((*UserEmailAddressList)(nil), "auth.UserEmailAddressList")
+	proto.RegisterType((*ListAllGroupsRequest)(nil), "auth.ListAllGroupsRequest")
+	proto.RegisterType((*NewPasswordResponse)(nil), "auth.NewPasswordResponse")
+	proto.RegisterType((*UserDef)(nil), "auth.UserDef")
+	proto.RegisterType((*AddTokenRequest)(nil), "auth.AddTokenRequest")
+	proto.RegisterType((*KeyResponse)(nil), "auth.KeyResponse")
+	proto.RegisterType((*AuthenticatePasswordRequest)(nil), "auth.AuthenticatePasswordRequest")
+	proto.RegisterType((*AuthenticateTokenRequest)(nil), "auth.AuthenticateTokenRequest")
+	proto.RegisterType((*UserDetail)(nil), "auth.UserDetail")
+	proto.RegisterType((*UserTokens)(nil), "auth.UserTokens")
+	proto.RegisterType((*GroupDB)(nil), "auth.GroupDB")
+	proto.RegisterType((*EmailVerifyPins)(nil), "auth.EmailVerifyPins")
+	proto.RegisterType((*SudoStatus)(nil), "auth.SudoStatus")
+	proto.RegisterEnum("auth.TokenType", TokenType_name, TokenType_value)
 }
 
-func init() { proto.RegisterFile("golang.conradwood.net/apis/auth/auth.proto", fileDescriptor1) }
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConn
 
-var fileDescriptor1 = []byte{
-	// 662 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xbc, 0x54, 0xd1, 0x4e, 0xdb, 0x3c,
-	0x14, 0x56, 0x20, 0x2d, 0xed, 0x69, 0xe1, 0xef, 0x6f, 0x31, 0x64, 0xa1, 0x89, 0x75, 0x19, 0x9a,
-	0x2a, 0x2e, 0xca, 0xd4, 0xed, 0x7a, 0x52, 0xa7, 0xc2, 0x94, 0xa9, 0x0c, 0x14, 0x18, 0xbb, 0x9d,
-	0x9b, 0x78, 0xc5, 0x22, 0xb5, 0x3b, 0x3b, 0x29, 0xaf, 0xb3, 0x07, 0xd8, 0x2b, 0xed, 0x5d, 0x26,
-	0x1f, 0xa7, 0x21, 0x05, 0xc6, 0x2e, 0x26, 0xed, 0x06, 0xf2, 0x7d, 0xe7, 0x3b, 0xc7, 0xdf, 0xf1,
-	0x39, 0x35, 0x1c, 0x4c, 0x55, 0xca, 0xe4, 0xb4, 0x1f, 0x2b, 0xa9, 0x59, 0x72, 0xa3, 0x54, 0xd2,
-	0x97, 0x3c, 0x3b, 0x64, 0x73, 0x61, 0x0e, 0x59, 0x9e, 0x5d, 0xe1, 0x9f, 0xfe, 0x5c, 0xab, 0x4c,
-	0x11, 0xdf, 0x7e, 0xef, 0xf6, 0x1f, 0xc9, 0x88, 0xd5, 0x6c, 0xa6, 0x64, 0xf1, 0xcf, 0x65, 0x05,
-	0xdf, 0x3d, 0x68, 0x0f, 0xf3, 0xec, 0x2a, 0xe2, 0x66, 0xae, 0xa4, 0xe1, 0x64, 0x1b, 0x6a, 0x97,
-	0x2c, 0x15, 0x09, 0xf5, 0xba, 0x5e, 0xaf, 0x11, 0x39, 0x40, 0xf6, 0x61, 0xf3, 0x2c, 0x9f, 0xa4,
-	0x22, 0x3e, 0xe1, 0xc6, 0xb0, 0x29, 0xa7, 0x6b, 0x5d, 0xaf, 0xd7, 0x8c, 0x56, 0x49, 0xb2, 0x07,
-	0x30, 0x56, 0xd3, 0xa5, 0x64, 0x1d, 0x25, 0x15, 0x86, 0xec, 0x81, 0xff, 0xc9, 0x70, 0x4d, 0xfd,
-	0xae, 0xd7, 0x6b, 0x0d, 0xa0, 0x8f, 0xee, 0x2d, 0x13, 0x21, 0x6f, 0xcf, 0xbe, 0x50, 0xd7, 0x5c,
-	0xd2, 0x1a, 0xa6, 0x3a, 0x10, 0xfc, 0xf0, 0x80, 0x9c, 0x8b, 0xa9, 0xe4, 0xc9, 0x3f, 0x33, 0xba,
-	0xbf, 0x62, 0xb4, 0xe3, 0x8c, 0x3a, 0x0f, 0x7f, 0xb4, 0xfb, 0x16, 0xe0, 0x56, 0x49, 0x48, 0x51,
-	0xc9, 0x9a, 0x6c, 0x17, 0x79, 0x4f, 0xa1, 0x69, 0x15, 0x2c, 0xcb, 0xb5, 0xf3, 0xd7, 0x8e, 0x6e,
-	0x89, 0xe0, 0xe7, 0xba, 0x4b, 0x21, 0x5b, 0xb0, 0x16, 0x8e, 0x30, 0xb1, 0x19, 0xad, 0x85, 0x23,
-	0x7b, 0xdc, 0xd1, 0x8c, 0x89, 0xb4, 0x68, 0xc9, 0x01, 0x5b, 0xec, 0x58, 0x68, 0x93, 0x7d, 0x64,
-	0xb3, 0x65, 0x27, 0xb7, 0x04, 0xd9, 0x85, 0xc6, 0x98, 0x15, 0x41, 0x1f, 0x83, 0x25, 0xb6, 0xb1,
-	0x33, 0x66, 0xcc, 0x8d, 0xd2, 0x49, 0xd1, 0x41, 0x89, 0xc9, 0x0b, 0xa8, 0xbf, 0xd7, 0x2a, 0x9f,
-	0x1b, 0x5a, 0xef, 0xae, 0xf7, 0x5a, 0x83, 0x96, 0xbb, 0x02, 0xe4, 0xa2, 0x22, 0x44, 0x76, 0xa0,
-	0x3e, 0x9c, 0x4c, 0x34, 0x5f, 0xd0, 0x0d, 0x4c, 0x2f, 0x10, 0xf2, 0x71, 0x26, 0x16, 0x9c, 0x36,
-	0x70, 0x34, 0x05, 0x22, 0x2f, 0x61, 0xeb, 0x9c, 0xeb, 0x85, 0x88, 0xf9, 0x30, 0x8e, 0x55, 0x2e,
-	0x33, 0xda, 0xc4, 0xf8, 0x1d, 0xd6, 0xce, 0x10, 0x7b, 0xbb, 0xe4, 0x5a, 0x7c, 0x15, 0x3c, 0xa1,
-	0x80, 0xb2, 0x55, 0x92, 0x1c, 0x40, 0xa7, 0xbc, 0xb4, 0x4b, 0xae, 0x8d, 0x50, 0x92, 0xb6, 0xba,
-	0x5e, 0x6f, 0x33, 0xba, 0xc7, 0xdb, 0x56, 0x8b, 0x0d, 0xca, 0x68, 0x1b, 0x35, 0x25, 0x26, 0x5d,
-	0x68, 0x95, 0xfa, 0x70, 0x44, 0x37, 0x71, 0x1e, 0x55, 0xca, 0xfa, 0x29, 0xe1, 0x71, 0x9e, 0xa6,
-	0x74, 0x0b, 0x35, 0xab, 0xa4, 0xed, 0xee, 0x54, 0x4f, 0x99, 0x14, 0x86, 0x65, 0x42, 0xc9, 0x70,
-	0x44, 0xff, 0xc3, 0x5b, 0xb9, 0xc3, 0x06, 0x9f, 0xe1, 0xc9, 0x58, 0xc8, 0x6b, 0xbc, 0xc3, 0x6a,
-	0xa8, 0x32, 0x6f, 0x7f, 0x39, 0xef, 0x53, 0x3d, 0x0d, 0x47, 0x38, 0x6f, 0x3f, 0x72, 0x80, 0x50,
-	0xd8, 0xc0, 0xd4, 0x70, 0x84, 0xd3, 0xf6, 0xa3, 0x25, 0x0c, 0x06, 0xd0, 0x7e, 0xb4, 0x1e, 0x01,
-	0x1f, 0xf7, 0xc0, 0xad, 0x0f, 0x7e, 0x07, 0x27, 0x50, 0xc3, 0xf4, 0x7b, 0xcb, 0xf6, 0x80, 0xd8,
-	0xde, 0xd4, 0x88, 0x9b, 0x58, 0x8b, 0xb9, 0xad, 0x5f, 0x2c, 0x5b, 0x95, 0x0a, 0x5e, 0x41, 0x13,
-	0xcb, 0x8d, 0x85, 0xc9, 0x2a, 0x3b, 0xe4, 0xfd, 0x76, 0x87, 0x82, 0x23, 0xf8, 0x7f, 0x98, 0x24,
-	0x17, 0xca, 0xb1, 0xfc, 0x5b, 0xce, 0x4d, 0x66, 0x17, 0xc8, 0xfe, 0x02, 0x4a, 0x43, 0x05, 0xaa,
-	0xf6, 0xee, 0x7c, 0x95, 0xbd, 0x7f, 0x80, 0x9d, 0x88, 0xcf, 0xd4, 0x82, 0x1f, 0x6b, 0x35, 0xfb,
-	0xcb, 0x5a, 0x5f, 0xa0, 0x63, 0xfd, 0xaf, 0x54, 0xa9, 0xa8, 0xbd, 0x15, 0x35, 0x19, 0xc0, 0x76,
-	0x28, 0xe3, 0x34, 0x4f, 0x78, 0x28, 0x19, 0xee, 0xb9, 0x3d, 0xc0, 0x60, 0xd1, 0x46, 0xf4, 0x60,
-	0x2c, 0x78, 0x03, 0x1d, 0xfb, 0x61, 0x4f, 0x29, 0x9f, 0xb3, 0x2e, 0xd4, 0x5c, 0xa2, 0xbb, 0xac,
-	0xea, 0xe3, 0xe8, 0x02, 0xef, 0x9e, 0xc3, 0x33, 0xc9, 0xb3, 0xea, 0xcb, 0x5e, 0xbc, 0xf5, 0xf6,
-	0x71, 0x47, 0xf9, 0xa4, 0x8e, 0x8f, 0xfa, 0xeb, 0x5f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x86, 0xaa,
-	0x00, 0x16, 0x38, 0x06, 0x00, 0x00,
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion4
+
+// Client API for AuthManagerService service
+
+type AuthManagerServiceClient interface {
+	// very dangerous. updates *any* user.
+	// calls to this method are limited to specific services
+	ForceUpdatePassword(ctx context.Context, in *ForceUpdatePasswordRequest, opts ...grpc.CallOption) (*common.Void, error)
+	// also limited to staff only
+	ListGroups(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*GroupList, error)
+	// get a user by ID - DEPRECATED
+	GetUserByID(ctx context.Context, in *ByIDRequest, opts ...grpc.CallOption) (*User, error)
+	// get a user by Email - DEPRECATED
+	GetUserByEmail(ctx context.Context, in *ByEmailRequest, opts ...grpc.CallOption) (*User, error)
+	// get a user by ID
+	SignedGetUserByID(ctx context.Context, in *ByIDRequest, opts ...grpc.CallOption) (*SignedUser, error)
+	// get a user by Email
+	SignedGetUserByEmail(ctx context.Context, in *ByEmailRequest, opts ...grpc.CallOption) (*SignedUser, error)
+	// create a serviceaccount
+	CreateService(ctx context.Context, in *CreateServiceRequest, opts ...grpc.CallOption) (*NewService, error)
+	// requires root user manager access - see code
+	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*User, error)
+	// requires root user manager access - see code. a "fake" user is used, for example, for the prober. it has an extremly short lifespan (<60 secs) and is severly limited in what it can do (e.g. cannot log in). Also it does not add/modify userids
+	CreateFakeUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*User, error)
+	// create an email to user to reset password
+	ResetPasswordEmail(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*common.Void, error)
+	// expire token
+	ExpireToken(ctx context.Context, in *ExpireTokenRequest, opts ...grpc.CallOption) (*common.Void, error)
+	// reset a users' password (the one whose context this is)
+	UpdateMyPassword(ctx context.Context, in *UpdatePasswordRequest, opts ...grpc.CallOption) (*common.Void, error)
+	// send an emailverification email
+	SendEmailVerify(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*common.Void, error)
+	// verify an email verification pin
+	VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*VerifyEmailResponse, error)
+	// get me another token
+	GetTokenForMe(ctx context.Context, in *GetTokenRequest, opts ...grpc.CallOption) (*TokenResponse, error)
+	// get *me* (my useraccount)
+	WhoAmI(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*User, error)
+	// if a token was compromised, replace it with a different one
+	TokenCompromised(ctx context.Context, in *TokenCompromisedRequest, opts ...grpc.CallOption) (*NewToken, error)
+	// temporarily become root. User objects for the current user will include group 'root' for a short while
+	Sudo(ctx context.Context, in *SudoRequest, opts ...grpc.CallOption) (*common.Void, error)
+	// get a group by id - if user has access to it
+	GetGroupByID(ctx context.Context, in *GetGroupRequest, opts ...grpc.CallOption) (*Group, error)
+	// if we have just linked some account (e.g. via Google Oauth) we need to store the information. Use this call to do so. (this is obviously privileged and for some services only)
+	StoreRemote(ctx context.Context, in *RemoteStoreRequest, opts ...grpc.CallOption) (*common.Void, error)
+	// if all we have is a oauth thing (which we stored with StoreOAuth) we can get a user with this
+	UserByRemoteToken(ctx context.Context, in *RemoteUserRequest, opts ...grpc.CallOption) (*RemoteUser, error)
+	// if we have a user but want its OAuthDetails we can get them with this
+	GetMyRemoteDetails(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*RemoteUser, error)
+	// expire all (non-permanent) tokens for Me
+	LogMeOut(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*User, error)
+	// logout some other user (privileged operation)
+	LogSomeoneOut(ctx context.Context, in *ByIDRequest, opts ...grpc.CallOption) (*User, error)
+	// get user by abbreviation
+	GetByAbbreviation(ctx context.Context, in *ByAbbrevRequest, opts ...grpc.CallOption) (*User, error)
+	// get all users, root only, very privileged call
+	GetAllUsers(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*UserList, error)
+	// create a 30-minute session token (which may or may not be linked to a user)
+	CreateSession(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*SessionToken, error)
+	// "keep-alive" for a session token
+	KeepAliveSession(ctx context.Context, in *SessionToken, opts ...grpc.CallOption) (*SessionToken, error)
+}
+
+type authManagerServiceClient struct {
+	cc *grpc.ClientConn
+}
+
+func NewAuthManagerServiceClient(cc *grpc.ClientConn) AuthManagerServiceClient {
+	return &authManagerServiceClient{cc}
+}
+
+func (c *authManagerServiceClient) ForceUpdatePassword(ctx context.Context, in *ForceUpdatePasswordRequest, opts ...grpc.CallOption) (*common.Void, error) {
+	out := new(common.Void)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/ForceUpdatePassword", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) ListGroups(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*GroupList, error) {
+	out := new(GroupList)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/ListGroups", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) GetUserByID(ctx context.Context, in *ByIDRequest, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/GetUserByID", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) GetUserByEmail(ctx context.Context, in *ByEmailRequest, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/GetUserByEmail", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) SignedGetUserByID(ctx context.Context, in *ByIDRequest, opts ...grpc.CallOption) (*SignedUser, error) {
+	out := new(SignedUser)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/SignedGetUserByID", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) SignedGetUserByEmail(ctx context.Context, in *ByEmailRequest, opts ...grpc.CallOption) (*SignedUser, error) {
+	out := new(SignedUser)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/SignedGetUserByEmail", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) CreateService(ctx context.Context, in *CreateServiceRequest, opts ...grpc.CallOption) (*NewService, error) {
+	out := new(NewService)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/CreateService", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/CreateUser", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) CreateFakeUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/CreateFakeUser", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) ResetPasswordEmail(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*common.Void, error) {
+	out := new(common.Void)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/ResetPasswordEmail", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) ExpireToken(ctx context.Context, in *ExpireTokenRequest, opts ...grpc.CallOption) (*common.Void, error) {
+	out := new(common.Void)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/ExpireToken", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) UpdateMyPassword(ctx context.Context, in *UpdatePasswordRequest, opts ...grpc.CallOption) (*common.Void, error) {
+	out := new(common.Void)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/UpdateMyPassword", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) SendEmailVerify(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*common.Void, error) {
+	out := new(common.Void)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/SendEmailVerify", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*VerifyEmailResponse, error) {
+	out := new(VerifyEmailResponse)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/VerifyEmail", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) GetTokenForMe(ctx context.Context, in *GetTokenRequest, opts ...grpc.CallOption) (*TokenResponse, error) {
+	out := new(TokenResponse)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/GetTokenForMe", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) WhoAmI(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/WhoAmI", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) TokenCompromised(ctx context.Context, in *TokenCompromisedRequest, opts ...grpc.CallOption) (*NewToken, error) {
+	out := new(NewToken)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/TokenCompromised", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) Sudo(ctx context.Context, in *SudoRequest, opts ...grpc.CallOption) (*common.Void, error) {
+	out := new(common.Void)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/Sudo", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) GetGroupByID(ctx context.Context, in *GetGroupRequest, opts ...grpc.CallOption) (*Group, error) {
+	out := new(Group)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/GetGroupByID", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) StoreRemote(ctx context.Context, in *RemoteStoreRequest, opts ...grpc.CallOption) (*common.Void, error) {
+	out := new(common.Void)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/StoreRemote", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) UserByRemoteToken(ctx context.Context, in *RemoteUserRequest, opts ...grpc.CallOption) (*RemoteUser, error) {
+	out := new(RemoteUser)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/UserByRemoteToken", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) GetMyRemoteDetails(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*RemoteUser, error) {
+	out := new(RemoteUser)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/GetMyRemoteDetails", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) LogMeOut(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/LogMeOut", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) LogSomeoneOut(ctx context.Context, in *ByIDRequest, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/LogSomeoneOut", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) GetByAbbreviation(ctx context.Context, in *ByAbbrevRequest, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/GetByAbbreviation", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) GetAllUsers(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*UserList, error) {
+	out := new(UserList)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/GetAllUsers", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) CreateSession(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*SessionToken, error) {
+	out := new(SessionToken)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/CreateSession", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authManagerServiceClient) KeepAliveSession(ctx context.Context, in *SessionToken, opts ...grpc.CallOption) (*SessionToken, error) {
+	out := new(SessionToken)
+	err := grpc.Invoke(ctx, "/auth.AuthManagerService/KeepAliveSession", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Server API for AuthManagerService service
+
+type AuthManagerServiceServer interface {
+	// very dangerous. updates *any* user.
+	// calls to this method are limited to specific services
+	ForceUpdatePassword(context.Context, *ForceUpdatePasswordRequest) (*common.Void, error)
+	// also limited to staff only
+	ListGroups(context.Context, *common.Void) (*GroupList, error)
+	// get a user by ID - DEPRECATED
+	GetUserByID(context.Context, *ByIDRequest) (*User, error)
+	// get a user by Email - DEPRECATED
+	GetUserByEmail(context.Context, *ByEmailRequest) (*User, error)
+	// get a user by ID
+	SignedGetUserByID(context.Context, *ByIDRequest) (*SignedUser, error)
+	// get a user by Email
+	SignedGetUserByEmail(context.Context, *ByEmailRequest) (*SignedUser, error)
+	// create a serviceaccount
+	CreateService(context.Context, *CreateServiceRequest) (*NewService, error)
+	// requires root user manager access - see code
+	CreateUser(context.Context, *CreateUserRequest) (*User, error)
+	// requires root user manager access - see code. a "fake" user is used, for example, for the prober. it has an extremly short lifespan (<60 secs) and is severly limited in what it can do (e.g. cannot log in). Also it does not add/modify userids
+	CreateFakeUser(context.Context, *CreateUserRequest) (*User, error)
+	// create an email to user to reset password
+	ResetPasswordEmail(context.Context, *ResetRequest) (*common.Void, error)
+	// expire token
+	ExpireToken(context.Context, *ExpireTokenRequest) (*common.Void, error)
+	// reset a users' password (the one whose context this is)
+	UpdateMyPassword(context.Context, *UpdatePasswordRequest) (*common.Void, error)
+	// send an emailverification email
+	SendEmailVerify(context.Context, *common.Void) (*common.Void, error)
+	// verify an email verification pin
+	VerifyEmail(context.Context, *VerifyEmailRequest) (*VerifyEmailResponse, error)
+	// get me another token
+	GetTokenForMe(context.Context, *GetTokenRequest) (*TokenResponse, error)
+	// get *me* (my useraccount)
+	WhoAmI(context.Context, *common.Void) (*User, error)
+	// if a token was compromised, replace it with a different one
+	TokenCompromised(context.Context, *TokenCompromisedRequest) (*NewToken, error)
+	// temporarily become root. User objects for the current user will include group 'root' for a short while
+	Sudo(context.Context, *SudoRequest) (*common.Void, error)
+	// get a group by id - if user has access to it
+	GetGroupByID(context.Context, *GetGroupRequest) (*Group, error)
+	// if we have just linked some account (e.g. via Google Oauth) we need to store the information. Use this call to do so. (this is obviously privileged and for some services only)
+	StoreRemote(context.Context, *RemoteStoreRequest) (*common.Void, error)
+	// if all we have is a oauth thing (which we stored with StoreOAuth) we can get a user with this
+	UserByRemoteToken(context.Context, *RemoteUserRequest) (*RemoteUser, error)
+	// if we have a user but want its OAuthDetails we can get them with this
+	GetMyRemoteDetails(context.Context, *common.Void) (*RemoteUser, error)
+	// expire all (non-permanent) tokens for Me
+	LogMeOut(context.Context, *common.Void) (*User, error)
+	// logout some other user (privileged operation)
+	LogSomeoneOut(context.Context, *ByIDRequest) (*User, error)
+	// get user by abbreviation
+	GetByAbbreviation(context.Context, *ByAbbrevRequest) (*User, error)
+	// get all users, root only, very privileged call
+	GetAllUsers(context.Context, *common.Void) (*UserList, error)
+	// create a 30-minute session token (which may or may not be linked to a user)
+	CreateSession(context.Context, *common.Void) (*SessionToken, error)
+	// "keep-alive" for a session token
+	KeepAliveSession(context.Context, *SessionToken) (*SessionToken, error)
+}
+
+func RegisterAuthManagerServiceServer(s *grpc.Server, srv AuthManagerServiceServer) {
+	s.RegisterService(&_AuthManagerService_serviceDesc, srv)
+}
+
+func _AuthManagerService_ForceUpdatePassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ForceUpdatePasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).ForceUpdatePassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/ForceUpdatePassword",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).ForceUpdatePassword(ctx, req.(*ForceUpdatePasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_ListGroups_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(common.Void)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).ListGroups(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/ListGroups",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).ListGroups(ctx, req.(*common.Void))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_GetUserByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ByIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).GetUserByID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/GetUserByID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).GetUserByID(ctx, req.(*ByIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_GetUserByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ByEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).GetUserByEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/GetUserByEmail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).GetUserByEmail(ctx, req.(*ByEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_SignedGetUserByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ByIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).SignedGetUserByID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/SignedGetUserByID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).SignedGetUserByID(ctx, req.(*ByIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_SignedGetUserByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ByEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).SignedGetUserByEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/SignedGetUserByEmail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).SignedGetUserByEmail(ctx, req.(*ByEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_CreateService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).CreateService(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/CreateService",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).CreateService(ctx, req.(*CreateServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).CreateUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/CreateUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).CreateUser(ctx, req.(*CreateUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_CreateFakeUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).CreateFakeUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/CreateFakeUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).CreateFakeUser(ctx, req.(*CreateUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_ResetPasswordEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).ResetPasswordEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/ResetPasswordEmail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).ResetPasswordEmail(ctx, req.(*ResetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_ExpireToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExpireTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).ExpireToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/ExpireToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).ExpireToken(ctx, req.(*ExpireTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_UpdateMyPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdatePasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).UpdateMyPassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/UpdateMyPassword",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).UpdateMyPassword(ctx, req.(*UpdatePasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_SendEmailVerify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(common.Void)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).SendEmailVerify(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/SendEmailVerify",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).SendEmailVerify(ctx, req.(*common.Void))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_VerifyEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).VerifyEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/VerifyEmail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).VerifyEmail(ctx, req.(*VerifyEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_GetTokenForMe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).GetTokenForMe(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/GetTokenForMe",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).GetTokenForMe(ctx, req.(*GetTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_WhoAmI_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(common.Void)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).WhoAmI(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/WhoAmI",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).WhoAmI(ctx, req.(*common.Void))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_TokenCompromised_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TokenCompromisedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).TokenCompromised(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/TokenCompromised",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).TokenCompromised(ctx, req.(*TokenCompromisedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_Sudo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SudoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).Sudo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/Sudo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).Sudo(ctx, req.(*SudoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_GetGroupByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).GetGroupByID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/GetGroupByID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).GetGroupByID(ctx, req.(*GetGroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_StoreRemote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoteStoreRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).StoreRemote(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/StoreRemote",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).StoreRemote(ctx, req.(*RemoteStoreRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_UserByRemoteToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoteUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).UserByRemoteToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/UserByRemoteToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).UserByRemoteToken(ctx, req.(*RemoteUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_GetMyRemoteDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(common.Void)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).GetMyRemoteDetails(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/GetMyRemoteDetails",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).GetMyRemoteDetails(ctx, req.(*common.Void))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_LogMeOut_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(common.Void)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).LogMeOut(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/LogMeOut",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).LogMeOut(ctx, req.(*common.Void))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_LogSomeoneOut_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ByIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).LogSomeoneOut(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/LogSomeoneOut",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).LogSomeoneOut(ctx, req.(*ByIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_GetByAbbreviation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ByAbbrevRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).GetByAbbreviation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/GetByAbbreviation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).GetByAbbreviation(ctx, req.(*ByAbbrevRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_GetAllUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(common.Void)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).GetAllUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/GetAllUsers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).GetAllUsers(ctx, req.(*common.Void))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_CreateSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(common.Void)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).CreateSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/CreateSession",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).CreateSession(ctx, req.(*common.Void))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthManagerService_KeepAliveSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SessionToken)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthManagerServiceServer).KeepAliveSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthManagerService/KeepAliveSession",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthManagerServiceServer).KeepAliveSession(ctx, req.(*SessionToken))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _AuthManagerService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "auth.AuthManagerService",
+	HandlerType: (*AuthManagerServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ForceUpdatePassword",
+			Handler:    _AuthManagerService_ForceUpdatePassword_Handler,
+		},
+		{
+			MethodName: "ListGroups",
+			Handler:    _AuthManagerService_ListGroups_Handler,
+		},
+		{
+			MethodName: "GetUserByID",
+			Handler:    _AuthManagerService_GetUserByID_Handler,
+		},
+		{
+			MethodName: "GetUserByEmail",
+			Handler:    _AuthManagerService_GetUserByEmail_Handler,
+		},
+		{
+			MethodName: "SignedGetUserByID",
+			Handler:    _AuthManagerService_SignedGetUserByID_Handler,
+		},
+		{
+			MethodName: "SignedGetUserByEmail",
+			Handler:    _AuthManagerService_SignedGetUserByEmail_Handler,
+		},
+		{
+			MethodName: "CreateService",
+			Handler:    _AuthManagerService_CreateService_Handler,
+		},
+		{
+			MethodName: "CreateUser",
+			Handler:    _AuthManagerService_CreateUser_Handler,
+		},
+		{
+			MethodName: "CreateFakeUser",
+			Handler:    _AuthManagerService_CreateFakeUser_Handler,
+		},
+		{
+			MethodName: "ResetPasswordEmail",
+			Handler:    _AuthManagerService_ResetPasswordEmail_Handler,
+		},
+		{
+			MethodName: "ExpireToken",
+			Handler:    _AuthManagerService_ExpireToken_Handler,
+		},
+		{
+			MethodName: "UpdateMyPassword",
+			Handler:    _AuthManagerService_UpdateMyPassword_Handler,
+		},
+		{
+			MethodName: "SendEmailVerify",
+			Handler:    _AuthManagerService_SendEmailVerify_Handler,
+		},
+		{
+			MethodName: "VerifyEmail",
+			Handler:    _AuthManagerService_VerifyEmail_Handler,
+		},
+		{
+			MethodName: "GetTokenForMe",
+			Handler:    _AuthManagerService_GetTokenForMe_Handler,
+		},
+		{
+			MethodName: "WhoAmI",
+			Handler:    _AuthManagerService_WhoAmI_Handler,
+		},
+		{
+			MethodName: "TokenCompromised",
+			Handler:    _AuthManagerService_TokenCompromised_Handler,
+		},
+		{
+			MethodName: "Sudo",
+			Handler:    _AuthManagerService_Sudo_Handler,
+		},
+		{
+			MethodName: "GetGroupByID",
+			Handler:    _AuthManagerService_GetGroupByID_Handler,
+		},
+		{
+			MethodName: "StoreRemote",
+			Handler:    _AuthManagerService_StoreRemote_Handler,
+		},
+		{
+			MethodName: "UserByRemoteToken",
+			Handler:    _AuthManagerService_UserByRemoteToken_Handler,
+		},
+		{
+			MethodName: "GetMyRemoteDetails",
+			Handler:    _AuthManagerService_GetMyRemoteDetails_Handler,
+		},
+		{
+			MethodName: "LogMeOut",
+			Handler:    _AuthManagerService_LogMeOut_Handler,
+		},
+		{
+			MethodName: "LogSomeoneOut",
+			Handler:    _AuthManagerService_LogSomeoneOut_Handler,
+		},
+		{
+			MethodName: "GetByAbbreviation",
+			Handler:    _AuthManagerService_GetByAbbreviation_Handler,
+		},
+		{
+			MethodName: "GetAllUsers",
+			Handler:    _AuthManagerService_GetAllUsers_Handler,
+		},
+		{
+			MethodName: "CreateSession",
+			Handler:    _AuthManagerService_CreateSession_Handler,
+		},
+		{
+			MethodName: "KeepAliveSession",
+			Handler:    _AuthManagerService_KeepAliveSession_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "golang.conradwood.net/apis/auth/auth.proto",
+}
+
+// Client API for AuthenticationService service
+
+type AuthenticationServiceClient interface {
+	// DEPRECATED authenticate a user by username/password, return token
+	GetByPassword(ctx context.Context, in *AuthenticatePasswordRequest, opts ...grpc.CallOption) (*AuthResponse, error)
+	// DEPRECATED authenticate a user by token, return same token
+	GetByToken(ctx context.Context, in *AuthenticateTokenRequest, opts ...grpc.CallOption) (*AuthResponse, error)
+	// authenticate a user by username/password, return token
+	SignedGetByPassword(ctx context.Context, in *AuthenticatePasswordRequest, opts ...grpc.CallOption) (*SignedAuthResponse, error)
+	// authenticate a user by token, return same token
+	SignedGetByToken(ctx context.Context, in *AuthenticateTokenRequest, opts ...grpc.CallOption) (*SignedAuthResponse, error)
+	// get the public signing key
+	GetPublicSigningKey(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*KeyResponse, error)
+}
+
+type authenticationServiceClient struct {
+	cc *grpc.ClientConn
+}
+
+func NewAuthenticationServiceClient(cc *grpc.ClientConn) AuthenticationServiceClient {
+	return &authenticationServiceClient{cc}
+}
+
+func (c *authenticationServiceClient) GetByPassword(ctx context.Context, in *AuthenticatePasswordRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
+	out := new(AuthResponse)
+	err := grpc.Invoke(ctx, "/auth.AuthenticationService/GetByPassword", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authenticationServiceClient) GetByToken(ctx context.Context, in *AuthenticateTokenRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
+	out := new(AuthResponse)
+	err := grpc.Invoke(ctx, "/auth.AuthenticationService/GetByToken", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authenticationServiceClient) SignedGetByPassword(ctx context.Context, in *AuthenticatePasswordRequest, opts ...grpc.CallOption) (*SignedAuthResponse, error) {
+	out := new(SignedAuthResponse)
+	err := grpc.Invoke(ctx, "/auth.AuthenticationService/SignedGetByPassword", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authenticationServiceClient) SignedGetByToken(ctx context.Context, in *AuthenticateTokenRequest, opts ...grpc.CallOption) (*SignedAuthResponse, error) {
+	out := new(SignedAuthResponse)
+	err := grpc.Invoke(ctx, "/auth.AuthenticationService/SignedGetByToken", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authenticationServiceClient) GetPublicSigningKey(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*KeyResponse, error) {
+	out := new(KeyResponse)
+	err := grpc.Invoke(ctx, "/auth.AuthenticationService/GetPublicSigningKey", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Server API for AuthenticationService service
+
+type AuthenticationServiceServer interface {
+	// DEPRECATED authenticate a user by username/password, return token
+	GetByPassword(context.Context, *AuthenticatePasswordRequest) (*AuthResponse, error)
+	// DEPRECATED authenticate a user by token, return same token
+	GetByToken(context.Context, *AuthenticateTokenRequest) (*AuthResponse, error)
+	// authenticate a user by username/password, return token
+	SignedGetByPassword(context.Context, *AuthenticatePasswordRequest) (*SignedAuthResponse, error)
+	// authenticate a user by token, return same token
+	SignedGetByToken(context.Context, *AuthenticateTokenRequest) (*SignedAuthResponse, error)
+	// get the public signing key
+	GetPublicSigningKey(context.Context, *common.Void) (*KeyResponse, error)
+}
+
+func RegisterAuthenticationServiceServer(s *grpc.Server, srv AuthenticationServiceServer) {
+	s.RegisterService(&_AuthenticationService_serviceDesc, srv)
+}
+
+func _AuthenticationService_GetByPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthenticatePasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticationServiceServer).GetByPassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthenticationService/GetByPassword",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticationServiceServer).GetByPassword(ctx, req.(*AuthenticatePasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthenticationService_GetByToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthenticateTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticationServiceServer).GetByToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthenticationService/GetByToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticationServiceServer).GetByToken(ctx, req.(*AuthenticateTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthenticationService_SignedGetByPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthenticatePasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticationServiceServer).SignedGetByPassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthenticationService/SignedGetByPassword",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticationServiceServer).SignedGetByPassword(ctx, req.(*AuthenticatePasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthenticationService_SignedGetByToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthenticateTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticationServiceServer).SignedGetByToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthenticationService/SignedGetByToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticationServiceServer).SignedGetByToken(ctx, req.(*AuthenticateTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthenticationService_GetPublicSigningKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(common.Void)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticationServiceServer).GetPublicSigningKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthenticationService/GetPublicSigningKey",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticationServiceServer).GetPublicSigningKey(ctx, req.(*common.Void))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _AuthenticationService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "auth.AuthenticationService",
+	HandlerType: (*AuthenticationServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetByPassword",
+			Handler:    _AuthenticationService_GetByPassword_Handler,
+		},
+		{
+			MethodName: "GetByToken",
+			Handler:    _AuthenticationService_GetByToken_Handler,
+		},
+		{
+			MethodName: "SignedGetByPassword",
+			Handler:    _AuthenticationService_SignedGetByPassword_Handler,
+		},
+		{
+			MethodName: "SignedGetByToken",
+			Handler:    _AuthenticationService_SignedGetByToken_Handler,
+		},
+		{
+			MethodName: "GetPublicSigningKey",
+			Handler:    _AuthenticationService_GetPublicSigningKey_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "golang.conradwood.net/apis/auth/auth.proto",
+}
+
+func init() { proto.RegisterFile("golang.conradwood.net/apis/auth/auth.proto", fileDescriptor0) }
+
+var fileDescriptor0 = []byte{
+	// 2186 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xbc, 0x19, 0x5d, 0x73, 0xdb, 0x58,
+	0x15, 0x39, 0x8a, 0xe3, 0x1c, 0x7f, 0xe6, 0xc6, 0x49, 0x55, 0x2f, 0x14, 0x47, 0x64, 0x43, 0xe8,
+	0xb2, 0x6e, 0xeb, 0x6d, 0x3b, 0x0b, 0x4c, 0x3b, 0xd8, 0xb5, 0x9d, 0x31, 0x4d, 0x9c, 0x8c, 0x9c,
+	0x66, 0xdf, 0x18, 0x54, 0xeb, 0xc6, 0xd5, 0xd4, 0x96, 0x8c, 0x24, 0x27, 0xe4, 0x91, 0x7d, 0x60,
+	0xf8, 0x19, 0xbc, 0x2f, 0x0f, 0x0c, 0x8f, 0xcc, 0xf0, 0xc6, 0xbf, 0xe2, 0x85, 0xb9, 0x1f, 0x92,
+	0xee, 0x95, 0xfc, 0x91, 0x2e, 0x0c, 0x2f, 0xad, 0xcf, 0xb9, 0xe7, 0x9c, 0x7b, 0xbe, 0xef, 0x39,
+	0x11, 0x3c, 0x1e, 0xbb, 0x13, 0xd3, 0x19, 0x37, 0x46, 0xae, 0xe3, 0x99, 0xd6, 0xad, 0xeb, 0x5a,
+	0x0d, 0x07, 0x07, 0x4f, 0xcc, 0x99, 0xed, 0x3f, 0x31, 0xe7, 0xc1, 0x07, 0xfa, 0x4f, 0x63, 0xe6,
+	0xb9, 0x81, 0x8b, 0x54, 0xf2, 0xbb, 0xd6, 0x58, 0xc1, 0x31, 0x72, 0xa7, 0x53, 0xd7, 0xe1, 0xff,
+	0x31, 0x2e, 0xfd, 0x2f, 0x0a, 0x14, 0x5a, 0xf3, 0xe0, 0x83, 0x81, 0xfd, 0x99, 0xeb, 0xf8, 0x18,
+	0x55, 0x61, 0xf3, 0xca, 0x9c, 0xd8, 0x96, 0xa6, 0xd4, 0x95, 0xe3, 0x9c, 0xc1, 0x00, 0x74, 0x08,
+	0xc5, 0x8b, 0xf9, 0xfb, 0x89, 0x3d, 0x3a, 0xc3, 0xbe, 0x6f, 0x8e, 0xb1, 0x96, 0xa9, 0x2b, 0xc7,
+	0xdb, 0x86, 0x8c, 0x44, 0x8f, 0x00, 0x4e, 0xdd, 0x71, 0x48, 0xb2, 0x41, 0x49, 0x04, 0x0c, 0x7a,
+	0x04, 0xea, 0x3b, 0x1f, 0x7b, 0x9a, 0x5a, 0x57, 0x8e, 0xf3, 0x4d, 0x68, 0x50, 0xed, 0x09, 0xc6,
+	0xa0, 0x78, 0x72, 0xf7, 0xa5, 0xfb, 0x11, 0x3b, 0xda, 0x26, 0x65, 0x65, 0x80, 0xfe, 0x57, 0x05,
+	0xd0, 0xd0, 0x1e, 0x3b, 0xd8, 0xfa, 0xbf, 0x29, 0x7a, 0x28, 0x29, 0x5a, 0x61, 0x8a, 0x32, 0x1d,
+	0xd6, 0xaa, 0xfb, 0x1a, 0x20, 0xa6, 0x44, 0x88, 0x4b, 0x22, 0x4a, 0x16, 0x38, 0xdf, 0x0f, 0x61,
+	0x9b, 0x50, 0x98, 0xc1, 0xdc, 0x63, 0xfa, 0x15, 0x8c, 0x18, 0xa1, 0x7f, 0xa7, 0x32, 0x16, 0x54,
+	0x82, 0x4c, 0xbf, 0x43, 0x19, 0xb7, 0x8d, 0x4c, 0xbf, 0x43, 0xae, 0xeb, 0x4e, 0x4d, 0x7b, 0xc2,
+	0x4d, 0x62, 0x00, 0x11, 0xd6, 0xb3, 0x3d, 0x3f, 0x18, 0x98, 0xd3, 0xd0, 0x92, 0x18, 0x81, 0x6a,
+	0x90, 0x3b, 0x35, 0xf9, 0xa1, 0x4a, 0x0f, 0x23, 0x18, 0x1d, 0x41, 0xee, 0xc2, 0xf4, 0xfd, 0x5b,
+	0xd7, 0xb3, 0x98, 0x05, 0x6d, 0xf8, 0xc7, 0xb7, 0x0f, 0xb3, 0x33, 0x82, 0xb3, 0x8c, 0xe8, 0x0c,
+	0xfd, 0x04, 0xb2, 0x27, 0x9e, 0x3b, 0x9f, 0xf9, 0x5a, 0xb6, 0xbe, 0x71, 0x9c, 0x6f, 0xe6, 0x99,
+	0x3b, 0x28, 0xce, 0xe0, 0x47, 0x68, 0x1f, 0xb2, 0xad, 0xf7, 0xef, 0x3d, 0x7c, 0xa3, 0x6d, 0xd1,
+	0x6b, 0x38, 0x44, 0xf1, 0xa3, 0xc0, 0xbe, 0xc1, 0x5a, 0x8e, 0x86, 0x89, 0x43, 0xe8, 0x08, 0x4a,
+	0x43, 0xec, 0xdd, 0xd8, 0x23, 0xdc, 0x1a, 0x8d, 0xdc, 0xb9, 0x13, 0x68, 0xdb, 0xf4, 0x3c, 0x81,
+	0x25, 0xf1, 0xa4, 0x76, 0x5e, 0x61, 0xcf, 0xbe, 0xb6, 0xb1, 0xa5, 0x01, 0x25, 0x93, 0x91, 0xe8,
+	0x39, 0x54, 0x22, 0x07, 0x5e, 0x61, 0xcf, 0xb7, 0x5d, 0x47, 0xcb, 0xd7, 0x95, 0xe3, 0x62, 0x3b,
+	0xf7, 0xf7, 0x6f, 0x1f, 0xaa, 0x81, 0x37, 0xc7, 0x46, 0x8a, 0x02, 0x1d, 0x42, 0x8e, 0xe7, 0x55,
+	0xa0, 0x15, 0x12, 0xd4, 0xd1, 0x09, 0x7a, 0x0c, 0xf9, 0x88, 0xb3, 0xdf, 0xd1, 0x8a, 0x24, 0x5e,
+	0x02, 0xa1, 0x78, 0x88, 0x1a, 0x50, 0x8c, 0xc0, 0xde, 0x7c, 0x32, 0xd1, 0x4a, 0x09, 0x6a, 0xf9,
+	0x98, 0x78, 0xe1, 0xdc, 0x1b, 0x9b, 0x8e, 0xed, 0x9b, 0x81, 0xed, 0x3a, 0xfd, 0x8e, 0x56, 0xa6,
+	0xde, 0x4b, 0x60, 0x91, 0x06, 0x5b, 0x6f, 0x3c, 0x6c, 0x06, 0xd8, 0xd2, 0x2a, 0x44, 0x51, 0x23,
+	0x04, 0xf5, 0x6f, 0x60, 0xef, 0xd4, 0x76, 0x3e, 0xd2, 0x28, 0x88, 0x4c, 0x42, 0xf6, 0xa8, 0x61,
+	0xf6, 0x9c, 0x7b, 0xe3, 0x7e, 0x87, 0x66, 0x8f, 0x6a, 0x30, 0x80, 0x08, 0xa6, 0xac, 0xfd, 0x0e,
+	0xcd, 0x1d, 0xd5, 0x08, 0x41, 0xbd, 0x09, 0x85, 0x95, 0xf2, 0x10, 0xa8, 0x34, 0xab, 0x58, 0x32,
+	0xd2, 0xdf, 0xfa, 0x19, 0x6c, 0x52, 0xf6, 0x54, 0xea, 0x2e, 0x20, 0x46, 0x75, 0xc8, 0x77, 0xb0,
+	0x3f, 0xf2, 0xec, 0x19, 0x91, 0xcf, 0x53, 0x57, 0x44, 0xe9, 0x4f, 0x61, 0x9b, 0x8a, 0x3b, 0xb5,
+	0xfd, 0x40, 0xc8, 0x42, 0x65, 0x69, 0x16, 0xea, 0x5d, 0xd8, 0x69, 0x59, 0xd6, 0xa5, 0xcb, 0xb0,
+	0xf8, 0xf7, 0x73, 0xec, 0x07, 0x24, 0x05, 0x49, 0x3d, 0x45, 0x0a, 0x71, 0x48, 0xb4, 0x9d, 0xe9,
+	0x15, 0xd9, 0xfe, 0x1b, 0xd8, 0x37, 0xf0, 0xd4, 0xbd, 0xc1, 0x3d, 0xcf, 0x9d, 0xfe, 0x97, 0xb2,
+	0x7e, 0x07, 0x15, 0xa2, 0xbf, 0x24, 0x45, 0xa0, 0x56, 0x24, 0x6a, 0xd4, 0x84, 0x6a, 0xdf, 0x19,
+	0x4d, 0xe6, 0x16, 0xee, 0x3b, 0x26, 0xad, 0x14, 0x72, 0x81, 0x4f, 0x85, 0xe6, 0x8c, 0x85, 0x67,
+	0xfa, 0x73, 0xa8, 0x90, 0x1f, 0xe4, 0x96, 0xa8, 0x39, 0xd6, 0x61, 0x93, 0x31, 0x32, 0x67, 0x89,
+	0xad, 0x96, 0x1d, 0xe8, 0xbf, 0x80, 0xbd, 0x77, 0x33, 0xcb, 0x0c, 0x70, 0x58, 0xe7, 0xa1, 0x72,
+	0x75, 0xc8, 0x0f, 0xf0, 0x6d, 0xd4, 0x19, 0x98, 0x82, 0x22, 0x4a, 0xbf, 0x82, 0x6a, 0x77, 0x82,
+	0x6f, 0xcc, 0x80, 0x54, 0x29, 0xf6, 0xfd, 0x90, 0xb3, 0x06, 0x39, 0x6e, 0x07, 0xbb, 0x77, 0xdb,
+	0x88, 0x60, 0xa4, 0x43, 0xa1, 0x33, 0xf7, 0x68, 0x2a, 0x0d, 0xf1, 0x88, 0x19, 0x54, 0x34, 0x24,
+	0x9c, 0x7e, 0x05, 0xb5, 0x9e, 0xeb, 0x8d, 0xf0, 0x62, 0xbd, 0x96, 0xb9, 0x3e, 0xa1, 0x6f, 0x26,
+	0xad, 0xef, 0x35, 0xa0, 0xae, 0x65, 0x07, 0x2d, 0xe7, 0x8e, 0x3a, 0x60, 0x8d, 0x3c, 0xa9, 0xa1,
+	0x66, 0x56, 0x35, 0xd4, 0x0d, 0xb9, 0xa1, 0xea, 0x6f, 0xa1, 0x4c, 0xee, 0x19, 0xe2, 0xc9, 0x75,
+	0x78, 0x89, 0x24, 0x4c, 0x59, 0x25, 0x2c, 0x93, 0x10, 0xf6, 0x06, 0xf2, 0xac, 0xc6, 0x59, 0x45,
+	0x85, 0x15, 0xa4, 0x2c, 0xaf, 0x20, 0x35, 0x5d, 0x41, 0x7d, 0x40, 0x82, 0x90, 0x50, 0xa9, 0xaf,
+	0x24, 0xd1, 0x54, 0x64, 0xbe, 0xb9, 0xc3, 0x52, 0x44, 0x24, 0x17, 0xa9, 0xf4, 0xaf, 0x61, 0x57,
+	0x12, 0xc5, 0x13, 0xed, 0x80, 0x97, 0x3c, 0x97, 0x22, 0x55, 0x25, 0x3b, 0xd1, 0x0f, 0xa0, 0x7c,
+	0x82, 0xe5, 0x02, 0x48, 0xf4, 0x07, 0xfd, 0x05, 0x54, 0x62, 0x92, 0xfb, 0x4b, 0x7e, 0x07, 0x0f,
+	0xe8, 0x0f, 0xc1, 0xe4, 0xf5, 0x25, 0x96, 0xf0, 0x5a, 0x26, 0xed, 0xb5, 0x01, 0x54, 0x99, 0xa9,
+	0xfc, 0x2d, 0x12, 0x2a, 0x83, 0x63, 0x84, 0x50, 0x88, 0xa8, 0x78, 0x22, 0xc8, 0x88, 0x13, 0x41,
+	0x1b, 0x60, 0x80, 0x6f, 0x39, 0x5d, 0x34, 0x04, 0x29, 0xeb, 0x86, 0x20, 0x49, 0xc6, 0x21, 0x14,
+	0x0c, 0xec, 0xe3, 0x20, 0xd4, 0x25, 0x1a, 0x06, 0x14, 0x61, 0x18, 0xd0, 0x1f, 0x03, 0xea, 0xfe,
+	0x61, 0x66, 0x7b, 0x98, 0x32, 0x09, 0xb4, 0x4c, 0xa2, 0x22, 0x4a, 0x3c, 0x02, 0x44, 0xdf, 0xcf,
+	0x3b, 0xca, 0x1a, 0xd2, 0x56, 0x60, 0xe3, 0xc2, 0x0e, 0x29, 0xc9, 0x4f, 0xfd, 0x19, 0xec, 0x4a,
+	0x74, 0x3c, 0x3c, 0x35, 0xc8, 0x45, 0x6f, 0x32, 0x9b, 0xc0, 0x22, 0x58, 0x7f, 0x41, 0x23, 0x2e,
+	0xe9, 0x90, 0xac, 0x7f, 0xf6, 0x90, 0xc8, 0xf5, 0xff, 0x0a, 0x8a, 0x9c, 0x87, 0xdf, 0xb1, 0x0f,
+	0x59, 0x6a, 0xce, 0x1d, 0x25, 0x2f, 0x1a, 0x1c, 0x5a, 0xe2, 0xa2, 0x26, 0xe4, 0xc2, 0x3e, 0x88,
+	0x8e, 0xe4, 0xfe, 0x97, 0x9e, 0xe0, 0x78, 0x17, 0x3c, 0x84, 0xc2, 0x10, 0xfb, 0x64, 0x1a, 0xa0,
+	0x32, 0x96, 0xb8, 0xea, 0x67, 0x50, 0x6e, 0xdf, 0xb1, 0x81, 0x46, 0xe8, 0x1e, 0x7c, 0xde, 0x51,
+	0xc4, 0x79, 0x47, 0xff, 0xb3, 0x02, 0x88, 0xbc, 0x1d, 0x01, 0x1e, 0x06, 0xae, 0x87, 0xd7, 0x35,
+	0x9b, 0x1a, 0xe4, 0xce, 0xe7, 0x9e, 0x68, 0x4c, 0x04, 0x13, 0x97, 0x31, 0x49, 0x9c, 0x93, 0xb5,
+	0x1b, 0x09, 0x47, 0xf8, 0x2f, 0x3c, 0xf7, 0xc6, 0xb6, 0xf8, 0xb0, 0xba, 0x6d, 0x44, 0xb0, 0xfe,
+	0x04, 0x76, 0x62, 0x5a, 0xa1, 0x47, 0x47, 0x17, 0x2a, 0xf2, 0x85, 0xfa, 0x6f, 0x01, 0x62, 0x86,
+	0xb5, 0x79, 0xfa, 0x14, 0xb6, 0x3a, 0x38, 0x30, 0xed, 0x09, 0x69, 0xe6, 0xc4, 0xc9, 0xfb, 0x8c,
+	0x24, 0x16, 0xc1, 0x8e, 0x8d, 0x90, 0x4c, 0xff, 0x9b, 0x02, 0x95, 0xe4, 0x69, 0x6a, 0xae, 0x88,
+	0x3d, 0x95, 0x49, 0x7a, 0x2a, 0xb2, 0x74, 0x43, 0xb6, 0x54, 0x32, 0x4a, 0x4d, 0x78, 0x51, 0x18,
+	0x9d, 0x36, 0xa5, 0xd1, 0x29, 0xe5, 0xdf, 0x6c, 0xda, 0xbf, 0xfa, 0x2b, 0xc8, 0x0f, 0xe7, 0x96,
+	0xbb, 0x2e, 0x8c, 0xfb, 0x90, 0x35, 0xb0, 0xe9, 0x47, 0xed, 0x84, 0x43, 0xfa, 0x13, 0x78, 0x40,
+	0xb5, 0x78, 0xe3, 0x4e, 0x67, 0x9e, 0x3b, 0xb5, 0x7d, 0x6c, 0xad, 0x2e, 0xca, 0x3a, 0xe4, 0x06,
+	0xf8, 0x76, 0x55, 0x2e, 0x7e, 0x0e, 0x45, 0x56, 0x8e, 0xab, 0x05, 0xf5, 0xa0, 0x14, 0x92, 0xad,
+	0xdc, 0x97, 0xc2, 0x28, 0x67, 0x16, 0x47, 0x59, 0xff, 0x1c, 0xf2, 0xed, 0xbb, 0x7e, 0x67, 0x8d,
+	0x03, 0xf4, 0x01, 0xec, 0xb3, 0xeb, 0xe2, 0x57, 0x9b, 0x5f, 0xfb, 0xfd, 0xda, 0xdd, 0x3f, 0x15,
+	0xd8, 0x61, 0x71, 0x12, 0x93, 0x77, 0x61, 0xd3, 0xfb, 0xfe, 0x0f, 0x36, 0xcd, 0xa9, 0x70, 0x6e,
+	0x08, 0xab, 0x27, 0xdc, 0x7a, 0xe2, 0x02, 0xdf, 0x94, 0x16, 0x9a, 0xd4, 0x42, 0x92, 0x5d, 0xb0,
+	0x90, 0xe8, 0x47, 0x50, 0x6a, 0xcb, 0x8d, 0x75, 0x71, 0xc3, 0x6e, 0x40, 0x95, 0x18, 0x48, 0x81,
+	0x96, 0x65, 0x79, 0xd8, 0xf7, 0x69, 0xff, 0x22, 0x9d, 0x6f, 0x4a, 0x6b, 0x8b, 0x0d, 0x52, 0x1c,
+	0xd2, 0xf7, 0xa1, 0x4a, 0xce, 0x5b, 0x93, 0x09, 0x9b, 0x78, 0xb9, 0x74, 0xd2, 0xa4, 0x85, 0x89,
+	0x47, 0x6c, 0xd2, 0x89, 0x41, 0x2e, 0x82, 0xf5, 0x03, 0xd8, 0x62, 0x65, 0x78, 0xbd, 0x34, 0xaa,
+	0x36, 0x94, 0xe9, 0x38, 0x2d, 0xf4, 0xf1, 0x65, 0x15, 0xb0, 0x30, 0x8c, 0xe8, 0x18, 0xca, 0xac,
+	0x65, 0x5f, 0xda, 0x53, 0xec, 0x07, 0xe6, 0x74, 0x46, 0x63, 0x50, 0x34, 0x92, 0x68, 0x52, 0x68,
+	0x6f, 0x71, 0x9c, 0xac, 0x15, 0xd8, 0x78, 0x8b, 0xef, 0xf8, 0xd6, 0x4c, 0x7e, 0x92, 0x28, 0xbf,
+	0x99, 0xb8, 0x73, 0x4b, 0x8c, 0x72, 0x84, 0xd0, 0xcf, 0xe1, 0xb3, 0xd6, 0x3c, 0xf8, 0x80, 0x9d,
+	0xc0, 0x1e, 0x2d, 0x98, 0x1d, 0x17, 0x27, 0x8e, 0xe8, 0x9d, 0x4c, 0xc2, 0x3b, 0x4f, 0x41, 0x13,
+	0x05, 0xde, 0xe3, 0x3d, 0xfd, 0x97, 0x02, 0xb0, 0xa2, 0xaf, 0xfd, 0xaf, 0xb7, 0xf7, 0x5a, 0x72,
+	0x7b, 0x17, 0x72, 0xb7, 0x0a, 0x9b, 0x2d, 0x6b, 0x6a, 0x3b, 0x3c, 0x37, 0x19, 0x90, 0xce, 0xdc,
+	0x2d, 0x1a, 0x8a, 0x44, 0xe6, 0x7e, 0xc7, 0xcd, 0xa0, 0x46, 0xf9, 0x6b, 0xda, 0xb3, 0x9a, 0x8e,
+	0xff, 0x86, 0x18, 0x7f, 0xa1, 0xf9, 0xaa, 0x72, 0xf3, 0x8d, 0x9f, 0xf6, 0x4d, 0xe9, 0x69, 0xff,
+	0x12, 0xb6, 0x29, 0xeb, 0xe5, 0xdd, 0x0c, 0x53, 0xf5, 0x4b, 0xcd, 0x32, 0xeb, 0x19, 0x11, 0xda,
+	0x88, 0x29, 0xf4, 0x73, 0x3e, 0xe6, 0x75, 0xda, 0xf7, 0x59, 0x50, 0xef, 0xb1, 0x73, 0xfe, 0x51,
+	0x81, 0x72, 0xec, 0x90, 0xbb, 0x0b, 0xfb, 0x13, 0x7c, 0xc0, 0x67, 0xa7, 0x8d, 0x68, 0x76, 0x4a,
+	0xda, 0xaf, 0xc6, 0xf6, 0xd7, 0x20, 0x47, 0x96, 0xa7, 0x59, 0xf8, 0x2e, 0xa9, 0x46, 0x04, 0xeb,
+	0xd7, 0x00, 0xe4, 0xd1, 0x19, 0x06, 0x66, 0x30, 0xbf, 0xff, 0xed, 0x89, 0x55, 0x5e, 0x98, 0x78,
+	0x63, 0x5f, 0xab, 0xa2, 0xaf, 0x1f, 0xbf, 0x14, 0x7c, 0x8d, 0x8a, 0xb0, 0xfd, 0x6e, 0xd0, 0xe9,
+	0xf6, 0xfa, 0x83, 0x6e, 0xa7, 0xf2, 0x03, 0x02, 0x5e, 0x74, 0x8d, 0xb3, 0xd6, 0xa0, 0x3b, 0xb8,
+	0xac, 0x28, 0x28, 0x0f, 0x5b, 0xc3, 0xee, 0x70, 0xd8, 0x3f, 0x1f, 0x54, 0x32, 0xcd, 0x3f, 0x15,
+	0x00, 0x91, 0xe2, 0x38, 0x33, 0x1d, 0x73, 0x8c, 0xbd, 0x70, 0xb0, 0xed, 0xc2, 0xee, 0x82, 0xf5,
+	0x0d, 0xd5, 0x59, 0xf8, 0x96, 0x6f, 0x76, 0xb5, 0x42, 0x83, 0xff, 0x49, 0xf2, 0xca, 0xb5, 0x2d,
+	0xf4, 0x05, 0x40, 0xb4, 0x30, 0xfb, 0x48, 0x3a, 0xab, 0x95, 0x85, 0x25, 0x80, 0xf6, 0xc9, 0x9f,
+	0x43, 0xfe, 0x04, 0x07, 0xc4, 0x03, 0xe4, 0x95, 0x42, 0x7c, 0x89, 0x11, 0x5e, 0xac, 0x9a, 0xf0,
+	0xe2, 0xa0, 0x26, 0x94, 0x22, 0x6a, 0x56, 0x7f, 0xd5, 0x90, 0x41, 0xec, 0xd5, 0x12, 0xcf, 0xd7,
+	0xb0, 0xc3, 0xc6, 0xc6, 0x35, 0xf7, 0xa4, 0x46, 0x4c, 0xf4, 0x1a, 0xaa, 0x09, 0xce, 0x55, 0x77,
+	0xa6, 0xf9, 0x5f, 0x41, 0x51, 0x5a, 0x43, 0x50, 0x4d, 0x5c, 0xd1, 0xe4, 0xdd, 0x24, 0x64, 0x17,
+	0xf6, 0x8c, 0x67, 0x00, 0xf1, 0x0b, 0x8a, 0x1e, 0x88, 0xbc, 0xc2, 0x9b, 0x2a, 0xd9, 0xfa, 0x02,
+	0x4a, 0x8c, 0xa0, 0x67, 0x7e, 0xfc, 0x04, 0xb6, 0x97, 0x64, 0xe4, 0xf5, 0x71, 0x10, 0xc6, 0x95,
+	0x99, 0x89, 0xc2, 0x71, 0x30, 0xde, 0x5a, 0x12, 0x91, 0x7e, 0x01, 0x79, 0x61, 0x5b, 0x41, 0x1a,
+	0x63, 0x48, 0x2f, 0x30, 0x09, 0xb6, 0x57, 0x50, 0x61, 0x79, 0x74, 0x16, 0x4d, 0x1b, 0xe8, 0x33,
+	0xae, 0xce, 0x3d, 0xf2, 0xeb, 0x4b, 0x28, 0x0f, 0xb1, 0x63, 0x09, 0x45, 0x9e, 0x48, 0x32, 0x99,
+	0xbc, 0x0d, 0x79, 0x61, 0xfd, 0x09, 0x95, 0x4c, 0x6f, 0x4e, 0xb5, 0x87, 0x0b, 0x4e, 0xf8, 0x6b,
+	0xf6, 0x2b, 0x28, 0x86, 0xfb, 0x50, 0xcf, 0xf5, 0xce, 0x30, 0xda, 0xe3, 0x79, 0x2c, 0x2f, 0x49,
+	0xb5, 0x5d, 0xa1, 0xd3, 0x45, 0xcc, 0x3a, 0x64, 0xbf, 0xf9, 0xe0, 0xb6, 0xa6, 0xfd, 0x84, 0x9a,
+	0x62, 0x04, 0x5a, 0x50, 0x49, 0xce, 0x99, 0xe8, 0x47, 0x82, 0xb0, 0xf4, 0xfc, 0x59, 0x2b, 0x45,
+	0x09, 0xc3, 0xbc, 0xff, 0x53, 0x50, 0x49, 0xd3, 0x09, 0x53, 0x5b, 0x98, 0x7a, 0x13, 0x0e, 0x69,
+	0x42, 0x21, 0xdc, 0xd5, 0x69, 0x2d, 0xc4, 0xb6, 0x88, 0x2b, 0x7e, 0x4d, 0xdc, 0xd7, 0x49, 0xa4,
+	0xf9, 0x3a, 0x44, 0x66, 0xeb, 0xd0, 0x89, 0xe9, 0x3d, 0x29, 0x71, 0xd5, 0x6b, 0xd8, 0x61, 0x85,
+	0xc3, 0x28, 0x99, 0xa2, 0x0f, 0x92, 0x6b, 0x46, 0xa2, 0x04, 0x84, 0x15, 0xe6, 0x39, 0xa0, 0x13,
+	0x1c, 0x9c, 0x71, 0x76, 0xbe, 0x86, 0x24, 0xdc, 0x98, 0xe6, 0x3a, 0x84, 0x1c, 0xfd, 0x14, 0x70,
+	0x3e, 0x0f, 0x56, 0xb8, 0xbc, 0x01, 0xc5, 0x53, 0x77, 0x3c, 0x74, 0xa7, 0xd8, 0x75, 0x28, 0xe9,
+	0x9a, 0xde, 0xf3, 0x12, 0x76, 0x4e, 0x70, 0x10, 0xae, 0x91, 0x36, 0xfb, 0xa3, 0xea, 0x5e, 0xc8,
+	0x23, 0x2d, 0x97, 0x12, 0xdf, 0x17, 0xb4, 0xc3, 0xb5, 0x26, 0x13, 0xba, 0xb0, 0x26, 0x14, 0x2a,
+	0xc5, 0x84, 0xb4, 0x1d, 0x3e, 0x8b, 0x5b, 0x06, 0x5d, 0x6a, 0x13, 0xe4, 0xbc, 0x24, 0xa5, 0x8d,
+	0xf7, 0x97, 0x50, 0x79, 0x8b, 0xf1, 0xac, 0x35, 0xb1, 0x6f, 0x22, 0xae, 0x05, 0x74, 0x8b, 0x78,
+	0x9b, 0xff, 0xce, 0xc0, 0x9e, 0x30, 0x25, 0xd1, 0x3d, 0x9e, 0x35, 0x9f, 0x1e, 0xcd, 0xf8, 0x76,
+	0x5c, 0xa0, 0x07, 0x8c, 0x7d, 0xc5, 0x90, 0x16, 0xde, 0x20, 0x7d, 0xe4, 0xf9, 0x35, 0x00, 0x95,
+	0xc3, 0x74, 0x7d, 0x94, 0x16, 0x22, 0xd5, 0xcf, 0x22, 0x09, 0x06, 0xec, 0x46, 0x5d, 0xf8, 0xd3,
+	0xf4, 0xd1, 0xc4, 0x8e, 0x2c, 0xc9, 0x3c, 0x65, 0x9f, 0x1b, 0xb8, 0xcc, 0xfb, 0xe9, 0xb6, 0x5c,
+	0xda, 0x4b, 0xd8, 0x3d, 0xc1, 0x01, 0xfb, 0x40, 0x45, 0x8e, 0x6d, 0x67, 0x4c, 0x06, 0x5e, 0x39,
+	0x74, 0x3c, 0xbb, 0x84, 0x19, 0xb9, 0x7d, 0x00, 0x3f, 0x76, 0x70, 0x20, 0x7e, 0xe9, 0xe3, 0xdf,
+	0xfe, 0xcc, 0x99, 0xed, 0x53, 0xf2, 0xf7, 0x59, 0xfa, 0x91, 0xef, 0xab, 0xff, 0x04, 0x00, 0x00,
+	0xff, 0xff, 0x83, 0x3c, 0x71, 0x4b, 0x48, 0x1c, 0x00, 0x00,
 }
