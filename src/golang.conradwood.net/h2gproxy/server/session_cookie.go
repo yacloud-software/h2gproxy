@@ -18,9 +18,14 @@ func (f *FProxy) add_session_cookie(response *h2gproxy.ServeResponse, serr error
 	if serr != nil {
 		return response, serr
 	}
+	am := authremote.GetAuthManagerClient()
+	if am == nil {
+		fmt.Printf("could not get authmanager\n")
+		return response, serr
+	}
 	c, err := f.req.Cookie(SESSION_COOKIE_NAME)
 	if err == http.ErrNoCookie {
-		tk, err := authremote.GetAuthManagerClient().CreateSession(f.ctx, &common.Void{})
+		tk, err := am.CreateSession(f.ctx, &common.Void{})
 		if err != nil {
 			fmt.Printf("Could not get session: %s\n", utils.ErrorString(err))
 			return response, serr
@@ -36,7 +41,7 @@ func (f *FProxy) add_session_cookie(response *h2gproxy.ServeResponse, serr error
 		return response, serr
 	}
 	// we got a cookie
-	_, err = authremote.GetAuthManagerClient().KeepAliveSession(f.ctx, &au.SessionToken{Token: c.Value})
+	_, err = am.KeepAliveSession(f.ctx, &au.SessionToken{Token: c.Value})
 	if err != nil {
 		fmt.Printf("Failed to keep session alive: %s\n", utils.ErrorString(err))
 	}
