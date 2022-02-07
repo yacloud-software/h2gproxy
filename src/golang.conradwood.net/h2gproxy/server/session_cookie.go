@@ -40,6 +40,10 @@ func (f *FProxy) add_session_cookie(response *h2gproxy.ServeResponse, serr error
 		fmt.Printf("failed to get session cookie: %s\n", utils.ErrorString(err))
 		return response, serr
 	}
+	if c == nil {
+		fmt.Printf("no cookie!\n")
+		return response, serr
+	}
 	// we got a cookie
 	_, err = am.KeepAliveSession(f.ctx, &au.SessionToken{Token: c.Value})
 	if err != nil {
