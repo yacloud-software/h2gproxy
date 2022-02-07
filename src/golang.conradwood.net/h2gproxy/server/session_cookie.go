@@ -8,6 +8,7 @@ import (
 	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/utils"
 	"net/http"
+	"time"
 )
 
 const (
@@ -31,8 +32,9 @@ func (f *FProxy) add_session_cookie(response *h2gproxy.ServeResponse, serr error
 			return response, serr
 		}
 		f.AddCookie(&h2gproxy.Cookie{
-			Name:  SESSION_COOKIE_NAME,
-			Value: tk.Token,
+			Name:   SESSION_COOKIE_NAME,
+			Value:  tk.Token,
+			Expiry: uint32(time.Now().Add(time.Duration(30) * time.Minute).Unix()),
 		})
 
 	} else if err != nil {

@@ -79,7 +79,7 @@ func (f *FProxy) WebLogin() bool {
 		if *override_cookie {
 			c.Expires = time.Now().Add(time.Duration(2) * time.Second)
 		}
-		f.SetCookie(c)
+		f.setCookie(c)
 
 	}
 

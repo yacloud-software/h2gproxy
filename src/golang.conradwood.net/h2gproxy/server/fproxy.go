@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -25,6 +26,7 @@ var (
 )
 
 type FProxy struct {
+	fproxy_lock              sync.Mutex
 	response_released        bool
 	response_headers_written bool
 	response_headers         map[string]string
@@ -62,6 +64,7 @@ type FProxy struct {
 	err                  error
 	antidos_notified     bool
 	port                 int // the port the request came in on
+	added_cookies        map[string]*h2gproxy.Cookie
 }
 
 func (f *FProxy) SetUser(a *apb.SignedUser) {
@@ -238,6 +241,23 @@ func (f *FProxy) write_headers() {
 	for k, v := range f.response_headers {
 		f.writer.Header().Set(k, v)
 	}
+
+	// write headers...
+	if f.added_cookies != nil {
+		for _, cookie := range f.added_cookies {
+			e := time.Unix(int64(cookie.Expiry), 0)
+			hc := &http.Cookie{Name: cookie.Name,
+				Value:    cookie.Value,
+				Path:     "/",
+				Expires:  e,
+				SameSite: http.SameSiteNoneMode,
+				Secure:   true,
+				Domain:   f.CookieDomain(),
+			}
+			http.SetCookie(f.writer, hc)
+		}
+	}
+
 	f.writer.WriteHeader(f.statusCode)
 	f.response_headers_written = true
 }
@@ -309,20 +329,20 @@ func (f *FProxy) SetCookies(cookies []*h2gproxy.Cookie) {
 		f.AddCookie(c)
 	}
 }
-func (f *FProxy) AddCookie(cookie *h2gproxy.Cookie) {
-	e := time.Unix(int64(cookie.Expiry), 0)
-	hc := &http.Cookie{Name: cookie.Name,
-		Value: cookie.Value,
-		Path:  "/", Expires: e,
-		SameSite: http.SameSiteNoneMode,
-		Secure:   true,
-		Domain:   f.CookieDomain(),
-	}
 
-	f.SetCookie(hc)
+func (f *FProxy) AddCookie(cookie *h2gproxy.Cookie) {
+	f.fproxy_lock.Lock()
+	if f.added_cookies == nil {
+		f.added_cookies = make(map[string]*h2gproxy.Cookie)
+	}
+	f.fproxy_lock.Unlock()
+	f.added_cookies[cookie.Name] = cookie
+
+	//	f.setCookie(hc)
 }
 
-func (f *FProxy) SetCookie(cookie *http.Cookie) {
+// the authcookie is a bit special
+func (f *FProxy) setCookie(cookie *http.Cookie) {
 	http.SetCookie(f.writer, cookie)
 }
 func (f *FProxy) Close() {

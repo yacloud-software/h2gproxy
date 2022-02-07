@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 	fw "golang.conradwood.net/apis/framework"
-	jm "golang.conradwood.net/apis/h2gproxy"
+	h2g "golang.conradwood.net/apis/h2gproxy"
 	ic "golang.conradwood.net/apis/rpcinterceptor"
 	"golang.conradwood.net/go-easyops/auth"
 	"golang.conradwood.net/go-easyops/client"
@@ -16,7 +16,6 @@ import (
 	"google.golang.org/grpc/codes"
 	_ "google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"net/http"
 	"strings"
 	"time"
 )
@@ -34,7 +33,7 @@ type GRPCProxy struct {
 }
 
 type ProxyConfig interface {
-	Serve(ctx context.Context, in *jm.ServeRequest) (*jm.ServeResponse, error)
+	Serve(ctx context.Context, in *h2g.ServeRequest) (*h2g.ServeResponse, error)
 }
 
 func NewGrpcProxy(f *FProxy, p ProxyConfig) *GRPCProxy {
@@ -210,7 +209,7 @@ func (g *GRPCProxy) grpcproxy(rp *ic.InterceptRPCResponse, a *authResult) (conte
 	body := g.f.RequestBody()
 
 	// build up the grpc proto
-	sv := &jm.ServeRequest{Body: string(body)}
+	sv := &h2g.ServeRequest{Body: string(body)}
 	sv.Host = strings.ToLower(g.f.req.Host)
 	sv.Path = g.f.req.URL.Path
 	sv.Method = g.f.req.Method
@@ -220,7 +219,7 @@ func (g *GRPCProxy) grpcproxy(rp *ic.InterceptRPCResponse, a *authResult) (conte
 		if strings.ToLower(name) == "user-agent" && len(values) > 0 {
 			sv.UserAgent = values[0]
 		}
-		h := &jm.Header{Name: name}
+		h := &h2g.Header{Name: name}
 		sv.Headers = append(sv.Headers, h)
 		h.Values = values
 	}
@@ -230,7 +229,7 @@ func (g *GRPCProxy) grpcproxy(rp *ic.InterceptRPCResponse, a *authResult) (conte
 	}
 	// careful here - we do *not* accept multiple values for a given field.
 	for name, value := range g.f.RequestValues() {
-		p := &jm.Parameter{Name: name, Value: value}
+		p := &h2g.Parameter{Name: name, Value: value}
 		sv.Parameters = append(sv.Parameters, p)
 	}
 	/***************************************************************
@@ -307,9 +306,9 @@ func (g *GRPCProxy) grpcproxy(rp *ic.InterceptRPCResponse, a *authResult) (conte
 	}
 	// set cookies if we are asked to do so
 	for _, c := range resp.Cookies {
-		cookie := &http.Cookie{Name: c.Name, Value: c.Value, Path: "/", Expires: time.Unix(int64(c.Expiry), 0)}
-		g.f.SetCookie(cookie)
-		fmt.Printf("Setting cookie %s, as instructed from backend\n", cookie.Name)
+		//cookie := &h2g.Cookie{Name: c.Name, Value: c.Value, Expiry: time.Unix(int64(c.Expiry))}
+		g.f.AddCookie(c)
+		fmt.Printf("Setting cookie %s, as instructed from backend\n", c.Name)
 
 	}
 	g.f.SetHeader("content-type", fmt.Sprintf("%s; charset=utf-8", mtype))
