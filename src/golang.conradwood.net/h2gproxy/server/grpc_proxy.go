@@ -210,7 +210,6 @@ func (g *GRPCProxy) grpcproxy(rp *ic.InterceptRPCResponse, a *authResult) (conte
 
 	// build up the grpc proto
 	sv := &h2g.ServeRequest{Body: string(body)}
-	sv.SessionToken, _ = g.f.GetSessionToken()
 	sv.Host = strings.ToLower(g.f.req.Host)
 	sv.Path = g.f.req.URL.Path
 	sv.Method = g.f.req.Method
@@ -270,6 +269,7 @@ func (g *GRPCProxy) grpcproxy(rp *ic.InterceptRPCResponse, a *authResult) (conte
 	/***************************************************************
 	// make the RPC Call
 	***************************************************************/
+	sv.SessionToken, _ = g.f.GetSessionToken()
 	resp, err := g.p.Serve(ctx, sv)
 	g.f.add_session_cookie(resp, err)
 	if err != nil {

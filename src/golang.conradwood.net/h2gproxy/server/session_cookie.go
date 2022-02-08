@@ -41,7 +41,11 @@ func (f *FProxy) GetSessionToken() (string, error) {
 	if c != nil && f.isSessionValid(c.Value) {
 		return c.Value, nil
 	}
-
+	ctx := f.ctx
+	if ctx == nil {
+		fmt.Printf("No context to create session\n")
+		return "", fmt.Errorf("No context to create session")
+	}
 	tk, err := am.CreateSession(f.ctx, &common.Void{})
 	if err != nil {
 		fmt.Printf("Could not get session: %s\n", utils.ErrorString(err))
