@@ -15,6 +15,13 @@ const (
 	SESSION_COOKIE_NAME = "Yei0neez1ohyohnith6iger6Oogexoox"
 )
 
+func (f *FProxy) isSessionValid(session string) bool {
+	if session == "" {
+		return false
+	}
+	return true
+}
+
 // get or create a session token
 // called (or should be called) before calling a backend
 func (f *FProxy) GetSessionToken() (string, error) {
@@ -31,7 +38,7 @@ func (f *FProxy) GetSessionToken() (string, error) {
 		return "", err
 	}
 
-	if c != nil {
+	if c != nil && f.isSessionValid(c.Value) {
 		return c.Value, nil
 	}
 
