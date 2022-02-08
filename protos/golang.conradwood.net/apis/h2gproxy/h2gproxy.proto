@@ -90,6 +90,7 @@ message ServeRequest {
   string Host = 6;      // requested host, e.g. www.singingcat.net
   string UserAgent = 7; // useragent for logging
   string SourceIP = 8;  // source ip where request comes from (for logging)
+  string SessionToken=9; // a session id, should that be context?
 }
 message Cookie {
   string Name = 1;
