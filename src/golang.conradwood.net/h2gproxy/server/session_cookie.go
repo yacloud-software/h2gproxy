@@ -15,6 +15,9 @@ const (
 	SESSION_COOKIE_NAME = "Yei0neez1ohyohnith6iger6Oogexoox"
 )
 
+func (f *FProxy) GetSessionToken() (string, error) {
+	return "FAKED by H2GPROXY", nil
+}
 func (f *FProxy) add_session_cookie(response *h2gproxy.ServeResponse, serr error) (*h2gproxy.ServeResponse, error) {
 	if serr != nil {
 		return response, serr
