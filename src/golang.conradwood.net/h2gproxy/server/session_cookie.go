@@ -16,7 +16,11 @@ const (
 )
 
 // get or create a session token
+// called (or should be called) before calling a backend
 func (f *FProxy) GetSessionToken() (string, error) {
+	if f.session_cookie != "" {
+		return f.session_cookie, nil
+	}
 	am := authremote.GetAuthManagerClient()
 	if am == nil {
 		fmt.Printf("could not get authmanager\n")
@@ -42,9 +46,12 @@ func (f *FProxy) GetSessionToken() (string, error) {
 		Expiry: uint32(time.Now().Add(time.Duration(30) * time.Minute).Unix()),
 	}
 	f.AddCookie(hc)
-
+	f.session_cookie = hc.Value
 	return hc.Value, nil
 }
+
+// must be called after backend and before sending response to webbrowser
+// (sets a cookie if required)
 func (f *FProxy) add_session_cookie(response *h2gproxy.ServeResponse, serr error) (*h2gproxy.ServeResponse, error) {
 	if serr != nil {
 		return response, serr
