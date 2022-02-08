@@ -15,8 +15,35 @@ const (
 	SESSION_COOKIE_NAME = "Yei0neez1ohyohnith6iger6Oogexoox"
 )
 
+// get or create a session token
 func (f *FProxy) GetSessionToken() (string, error) {
-	return "FAKED by H2GPROXY", nil
+	am := authremote.GetAuthManagerClient()
+	if am == nil {
+		fmt.Printf("could not get authmanager\n")
+		return "", fmt.Errorf("no authmanager")
+	}
+	c, err := f.req.Cookie(SESSION_COOKIE_NAME)
+	if err != nil && err != http.ErrNoCookie {
+		return "", err
+	}
+
+	if c != nil {
+		return c.Value, nil
+	}
+
+	tk, err := am.CreateSession(f.ctx, &common.Void{})
+	if err != nil {
+		fmt.Printf("Could not get session: %s\n", utils.ErrorString(err))
+		return "", err
+	}
+	hc := &h2gproxy.Cookie{
+		Name:   SESSION_COOKIE_NAME,
+		Value:  tk.Token,
+		Expiry: uint32(time.Now().Add(time.Duration(30) * time.Minute).Unix()),
+	}
+	f.AddCookie(hc)
+
+	return hc.Value, nil
 }
 func (f *FProxy) add_session_cookie(response *h2gproxy.ServeResponse, serr error) (*h2gproxy.ServeResponse, error) {
 	if serr != nil {
