@@ -378,6 +378,11 @@ func (f *FProxy) execute() {
 		return
 	}
 
+	_, serr := f.GetSessionToken()
+	if serr != nil {
+		fmt.Printf("Session token cannot be retrieved: %s\n", utils.ErrorString(serr))
+	}
+
 	if f.hf.IsJsonAPI() {
 		WebProxy(f)
 		//JSONProxy(f)
