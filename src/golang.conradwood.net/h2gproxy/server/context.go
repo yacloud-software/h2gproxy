@@ -48,6 +48,7 @@ func createContextWith(octx context.Context, f *FProxy, a *authResult, rp *ic.In
 	if f.unsigneduser != nil {
 		ix.UserID = f.unsigneduser.ID
 	}
+	ix.SignedSession = f.session
 	ix.ServiceToken = tokens.GetServiceTokenParameter()
 	if *debugctx {
 		fmt.Printf("New IX Metadata: %#v\n", ix)
