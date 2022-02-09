@@ -252,6 +252,12 @@ func (g *GRPCProxy) grpcproxy(rp *ic.InterceptRPCResponse, a *authResult) (conte
 		}
 	*/
 	g.f.ctx = ctx
+
+	_, err = g.f.GetSessionToken()
+	if err != nil {
+		fmt.Printf("Session token cannot be retrieved: %s\n", utils.ErrorString(err))
+	}
+
 	if *print_rpc || *printHeaders {
 		for _, h := range sv.Headers {
 			fmt.Printf("[grpcproxy] request headers: %s=%s\n", h.Name, strings.Join(h.Values, ","))
