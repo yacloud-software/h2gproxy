@@ -28,7 +28,7 @@ func (f *FProxy) isSessionValid(ctx context.Context, session string) bool {
 	if ctx == nil {
 		return false
 	}
-	sign_sess, err := am.KeepAliveSession(ctx, &au.SessionToken{Token: session})
+	sign_sess, err := am.KeepAliveSession(ctx, &au.KeepAliveSessionRequest{Token: session, User: f.signeduser})
 	f.session = sign_sess
 	if err != nil {
 		fmt.Printf("session not valid: %s\n", err)
@@ -131,7 +131,7 @@ func (f *FProxy) add_session_cookie(response *h2gproxy.ServeResponse, serr error
 		return response, serr
 	}
 	// we got a cookie (to be fair, this would be better executer at the BEGINNING of the request)
-	sign_sess, err := am.KeepAliveSession(ctx, &au.SessionToken{Token: c.Value})
+	sign_sess, err := am.KeepAliveSession(ctx, &au.KeepAliveSessionRequest{Token: c.Value, User: f.signeduser})
 	if err != nil {
 		fmt.Printf("Failed to keep session alive: %s\n", utils.ErrorString(err))
 	}
