@@ -377,6 +377,10 @@ func (f *FProxy) execute() {
 		option_handler(f)
 		return
 	}
+	_, err := f.GetSessionToken()
+	if err != nil {
+		fmt.Printf("Session token cannot be retrieved: %s\n", utils.ErrorString(err))
+	}
 
 	if f.hf.IsJsonAPI() {
 		WebProxy(f)
@@ -433,7 +437,7 @@ func (f *FProxy) execute() {
 		}
 	}
 
-	err := f.reverse_proxy_lookup(f.hf)
+	err = f.reverse_proxy_lookup(f.hf)
 	if err != nil {
 		f.SetError(err)
 		return
