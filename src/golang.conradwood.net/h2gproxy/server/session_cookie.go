@@ -46,14 +46,19 @@ func (f *FProxy) GetSessionToken() (string, error) {
 		fmt.Printf("No context to create session\n")
 		return "", fmt.Errorf("No context to create session")
 	}
-	tk, err := am.CreateSession(f.ctx, &common.Void{})
+	sign_sess, err := am.CreateSession(f.ctx, &common.Void{})
 	if err != nil {
 		fmt.Printf("Could not get session: %s\n", utils.ErrorString(err))
 		return "", err
 	}
+	sess := &au.Session{}
+	err = utils.UnmarshalBytes(sign_sess.Session, sess)
+	if err != nil {
+		return "", err
+	}
 	hc := &h2gproxy.Cookie{
 		Name:   SESSION_COOKIE_NAME,
-		Value:  tk.Token,
+		Value:  sess.Token,
 		Expiry: uint32(time.Now().Add(time.Duration(30) * time.Minute).Unix()),
 	}
 	f.AddCookie(hc)
@@ -74,14 +79,21 @@ func (f *FProxy) add_session_cookie(response *h2gproxy.ServeResponse, serr error
 	}
 	c, err := f.req.Cookie(SESSION_COOKIE_NAME)
 	if err == http.ErrNoCookie || ((err == nil) && (c == nil)) {
-		tk, err := am.CreateSession(f.ctx, &common.Void{})
+		sign_sess, err := am.CreateSession(f.ctx, &common.Void{})
 		if err != nil {
 			fmt.Printf("Could not get session: %s\n", utils.ErrorString(err))
 			return response, serr
 		}
+		sess := &au.Session{}
+		err = utils.UnmarshalBytes(sign_sess.Session, sess)
+		if err != nil {
+			fmt.Printf("Invalid session thing: %s\n", err)
+			return response, serr
+		}
+
 		f.AddCookie(&h2gproxy.Cookie{
 			Name:   SESSION_COOKIE_NAME,
-			Value:  tk.Token,
+			Value:  sess.Token,
 			Expiry: uint32(time.Now().Add(time.Duration(30) * time.Minute).Unix()),
 		})
 		return response, serr
