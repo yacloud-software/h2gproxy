@@ -25,6 +25,9 @@ func (f *FProxy) isSessionValid(ctx context.Context, session string) bool {
 		fmt.Printf("could not get authmanager\n")
 		return false
 	}
+	if ctx == nil {
+		return false
+	}
 	sign_sess, err := am.KeepAliveSession(ctx, &au.SessionToken{Token: session})
 	f.session = sign_sess
 	if err != nil {
