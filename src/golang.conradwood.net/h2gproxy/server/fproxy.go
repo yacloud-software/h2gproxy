@@ -66,6 +66,7 @@ type FProxy struct {
 	port                 int // the port the request came in on
 	added_cookies        map[string]*h2gproxy.Cookie
 	session_cookie       string
+	session              *apb.SignedSession
 }
 
 func (f *FProxy) SetUser(a *apb.SignedUser) {

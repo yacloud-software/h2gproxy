@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	au "golang.conradwood.net/apis/auth"
 	"golang.conradwood.net/apis/common"
@@ -15,8 +16,19 @@ const (
 	SESSION_COOKIE_NAME = "Yei0neez1ohyohnith6iger6Oogexoox"
 )
 
-func (f *FProxy) isSessionValid(session string) bool {
+func (f *FProxy) isSessionValid(ctx context.Context, session string) bool {
 	if session == "" {
+		return false
+	}
+	am := authremote.GetAuthManagerClient()
+	if am == nil {
+		fmt.Printf("could not get authmanager\n")
+		return false
+	}
+	sign_sess, err := am.KeepAliveSession(ctx, &au.SessionToken{Token: session})
+	f.session = sign_sess
+	if err != nil {
+		fmt.Printf("session not valid: %s\n", err)
 		return false
 	}
 	return true
@@ -37,8 +49,7 @@ func (f *FProxy) GetSessionToken() (string, error) {
 	if err != nil && err != http.ErrNoCookie {
 		return "", err
 	}
-
-	if c != nil && f.isSessionValid(c.Value) {
+	if c != nil && f.isSessionValid(f.ctx, c.Value) {
 		return c.Value, nil
 	}
 	ctx := f.ctx
@@ -51,6 +62,7 @@ func (f *FProxy) GetSessionToken() (string, error) {
 		fmt.Printf("Could not get session: %s\n", utils.ErrorString(err))
 		return "", err
 	}
+	f.session = sign_sess
 	sess := &au.Session{}
 	err = utils.UnmarshalBytes(sign_sess.Session, sess)
 	if err != nil {
@@ -84,6 +96,7 @@ func (f *FProxy) add_session_cookie(response *h2gproxy.ServeResponse, serr error
 			fmt.Printf("Could not get session: %s\n", utils.ErrorString(err))
 			return response, serr
 		}
+		f.session = sign_sess
 		sess := &au.Session{}
 		err = utils.UnmarshalBytes(sign_sess.Session, sess)
 		if err != nil {
@@ -107,10 +120,11 @@ func (f *FProxy) add_session_cookie(response *h2gproxy.ServeResponse, serr error
 		return response, serr
 	}
 	// we got a cookie (to be fair, this would be better executer at the BEGINNING of the request)
-	_, err = am.KeepAliveSession(f.ctx, &au.SessionToken{Token: c.Value})
+	sign_sess, err := am.KeepAliveSession(f.ctx, &au.SessionToken{Token: c.Value})
 	if err != nil {
 		fmt.Printf("Failed to keep session alive: %s\n", utils.ErrorString(err))
 	}
+	f.session = sign_sess
 	return response, serr
 }
 func (f *FProxy) with_session_cookie(response *h2gproxy.ServeResponse, err error) (*h2gproxy.ServeResponse, error) {
