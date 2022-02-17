@@ -101,6 +101,9 @@ func (f *FProxy) WebLogin() bool {
 
 	if !h.Authenticated {
 		debugWl("Weblogin requests username and password!\n")
+		if h.MimeType != "" {
+			f.SetHeader("Content-Type", h.MimeType)
+		}
 		f.SetStatus(200)
 		f.Write(h.Body)
 		return false
@@ -150,6 +153,7 @@ func (f *FProxy) WebVerifyEmail(ctx context.Context) bool {
 		debugWl("[weblogin] - updated cache for user %s\n", auth.Description(f.unsigneduser))
 		return true
 	}
+
 	f.SetStatus(200)
 	f.Write([]byte(h.HTML))
 	//	fmt.Printf("Result: %#v\n", h)
@@ -209,6 +213,9 @@ func WebLoginProxy(f *FProxy) {
 	if wr.RedirectTo != "" {
 		f.RedirectTo(wr.RedirectTo, wr.ForceGetAfterRedirect)
 		return
+	}
+	if wr.MimeType != "" {
+		f.SetHeader("Content-Type", wr.MimeType)
 	}
 	f.SetStatus(200)
 	f.Write(wr.Body)
