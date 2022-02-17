@@ -182,7 +182,7 @@ func apply(cfg *Config) error {
 				URLPath:       "/weblogin/",
 				TargetService: WEBLOGIN,
 				ConfigName:    "weblogin",
-				MaxInFlights:  5,
+				MaxInFlights:  15,
 				MaxPerSec:     10,
 				Api:           3,
 			}}
