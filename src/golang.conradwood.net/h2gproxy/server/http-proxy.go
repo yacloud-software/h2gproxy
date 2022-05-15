@@ -1185,8 +1185,10 @@ func (f *FProxy) needsBasicAuth() bool {
 			return true
 		}
 	*/
-	if strings.HasPrefix(s, "Wget") || strings.HasPrefix(s, "git") {
-		return true
+	for _, k := range known_cli_download_tools {
+		if strings.HasPrefix(s, k) {
+			return true
+		}
 	}
 	return *basicAuth
 }
