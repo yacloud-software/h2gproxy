@@ -283,6 +283,23 @@ func (f *FProxy) RedirectTo(url string, forceget bool) {
 	}
 	f.write_headers()
 }
+func (f *FProxy) GetHeader(key string) string {
+	if f.req == nil {
+		return ""
+	}
+	key = strings.ToLower(key)
+	for hn, hvs := range f.req.Header {
+		hn = strings.ToLower(hn)
+		if key != hn {
+			continue
+		}
+		if len(hvs) == 0 {
+			return ""
+		}
+		return hvs[0]
+	}
+	return ""
+}
 
 func (f *FProxy) SetHeader(key, value string) {
 	if f.response_headers_written {
@@ -414,4 +431,20 @@ func (f *FProxy) CookieDomain() string {
 	}
 	cr = cr[i:]
 	return cr
+}
+
+func (f *FProxy) SubmittedCookies() []*h2gproxy.Cookie {
+	var res []*h2gproxy.Cookie
+	if f.req == nil {
+		return res
+	}
+	for _, c := range f.req.Cookies() {
+		hc := &h2gproxy.Cookie{
+			Name:   c.Name,
+			Value:  c.Value,
+			Expiry: uint32(c.Expires.Unix()),
+		}
+		res = append(res, hc)
+	}
+	return res
 }

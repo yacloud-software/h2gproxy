@@ -185,7 +185,7 @@ func (a *authResult) UserFromWeblogin() *apb.SignedUser {
 		// weblogin does not think this is valid
 		return nil
 	}
-	a.f.AddCookie(c)
+	a.f.SetCookies(c)
 	a.attempted = true
 	return u
 }

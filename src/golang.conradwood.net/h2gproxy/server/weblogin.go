@@ -50,7 +50,10 @@ func (f *FProxy) WebLogin() bool {
 		Submitted: make(map[string]string),
 		Body:      string(f.RequestBody()),
 		Peer:      f.PeerIP(),
+		Cookies:   f.SubmittedCookies(),
+		UserAgent: f.GetHeader("user-agent"),
 	}
+
 	for k, v := range f.RequestValues() {
 		wreq.Submitted[k] = v
 	}
@@ -109,7 +112,7 @@ func (f *FProxy) WebLogin() bool {
 		return false
 	}
 	debugWl("Weblogin authenticated (user=%s)!", h.User.Email)
-
+	f.SetCookies(h.Cookies)
 	return true
 }
 
@@ -251,7 +254,7 @@ func getUserContext(f *FProxy) context.Context {
 	return ctx
 }
 
-func WebloginCheck(webloginpara string) (*apb.SignedUser, *h2gproxy.Cookie, error) {
+func WebloginCheck(webloginpara string) (*apb.SignedUser, []*h2gproxy.Cookie, error) {
 	debugWl("invoked WebloginCheck()")
 	if wl == nil {
 		wl = weblogin.GetWebloginClient()
@@ -271,7 +274,7 @@ func WebloginCheck(webloginpara string) (*apb.SignedUser, *h2gproxy.Cookie, erro
 		return nil, nil, err
 	}
 	if len(wr.Cookies) > 0 {
-		return su, wr.Cookies[0], nil
+		return su, wr.Cookies, nil
 	}
 	return su, nil, nil
 }
@@ -288,6 +291,8 @@ func webloginGetRedirectTarget(f *FProxy) string {
 		Query:     f.req.URL.RawQuery,
 		Submitted: make(map[string]string),
 		Peer:      f.PeerIP(),
+		Cookies:   f.SubmittedCookies(),
+		UserAgent: f.GetHeader("user-agent"),
 	}
 
 	ctx := tokens.ContextWithToken()

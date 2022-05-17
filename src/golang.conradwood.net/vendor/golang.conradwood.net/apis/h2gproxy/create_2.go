@@ -1,6 +1,6 @@
 // client create: H2GProxyServiceClient
 /* geninfo:
-   filename  : protos/golang.conradwood.net/apis/h2gproxy/h2gproxy.proto
+   filename  : golang.conradwood.net/apis/h2gproxy/h2gproxy.proto
    gopackage : golang.conradwood.net/apis/h2gproxy
    importname: ai_1
    varname   : client_H2GProxyServiceClient_1
