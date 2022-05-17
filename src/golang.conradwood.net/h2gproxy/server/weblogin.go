@@ -134,6 +134,8 @@ func (f *FProxy) WebVerifyEmail(ctx context.Context) bool {
 		Submitted: make(map[string]string),
 		Body:      string(f.RequestBody()),
 		Peer:      f.PeerIP(),
+		Cookies:   f.SubmittedCookies(),
+		UserAgent: f.GetHeader("user-agent"),
 	}
 	for k, v := range f.RequestValues() {
 		wreq.Submitted[k] = v
@@ -172,6 +174,8 @@ func createWebloginRequest(f *FProxy) *weblogin.WebloginRequest {
 		Submitted: make(map[string]string),
 		Peer:      f.PeerIP(),
 		Body:      string(f.RequestBody()),
+		Cookies:   f.SubmittedCookies(),
+		UserAgent: f.GetHeader("user-agent"),
 	}
 	for k, v := range f.RequestValues() {
 		wreq.Submitted[k] = v
