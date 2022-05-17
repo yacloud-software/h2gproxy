@@ -247,14 +247,15 @@ func (f *FProxy) write_headers() {
 	// write headers...
 	if f.added_cookies != nil {
 		for _, cookie := range f.added_cookies {
-			e := time.Unix(int64(cookie.Expiry), 0)
 			hc := &http.Cookie{Name: cookie.Name,
 				Value:    cookie.Value,
 				Path:     "/",
-				Expires:  e,
 				SameSite: http.SameSiteNoneMode,
 				Secure:   true,
 				Domain:   f.CookieDomain(),
+			}
+			if cookie.Expiry != 0 {
+				hc.Expires = time.Unix(int64(cookie.Expiry), 0)
 			}
 			http.SetCookie(f.writer, hc)
 		}
