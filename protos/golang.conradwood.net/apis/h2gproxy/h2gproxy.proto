@@ -95,7 +95,7 @@ message ServeRequest {
 message Cookie {
   string Name = 1;
   string Value = 2;
-  uint32 Expiry = 3;
+  uint32 Expiry = 3; // timestamp of when to expiry the cookie
 }
 message ServeResponse {
   uint32 HTTPResponseCode = 1;
