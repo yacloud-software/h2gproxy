@@ -158,7 +158,6 @@ func (f *FProxy) WebVerifyEmail(ctx context.Context) bool {
 		debugWl("[weblogin] - updated cache for user %s\n", auth.Description(f.unsigneduser))
 		return true
 	}
-
 	f.SetStatus(200)
 	f.Write([]byte(h.HTML))
 	//	fmt.Printf("Result: %#v\n", h)
