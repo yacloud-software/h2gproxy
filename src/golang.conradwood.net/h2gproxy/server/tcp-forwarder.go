@@ -69,7 +69,8 @@ func (pt *PassThru) Read(p []byte) (int, error) {
 }
 
 type TCPForwarder struct {
-	config          *pb.AddConfigHTTPRequest
+	session         *pb.AddConfigHTTPRequest // this does not appear to be set ever..
+	config          *pb.AddConfigTCPRequest
 	Port            int
 	Path            string
 	active          bool
@@ -152,9 +153,10 @@ func (tf *TCPForwarder) forward(incoming net.Conn) {
 		tcp_Printf("Bad connection type: %v\n", incoming)
 		return
 	}
-	tcp.SetKeepAlive(true)
-	tcp.SetKeepAlivePeriod(time.Minute * 15)
-
+	if tf.config.KeepAliveSeconds > 0 {
+		tcp.SetKeepAlive(true)
+		tcp.SetKeepAlivePeriod(time.Second * time.Duration(tf.config.KeepAliveSeconds))
+	}
 	// lookup address
 	con, err := client.DialTCPWrapper(tf.Path)
 	if err != nil {

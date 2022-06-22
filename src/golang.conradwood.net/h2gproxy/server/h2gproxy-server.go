@@ -257,7 +257,8 @@ func (*H2gproxyServer) AddConfigTCP(c context.Context, cr *pb.AddConfigTCPReques
 		return nil, errors.New(fmt.Sprintf("No such config: %s\n", cr.ConfigID))
 	}
 	tf := TCPForwarder{Port: int(cr.SourcePort),
-		Path: cr.TargetServicePath,
+		Path:   cr.TargetServicePath,
+		config: cr,
 	}
 	cfg.tcpforwarders = append(cfg.tcpforwarders, &tf)
 	return &pb.AddConfigResponse{}, nil

@@ -56,7 +56,7 @@ func (t *TCPProxySession) ConnectionString() string {
 func (t *TCPProxySession) Session() *pb.TCPSession {
 	ts := &pb.TCPSession{
 		InboundPort: uint32(t.forwarder.Port),
-		Config:      t.forwarder.config,
+		Config:      t.forwarder.session,
 	}
 	_, ts.ProxyOutboundPort = t.outbound.LocalAddr()
 	ts.ProxyTargetHost, ts.ProxyTargetPort = t.outbound.RemoteAddr()

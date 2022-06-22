@@ -41,8 +41,9 @@ type ConfigFile struct {
 	Httpproxy []*Httpdef
 }
 type Tcpdef struct {
-	Port   int
-	Target string
+	Port             int
+	Target           string
+	KeepAliveSeconds uint32
 }
 
 // changed made here will need to be copied
@@ -93,7 +94,10 @@ func Submit(ctx context.Context, lb lbps, fname string, def Httpdef) error {
 		addreq := &pb.AddConfigTCPRequest{
 			ConfigID:          configid,
 			SourcePort:        int32(tcpdef.Port),
-			TargetServicePath: tcpdef.Target}
+			TargetServicePath: tcpdef.Target,
+			KeepAliveSeconds:  tcpdef.KeepAliveSeconds,
+		}
+
 		_, err := lb.AddConfigTCP(ctx, addreq)
 		if err != nil {
 			return err
