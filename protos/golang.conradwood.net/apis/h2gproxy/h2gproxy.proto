@@ -24,6 +24,7 @@ message AddConfigTCPRequest {
   string ConfigID = 1;
   int32 SourcePort = 2;
   string TargetServicePath = 3;
+  uint32 KeepAliveSeconds=4; // if >0, set a keepalive, sent this number of seconds
 }
 
 /*******************************************************
