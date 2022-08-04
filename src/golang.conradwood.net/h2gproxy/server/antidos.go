@@ -24,13 +24,13 @@ func AntiDOS_HTTPHandler(w http.ResponseWriter, r *http.Request, port int) bool 
 	ip := r.RemoteAddr
 	ip, _, err := net.SplitHostPort(ip)
 	if err != nil {
-		fmt.Printf("Cannot check ip \"%s\" - error parsing (%s)\n", ip, err)
+		fmt.Printf("[antidos] Cannot check ip \"%s\" - error parsing (%s)\n", ip, err)
 		return false
 	}
-	fmt.Printf("Checking remoteaddr \"%s\"\n", ip)
+	fmt.Printf("[antidos] Checking remoteaddr \"%s\"\n", ip)
 	ctx := authremote.Context()
 	b := AntiDOS_IsBlacklisted(ctx, ip)
-	fmt.Printf("IP \"%s\" blacklisted? %v\n", ip, b)
+	fmt.Printf("[antidos] IP \"%s\" blacklisted? %v\n", ip, b)
 	return false
 }
 
@@ -42,7 +42,7 @@ func AntiDOS_IsBlacklisted(ctx context.Context, ip string) bool {
 	req := &antidos.IPRequest{IP: ip}
 	r, err := antidos.GetAntiDOSClient().IPStatus(ctx, req)
 	if err != nil {
-		fmt.Printf("Failed to check antidos: %s\n", utils.ErrorString(err))
+		fmt.Printf("[antidos] Failed to check antidos: %s\n", utils.ErrorString(err))
 		return false
 	}
 	if r.Blocked {
@@ -52,6 +52,7 @@ func AntiDOS_IsBlacklisted(ctx context.Context, ip string) bool {
 }
 
 func AntiDOS_BuildBlackListPage(ip string) []byte {
+	fmt.Printf("[antidos] Building blacklist page for ip \"%s\"\n", ip)
 	s := `<html><body>
 Your Request was blocked because we detected suspicious traffic from your IP Address (` + ip + `). Please retry again later.
 </body>
