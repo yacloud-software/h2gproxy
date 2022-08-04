@@ -157,6 +157,9 @@ func main_handler(w http.ResponseWriter, r *http.Request, isTLS bool, port int) 
 	if isTLS {
 		httpproto = "https"
 	}
+	if AntiDOS_HTTPHandler(w, r, port) {
+		return
+	}
 	hf := findBestMatch(r, httpproto)
 	if hf == nil {
 		w.Header().Add("Content-Type", "text/html")
