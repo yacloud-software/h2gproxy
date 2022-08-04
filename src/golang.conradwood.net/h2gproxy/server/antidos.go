@@ -14,7 +14,8 @@ import (
 )
 
 var (
-	check_antidos    = flag.Bool("antidos_check_each_request", false, "if true check each request with antidos before passing it on")
+	check_antidos    = flag.Bool("antidos_check_each_request", true, "if true check each request with antidos before passing it on")
+	antidos_debug    = flag.Bool("antidos_debug", false, "if true debug antidos")
 	antidos_ip_cache = cache.New("antidos_ip_cache", time.Duration(1)*time.Minute, 1000)
 )
 
@@ -34,10 +35,14 @@ func AntiDOS_HTTPHandler(w http.ResponseWriter, r *http.Request, port int) bool 
 		fmt.Printf("[antidos] Cannot check ip \"%s\" - error parsing (%s)\n", ip, err)
 		return false
 	}
-	fmt.Printf("[antidos] Checking remoteaddr \"%s\"\n", ip)
+	if *antidos_debug {
+		fmt.Printf("[antidos] Checking remoteaddr \"%s\"\n", ip)
+	}
 	ctx := authremote.Context()
 	b := AntiDOS_IsBlacklisted(ctx, ip)
-	fmt.Printf("[antidos] IP \"%s\" blacklisted? %v\n", ip, b)
+	if *antidos_debug {
+		fmt.Printf("[antidos] IP \"%s\" blacklisted? %v\n", ip, b)
+	}
 	if !b {
 		return false
 	}
@@ -77,7 +82,9 @@ func AntiDOS_IsBlacklisted(ctx context.Context, ip string) bool {
 }
 
 func AntiDOS_BuildBlackListPage(ip string) []byte {
-	fmt.Printf("[antidos] Building blacklist page for ip \"%s\"\n", ip)
+	if *antidos_debug {
+		fmt.Printf("[antidos] Building blacklist page for ip \"%s\"\n", ip)
+	}
 	s := `<html><body>
 Your Request was blocked because we detected suspicious traffic from your IP Address (` + ip + `). Please retry again later.
 </body>
