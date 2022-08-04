@@ -31,7 +31,13 @@ func AntiDOS_HTTPHandler(w http.ResponseWriter, r *http.Request, port int) bool 
 	ctx := authremote.Context()
 	b := AntiDOS_IsBlacklisted(ctx, ip)
 	fmt.Printf("[antidos] IP \"%s\" blacklisted? %v\n", ip, b)
-	return false
+	if !b {
+		return false
+	}
+	page := AntiDOS_BuildBlackListPage(ip)
+	w.Header()["content-type"] = []string{"text/html"}
+	w.Write(page)
+	return true
 }
 
 // return true if antidos says it's blacklistest
