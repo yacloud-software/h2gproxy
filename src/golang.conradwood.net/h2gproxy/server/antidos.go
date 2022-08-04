@@ -6,14 +6,21 @@ import (
 	"fmt"
 	"golang.conradwood.net/apis/antidos"
 	"golang.conradwood.net/go-easyops/authremote"
+	"golang.conradwood.net/go-easyops/cache"
 	"golang.conradwood.net/go-easyops/utils"
 	"net"
 	"net/http"
+	"time"
 )
 
 var (
-	check_antidos = flag.Bool("antidos_check_each_request", false, "if true check each request with antidos before passing it on")
+	check_antidos    = flag.Bool("antidos_check_each_request", false, "if true check each request with antidos before passing it on")
+	antidos_ip_cache = cache.New("antidos_ip_cache", time.Duration(1)*time.Minute, 1000)
 )
+
+type antidos_ip_cache_entry struct {
+	blocked bool
+}
 
 // all http requests should be send here first.
 // if it returns true the request was intercepted and handled by AntiDOS and no further processing shold occur
@@ -45,12 +52,24 @@ func AntiDOS_IsBlacklisted(ctx context.Context, ip string) bool {
 	if !*check_antidos {
 		return false
 	}
+	var aic *antidos_ip_cache_entry
+	o := antidos_ip_cache.Get(ip)
+	if o != nil {
+		aic = o.(*antidos_ip_cache_entry)
+	}
+
+	if aic != nil {
+		return aic.blocked
+	}
+
 	req := &antidos.IPRequest{IP: ip}
 	r, err := antidos.GetAntiDOSClient().IPStatus(ctx, req)
 	if err != nil {
 		fmt.Printf("[antidos] Failed to check antidos: %s\n", utils.ErrorString(err))
 		return false
 	}
+	aic = &antidos_ip_cache_entry{blocked: r.Blocked}
+	antidos_ip_cache.Put(ip, aic)
 	if r.Blocked {
 		return true
 	}
