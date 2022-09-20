@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	apb "golang.conradwood.net/apis/auth"
 	"golang.conradwood.net/go-easyops/cache"
 	"time"
@@ -20,6 +21,9 @@ func NewAuthServerProxy() *authServerProxy {
 }
 
 func (asp *authServerProxy) SignedGetByPassword(ctx context.Context, req *apb.AuthenticatePasswordRequest) (*apb.SignedAuthResponse, error) {
+	if req == nil {
+		return nil, fmt.Errorf("authproxy.SignedGetByPassword() called without request")
+	}
 	key := pw_key(req)
 	cra := auth_bypw.Get(key)
 	if cra != nil {
