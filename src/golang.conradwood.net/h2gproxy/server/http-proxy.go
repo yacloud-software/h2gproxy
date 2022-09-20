@@ -1117,7 +1117,7 @@ func (f *FProxy) authenticateUser(user, pw string) (*apb.SignedUser, error) {
 	ctx := tokens.ContextWithToken()
 	cr, err := authproxy.SignedGetByPassword(ctx, &apb.AuthenticatePasswordRequest{Email: user, Password: pw})
 	if err != nil {
-		fmt.Printf("Failed to authenticate user %s: %s\n", user, utils.ErrorString(err))
+		fmt.Printf("Failed to authenticate user %s: %s (from %s, accessing %s)\n", user, utils.ErrorString(err), f.PeerIP(), f.String())
 		return nil, err
 	}
 	if !cr.Valid {
