@@ -21,9 +21,10 @@ import (
 )
 
 var (
-	rc        ic.RPCInterceptorServiceClient
-	print_rpc = flag.Bool("print_rpc", false, "print rpc payload before calling gRPC backends")
-	debug_rpc = flag.Bool("debug_grpc_proxy", false, "debug grpc proxy")
+	rc            ic.RPCInterceptorServiceClient
+	send_www_auth = flag.Bool("grpc_proxy_send_www_auth", false, "if true send a 'Basic' www-authenticate header whenever the backend requires authentication to complete a call. if false, send an empty www-authenticate header")
+	print_rpc     = flag.Bool("print_rpc", false, "print rpc payload before calling gRPC backends")
+	debug_rpc     = flag.Bool("debug_grpc_proxy", false, "debug grpc proxy")
 )
 
 type GRPCProxy struct {
@@ -347,7 +348,11 @@ func (g *GRPCProxy) late_authenticate() bool {
 		if *debug_rpc {
 			fmt.Printf("[grpcproxy]Cannot do 'late' basic authentication just yet, sorry.")
 		}
-		g.f.SetHeader("WWW-Authenticate", "Basic realm=\"Login\"")
+		if *send_www_auth {
+			g.f.SetHeader("WWW-Authenticate", "Basic realm=\"Login\"")
+		} else {
+			g.f.SetHeader("WWW-Authenticate", "")
+		}
 		g.f.SetStatus(401)
 		g.f.Write([]byte("[grpcproxy] authentication required. you may try passing apikey=XXX as a url parameter or add your credentials to .netrc"))
 		return false
