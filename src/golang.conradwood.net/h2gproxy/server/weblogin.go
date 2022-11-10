@@ -39,7 +39,7 @@ func (f *FProxy) WebLogin() bool {
 	if wl == nil {
 		wl = weblogin.GetWebloginClient()
 	}
-	debugWl("Serving weblogin...\n")
+	debugWl("Serving weblogin...")
 	req := f.req
 	wreq := &weblogin.WebloginRequest{
 		Method:    req.Method,
@@ -67,9 +67,10 @@ func (f *FProxy) WebLogin() bool {
 		f.AntiDOS("unable to provide login page: %s", err)
 		return false
 	}
-
+	debugWl("processed without error. (httpcode=%d,Authenticated=%v,Cookies:%#v)", h.HTTPCode, h.Authenticated, h.Cookies)
 	if h.Token != "" {
-		debugWl("Set cookie (expiry %d seconds, host=%s)\n", h.CookieLivetime, req.Host)
+		d := f.CookieDomain()
+		debugWl("Set cookie (expiry %d seconds, host=%s,domain=%s)\n", h.CookieLivetime, req.Host, d)
 		// user authenticated, set cookie and reload
 		c := &http.Cookie{Name: "Auth-Token",
 			Value:    h.Token,
@@ -77,7 +78,7 @@ func (f *FProxy) WebLogin() bool {
 			Expires:  time.Now().Add(time.Duration(h.CookieLivetime) * time.Second),
 			SameSite: http.SameSiteNoneMode,
 			Secure:   true,
-			Domain:   f.CookieDomain(),
+			Domain:   d,
 		}
 		if *override_cookie {
 			c.Expires = time.Now().Add(time.Duration(2) * time.Second)
@@ -87,6 +88,7 @@ func (f *FProxy) WebLogin() bool {
 	}
 
 	if h.User != nil {
+		debugWl("weblogin got user %s", h.User.Email)
 		su, err := GetSignedUser(ctx, h.User)
 		if err != nil {
 			fmt.Printf("Getting signed user failed %s", err)
@@ -98,6 +100,7 @@ func (f *FProxy) WebLogin() bool {
 	}
 
 	if h.RedirectTo != "" {
+		debugWl("weblogin asked to redirect to \"%s\"", h.RedirectTo)
 		f.RedirectTo(h.RedirectTo, h.ForceGetAfterRedirect)
 		return false // do not retry same url - redirect!
 	}

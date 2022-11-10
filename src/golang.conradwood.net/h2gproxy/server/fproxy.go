@@ -351,6 +351,9 @@ func (f *FProxy) SetCookies(cookies []*h2gproxy.Cookie) {
 }
 
 func (f *FProxy) AddCookie(cookie *h2gproxy.Cookie) {
+	if len(cookie.Name) == 0 || cookie.Name[0] == '.' {
+		panic(fmt.Sprintf("invalid cookie (%s)", cookie.Name))
+	}
 	f.fproxy_lock.Lock()
 	if f.added_cookies == nil {
 		f.added_cookies = make(map[string]*h2gproxy.Cookie)
@@ -431,6 +434,11 @@ func (f *FProxy) CookieDomain() string {
 		return ""
 	}
 	cr = cr[i:]
+	// may include a port
+	i = strings.Index(cr, ":")
+	if i != -1 {
+		cr = cr[:i]
+	}
 	return cr
 }
 
