@@ -105,6 +105,7 @@ message ServeResponse {
   string MimeType = 4;         // default application/json
   repeated Cookie Cookies = 5; // cookies to set
   bytes Body = 6;              // the response to be served to the client
+  bool RedirectToSlash = 7;// if true (in response from backend, h2gproxy will issue a redirect to the browser to the url+"/"
 }
 
 // also check config-submitter.go !!!
