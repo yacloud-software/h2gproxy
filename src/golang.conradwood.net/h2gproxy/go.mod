@@ -5,21 +5,21 @@ go 1.18
 require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/golang/protobuf v1.5.2
-	golang.conradwood.net/apis/antidos v1.1.1936
-	golang.conradwood.net/apis/auth v1.1.1936
-	golang.conradwood.net/apis/certmanager v1.1.1936
-	golang.conradwood.net/apis/common v1.1.1936
-	golang.conradwood.net/apis/framework v1.1.1936
+	golang.conradwood.net/apis/antidos v1.1.1968
+	golang.conradwood.net/apis/auth v1.1.1968
+	golang.conradwood.net/apis/certmanager v1.1.1968
+	golang.conradwood.net/apis/common v1.1.1968
+	golang.conradwood.net/apis/framework v1.1.1968
 	golang.conradwood.net/apis/h2gproxy v1.1.1746
-	golang.conradwood.net/apis/httpkpi v1.1.1936
-	golang.conradwood.net/apis/jsonapimultiplexer v1.1.1936
-	golang.conradwood.net/apis/registry v1.1.1936
-	golang.conradwood.net/apis/rpcinterceptor v1.1.1936
-	golang.conradwood.net/apis/usagestats v1.1.1936
-	golang.conradwood.net/apis/weblogin v1.1.1936
-	golang.conradwood.net/go-easyops v0.1.14079
+	golang.conradwood.net/apis/httpkpi v1.1.1968
+	golang.conradwood.net/apis/jsonapimultiplexer v1.1.1968
+	golang.conradwood.net/apis/registry v1.1.1968
+	golang.conradwood.net/apis/rpcinterceptor v1.1.1968
+	golang.conradwood.net/apis/usagestats v1.1.1968
+	golang.conradwood.net/apis/weblogin v1.1.1968
+	golang.conradwood.net/go-easyops v0.1.14292
 	golang.org/x/net v0.2.0
-	google.golang.org/grpc v1.50.1
+	google.golang.org/grpc v1.51.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -31,11 +31,11 @@ require (
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
-	golang.conradwood.net/apis/autodeployer v1.1.1936 // indirect
-	golang.conradwood.net/apis/deploymonkey v1.1.1936 // indirect
-	golang.conradwood.net/apis/echoservice v1.1.1936 // indirect
-	golang.conradwood.net/apis/errorlogger v1.1.1936 // indirect
-	golang.conradwood.net/apis/objectstore v1.1.1936 // indirect
+	golang.conradwood.net/apis/autodeployer v1.1.1968 // indirect
+	golang.conradwood.net/apis/deploymonkey v1.1.1968 // indirect
+	golang.conradwood.net/apis/echoservice v1.1.1968 // indirect
+	golang.conradwood.net/apis/errorlogger v1.1.1968 // indirect
+	golang.conradwood.net/apis/objectstore v1.1.1968 // indirect
 	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20220921223823-23cae91e6737 // indirect

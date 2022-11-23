@@ -121,11 +121,12 @@ retry:
 
 	var httpError *HTTPError
 	public_error_message := ""
+	privileged_error_message := ""
 	/******************** did the backend return an error ? ******************/
 	if err != nil {
 		st := status.Convert(err)
 		public_error_message = get_public_error_message(err)
-		privileged_error_message := utils.ErrorString(err)
+		privileged_error_message = utils.ErrorString(err)
 		message := st.Message()
 		code := st.Code()
 		msg := fmt.Sprintf("[streamproxy] API (type %d) Call (%s), authenticated()=%v, late_auth=%v, failed: code=%d message=%s", g.f.hf.def.Api, g.f.String(), a.Authenticated(), late_auth_attempted, code, message)
