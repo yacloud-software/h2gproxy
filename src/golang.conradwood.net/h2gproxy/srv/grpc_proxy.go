@@ -303,14 +303,15 @@ func (g *GRPCProxy) grpcproxy(rp *ic.InterceptRPCResponse, a *authResult) (conte
 			code = 200
 		}
 	}
+	g.f.SetStatus(code)
 
 	if resp.RedirectToSlash {
 		fmt.Printf("received redirect_to_slash_request.\n")
-		code = 307
-		g.f.addHeader("location", "http://localhost:4105")
+		g.f.RedirectTo(g.f.FullURL()+"/", false)
+		//		code = 307
+		//		g.f.addHeader("location", g.f.FullURL()+"/")
 	}
 
-	g.f.SetStatus(code)
 	mtype := "application/json"
 	if resp.MimeType != "" {
 		mtype = resp.MimeType
