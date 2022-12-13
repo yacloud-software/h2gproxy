@@ -153,6 +153,7 @@ func (f *foohandler) handler(w http.ResponseWriter, r *http.Request) {
 * every request comes in here from the http.Handler
 ********************************************************/
 func main_handler(w http.ResponseWriter, r *http.Request, isTLS bool, port int) {
+	started := time.Now()
 	httpproto := "http"
 	if isTLS {
 		httpproto = "https"
@@ -241,7 +242,8 @@ func main_handler(w http.ResponseWriter, r *http.Request, isTLS bool, port int) 
 	if f.hf != nil && f.hf.def != nil && f.hf.def.ConfigName != "" {
 		cfgname = f.hf.def.ConfigName
 	}
-	fmt.Printf("[%s%s] %s %d %s%s\n", f.req.RemoteAddr, user, cfgname, f.statusCode, f.FullURL(), es)
+	timing := fmt.Sprintf("%0.2fs", time.Since(started).Seconds())
+	fmt.Printf("[%s%s] %s %s %d %s%s\n", f.req.RemoteAddr, user, cfgname, timing, f.statusCode, f.FullURL(), es)
 	//Debug: List open file descriptors. Disabled by default.
 	PrintOpenFDs()
 

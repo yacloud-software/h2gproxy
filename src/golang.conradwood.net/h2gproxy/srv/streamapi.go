@@ -188,9 +188,11 @@ retry:
 	return
 }
 
-/***************************************************************
+/*
+**************************************************************
 // Wrapper and Buffer around the streaming backend
-***************************************************************/
+**************************************************************
+*/
 func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (context.Context, error) {
 
 	// read the request:

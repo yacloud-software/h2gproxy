@@ -86,18 +86,23 @@ func (j *download_proxy) BackendStream(ctx context.Context, fcr *lb.StreamReques
 			StreamName:    "StreamHTTP",
 			Handler:       DownloadStreamHandler,
 			ServerStreams: true,
+			//ClientStreams: true, // gives a protocol violation thing
 		},
 		fmt.Sprintf("/%s/StreamHTTP", j.targetservice))
 	if err != nil {
 		return err
 	}
 	if err := stream.SendMsg(fcr); err != nil {
+		stream.Fail(err)
 		return err
 	}
 	if err := stream.CloseSend(); err != nil {
+		stream.Fail(err)
 		return err
 	}
-
+	if *debug {
+		fmt.Printf("[downloadproxy] - starting recv() loop\n")
+	}
 	for {
 		resp := &lb.StreamDataResponse{}
 		// TODO: handle streamresponse here instead of only data
@@ -107,6 +112,7 @@ func (j *download_proxy) BackendStream(ctx context.Context, fcr *lb.StreamReques
 		}
 		if err != nil {
 			fmt.Printf("[downloadproxy] error encountered: %s\n", utils.ErrorString(err))
+			stream.Fail(err)
 			return err
 		}
 		if resp.Response != nil {
@@ -116,6 +122,7 @@ func (j *download_proxy) BackendStream(ctx context.Context, fcr *lb.StreamReques
 			out_stream <- &lb.BodyData{Data: resp.Data}
 		}
 	}
+	stream.Finish()
 	close(out_stream)
 	if *debug {
 		fmt.Printf("[downloadproxy] done\n")
