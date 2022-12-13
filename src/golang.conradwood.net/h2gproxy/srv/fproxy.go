@@ -332,11 +332,11 @@ func (f *FProxy) Write(buf []byte) error {
 	//	f.SetHeader("content-length", fmt.Sprintf("%d", len(buf)))
 	f.write_headers()
 	b, err := f.writer.Write(buf)
-	if b != len(buf) {
-		return fmt.Errorf("partial write: %d bytes of %d", b, len(buf))
-	}
 	if err != nil {
 		return err
+	}
+	if b != len(buf) {
+		return fmt.Errorf("partial write: %d bytes of %d", b, len(buf))
 	}
 	return nil
 }
