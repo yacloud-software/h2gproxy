@@ -331,11 +331,12 @@ func (f *FProxy) Write(buf []byte) error {
 
 	//	f.SetHeader("content-length", fmt.Sprintf("%d", len(buf)))
 	f.write_headers()
+	// posix is ambigous here. 0 is not an error if is not a file (I think)
 	b, err := f.writer.Write(buf)
 	if err != nil {
 		return err
 	}
-	if b != len(buf) {
+	if (b != 0) && (b != len(buf)) {
 		return fmt.Errorf("partial write: %d bytes of %d", b, len(buf))
 	}
 	return nil
