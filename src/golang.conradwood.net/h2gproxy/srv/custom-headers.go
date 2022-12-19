@@ -63,7 +63,7 @@ func (f *FProxy) customHeaders(msg *ExtraInfo) {
 		}
 	}
 	f.addHeader("Userid", user.ID)
-	if !auth.IsRootUser(user) {
+	if !auth.IsRootUser(user) && (!auth.IsInGroupByUser(user, "5")) {
 		if *debug {
 			fmt.Printf("Custom-Headers: not inserted, user \"%s\" not rootuser.\n", user.ID)
 		}
@@ -120,6 +120,10 @@ func (f *FProxy) addHeader(name string, value string) {
 	// (except "ascii only" should work...)
 	x := ""
 	sp := false
+	max_header_len := 80
+	if strings.Contains(strings.ToLower(f.GetUserAgent()), "wget") {
+		max_header_len = 1024
+	}
 	for i, s := range value {
 		if s == '"' || s == ' ' || s == '\n' || s == '\r' {
 			if sp {
@@ -131,9 +135,10 @@ func (f *FProxy) addHeader(name string, value string) {
 			sp = false
 		}
 		x = x + string(s)
-		if i > 80 {
+		if i > max_header_len {
 			break
 		}
+
 	}
 	if x != value && *debug {
 		fmt.Printf("Custom-Headers: New header value: \"%s\"\n", x)

@@ -473,3 +473,9 @@ func (f *FProxy) FullURL() string {
 	p = strings.Trim(p, "/")
 	return fmt.Sprintf("%s://%s/%s", f.scheme, h, p)
 }
+
+// return the useragent header
+func (f *FProxy) GetUserAgent() string {
+	s := f.GetHeader("user-agent")
+	return s
+}
