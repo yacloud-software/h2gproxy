@@ -458,3 +458,18 @@ func (f *FProxy) SubmittedCookies() []*h2gproxy.Cookie {
 	}
 	return res
 }
+
+// return full url as requested by client
+func (f *FProxy) FullURL() string {
+	p := f.req.URL.RawPath
+	if p == "" {
+		p = f.req.URL.Path
+	}
+	h := f.req.URL.Host
+	if h == "" {
+		h = f.req.Host
+	}
+	h = strings.Trim(h, "/")
+	p = strings.Trim(p, "/")
+	return fmt.Sprintf("%s://%s/%s", f.scheme, h, p)
+}

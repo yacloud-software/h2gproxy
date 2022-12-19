@@ -367,7 +367,7 @@ func (f *FProxy) execute() {
 	f.req.Close = true
 	f.req.Header["Connection"] = []string{"close"}
 	if *debug {
-		fmt.Printf("%s -> APIType %s\n", f.hf.def.ConfigName, f.hf.ApiTypeName())
+		fmt.Printf("%s: %s -> APIType %s\n", f.FullURL(), f.hf.def.ConfigName, f.hf.ApiTypeName())
 	}
 
 	// OPTIONS must be handled differently - they are not authenticated, but need to be replied to
@@ -1371,19 +1371,6 @@ func (f *FProxy) AddContext() {
 		fmt.Printf("no context available for user %s (%s)\n", f.unsigneduser, err)
 	}
 
-}
-func (f *FProxy) FullURL() string {
-	p := f.req.URL.RawPath
-	if p == "" {
-		p = f.req.URL.Path
-	}
-	h := f.req.URL.Host
-	if h == "" {
-		h = f.req.Host
-	}
-	h = strings.Trim(h, "/")
-	p = strings.Trim(p, "/")
-	return fmt.Sprintf("%s://%s/%s", f.scheme, h, p)
 }
 func (f *FProxy) Context() context.Context {
 	if f.ctx != nil {

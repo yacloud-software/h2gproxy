@@ -24,7 +24,8 @@ import (
 )
 
 var (
-	httpsport = flag.String("https_port", "", "The port to start the HTTPs listener on")
+	single_cert = flag.String("cert_host", "", "if set, only retrieve and service this certificate")
+	httpsport   = flag.String("https_port", "", "The port to start the HTTPs listener on")
 	//	certdir     = flag.String("certs_dir", "/etc/certs", "The directory in which the certs live (one dir per hostname, certificate.pem and key.pem in each direcetory")
 	certmap            = make(map[string]*tls.Certificate)
 	certs              []tls.Certificate
@@ -59,9 +60,18 @@ func cert_refresh() error {
 	defer certLock.Unlock()
 	fmt.Printf("[certs] refreshing...\n")
 	ctx := tokens.ContextWithToken()
-	certlist, err := certManager.ListPublicCertificates(ctx, &common.Void{})
-	if err != nil {
-		return err
+	var certlist *cm.CertNameList
+	//var certlist string
+	var err error
+	if *single_cert == "" {
+		certlist, err = certManager.ListPublicCertificates(ctx, &common.Void{})
+		if err != nil {
+			return err
+		}
+	} else {
+		certlist = &cm.CertNameList{Certificates: []*cm.CertInfo{
+			&cm.CertInfo{Hostname: *single_cert},
+		}}
 	}
 	newcerts := make(map[string]*tls.Certificate)
 	for _, c := range certlist.Certificates {
