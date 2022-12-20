@@ -92,7 +92,7 @@ func (f *FProxy) SetUser(a *apb.SignedUser) {
 		f.md.User = u
 		f.md.SignedUser = a
 	}
-	fmt.Printf("[fproxy] set user\n")
+	//fmt.Printf("[fproxy] set user\n")
 
 }
 

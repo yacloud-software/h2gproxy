@@ -35,9 +35,13 @@ func (g *grpc_conn) AvailableForNewStreams() bool {
 }
 
 func GetGRPCConnection(name string) *grpc_conn {
-	fmt.Printf("(1) Got %d connections\n", len(con))
+	if *debug {
+		fmt.Printf("(1) Got %d connections\n", len(con))
+	}
 	grpc_closer()
-	fmt.Printf("(2) Got %d connections\n", len(con))
+	if *debug {
+		fmt.Printf("(2) Got %d connections\n", len(con))
+	}
 	for _, c := range con {
 		if c.Name == name && c.AvailableForNewStreams() {
 			return c

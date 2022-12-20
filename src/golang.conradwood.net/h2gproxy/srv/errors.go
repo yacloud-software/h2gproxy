@@ -33,6 +33,13 @@ var grpcToHTTPMap = map[codes.Code]*HTTPError{
 	codes.Unauthenticated:    {401, "missing, invalid, or expired authentication", "", ""},
 }
 
+func grpcToHTTP(code codes.Code) *HTTPError {
+	he := grpcToHTTPMap[code]
+	if he != nil {
+		return he
+	}
+	return &HTTPError{500, "unknown error", fmt.Sprintf("GRPCCode:%d", code), ""}
+}
 func (f *FProxy) SetError(err error) {
 	if err == nil {
 		return
