@@ -35,10 +35,9 @@ type StreamingProxy interface {
 }
 
 type StreamProxy struct {
-	f                     *FProxy
-	p                     StreamingProxy // the backend wrapper
-	AcceptUnverifiedUsers bool
-	write_err             error // nil or an error if we failed to write to browser
+	f         *FProxy
+	p         StreamingProxy // the backend wrapper
+	write_err error          // nil or an error if we failed to write to browser
 }
 
 func NewStreamProxy(f *FProxy, sp StreamingProxy) *StreamProxy {
@@ -50,6 +49,9 @@ func NewStreamProxy(f *FProxy, sp StreamingProxy) *StreamProxy {
 func (g *StreamProxy) Proxy() {
 	if rc == nil {
 		rc = ic.NewRPCInterceptorServiceClient(client.Connect("rpcinterceptor.RPCInterceptorService"))
+	}
+	if *printHeaders {
+		fmt.Println(headersToString(g.f.req.Header))
 	}
 	g.f.SetHeader("Connection", "close")
 	var err error
@@ -85,6 +87,7 @@ func (g *StreamProxy) Proxy() {
 	}
 	if a != nil && (a.User() != nil) {
 		g.f.SetUser(a.SignedUser())
+
 	}
 	// safety check: need auth but got no user? - decline
 	if g.f.hf.def.NeedAuth && g.f.unsigneduser == nil {
@@ -113,9 +116,7 @@ func (g *StreamProxy) Proxy() {
 	late_auth_attempted := false
 retry:
 	// check for non-verified users
-	if g.f.unsigneduser != nil && g.f.unsigneduser.EmailVerified == false && !g.AcceptUnverifiedUsers {
-		g.f.SetUser(nil)
-	}
+	verify_user(g.f)
 	if *debug {
 		fmt.Printf("Stream request from %s to %s\n", g.f.PeerIP(), g.f.String())
 	}
@@ -234,8 +235,16 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 	/***************************************************************
 	// build a useful context from authresult & intercept response
 	***************************************************************/
-	//fmt.Printf("Context with user: %v\n", g.f.user)
-	ctx, err := createContext(g.f, a, rp)
+	var ctx context.Context
+	var cnc context.CancelFunc
+	if ExperimentalMode() {
+		ctx, cnc, err = createCancellableContext(g.f, a, rp)
+	} else {
+		ctx, err = createContext(g.f, a, rp)
+		cnc = func() {
+			fmt.Printf("cancelled\n")
+		}
+	}
 	if err != nil {
 		fmt.Printf("[streamproxy] failed to create a new context: %s\n", err)
 		return nil, err
@@ -270,6 +279,7 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 	started := time.Now()
 	err = g.p.BackendStream(ctx, sv, chan_in, resp, chan_out)
 	elapsed := time.Since(started)
+	cnc()
 	if *debug {
 		fmt.Printf("[streamproxy] BackendStream() returned after %v\n", elapsed)
 	}

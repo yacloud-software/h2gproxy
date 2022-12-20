@@ -71,6 +71,7 @@ type FProxy struct {
 
 func (f *FProxy) SetUser(a *apb.SignedUser) {
 	if a == nil {
+		fmt.Printf("[fproxy] cleared user\n")
 		if f.md != nil {
 			f.md.UserID = ""
 			f.md.User = nil
@@ -91,6 +92,7 @@ func (f *FProxy) SetUser(a *apb.SignedUser) {
 		f.md.User = u
 		f.md.SignedUser = a
 	}
+	fmt.Printf("[fproxy] set user\n")
 
 }
 
@@ -538,4 +540,14 @@ func (f *FProxy) authenticateByUserIDAndToken(user, pw string) (*apb.SignedUser,
 	}
 	return cr.User, nil
 
+}
+
+func verify_user(f *FProxy) {
+	if f.unsigneduser == nil {
+		return
+	}
+	if f.unsigneduser.EmailVerified == false {
+		fmt.Printf("[verifyuser] User email is not verified. not accepting user\n")
+		f.SetUser(nil)
+	}
 }

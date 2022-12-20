@@ -29,6 +29,24 @@ func createContext(f *FProxy, a *authResult, rp *ic.InterceptRPCResponse) (conte
 	octx := tokens.ContextWithTokenAndTimeout(uint64(secs))
 	return createContextWith(octx, f, a, rp)
 }
+
+func createCancellableContext(f *FProxy, a *authResult, rp *ic.InterceptRPCResponse) (context.Context, context.CancelFunc, error) {
+	secs := f.hf.def.MaxDuration
+	if secs == 0 {
+		if f.hf.def.Api == 4 {
+			secs = 600 // streaming is longer by default
+		} else {
+			secs = 10
+		}
+	}
+	octx, cnc := tokens.Context2WithTokenAndTimeout(uint64(secs))
+	ctx, err := createContextWith(octx, f, a, rp)
+	if err != nil {
+		return nil, nil, err
+	}
+	return ctx, cnc, nil
+}
+
 func createContextWith(octx context.Context, f *FProxy, a *authResult, rp *ic.InterceptRPCResponse) (context.Context, error) {
 	if octx.Err() != nil {
 		// no point calling out with a failed context
