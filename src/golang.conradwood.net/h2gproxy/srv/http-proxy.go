@@ -20,7 +20,6 @@ import (
 	us "golang.conradwood.net/apis/usagestats"
 	"golang.conradwood.net/go-easyops/auth"
 	"golang.conradwood.net/go-easyops/client"
-	"golang.conradwood.net/go-easyops/common"
 	"golang.conradwood.net/go-easyops/prometheus"
 	"golang.conradwood.net/go-easyops/tokens"
 	"golang.conradwood.net/go-easyops/utils"
@@ -1113,30 +1112,6 @@ func (f *FProxy) createErrorPage(resp *http.Response) (err error) {
 /**********************************
 * implementing basic auth
 ***********************************/
-func (f *FProxy) authenticateUser(user, pw string) (*apb.SignedUser, error) {
-	ctx := tokens.ContextWithToken()
-	cr, err := authproxy.SignedGetByPassword(ctx, &apb.AuthenticatePasswordRequest{Email: user, Password: pw})
-	if err != nil {
-		fmt.Printf("Failed to authenticate user %s: %s (from %s, accessing %s)\n", user, utils.ErrorString(err), f.PeerIP(), f.String())
-		return nil, err
-	}
-	if !cr.Valid {
-		fmt.Println(cr.LogMessage)
-		return nil, fmt.Errorf("%s", cr.PublicMessage)
-	}
-	u := common.VerifySignedUser(cr.User)
-	if u == nil {
-		return nil, fmt.Errorf("invalid user-signature")
-	}
-	if !u.Active {
-		fmt.Printf("not active\n")
-		return nil, fmt.Errorf("Not active")
-	}
-	if *debug {
-		fmt.Printf("Authenticated user %s %s (%s): \n", u.FirstName, u.LastName, u.Email)
-	}
-	return cr.User, nil
-}
 
 func (f *FProxy) doBasicAuth() bool {
 	if !*enBasicAuth {

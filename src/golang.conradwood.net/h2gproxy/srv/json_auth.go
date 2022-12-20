@@ -130,7 +130,7 @@ func (a *authResult) UserFromBearer() bool {
 	// for now, we must ignore error and continue to
 	// check if it's a hes token
 
-	// check if token is a guru uesr token (calls AuthenticationService.GetUserByToken())
+	// check if token is a user token (calls AuthenticationService.GetUserByToken())
 	// AuthenticationService.GetUserByToken() calls authbe.Authenticate(token)
 	// authbe.Authenticate(token) checks against a token in the usertoken table
 	u, err := TokenToUser(s)

@@ -479,3 +479,63 @@ func (f *FProxy) GetUserAgent() string {
 	s := f.GetHeader("user-agent")
 	return s
 }
+func (f *FProxy) authenticateUser(user, pw string) (*apb.SignedUser, error) {
+	if strings.HasSuffix(user, ".token") {
+		// assuming userid & token instead of user and password
+		return f.authenticateByUserIDAndToken(user, pw)
+	}
+	ctx := tokens.ContextWithToken()
+	cr, err := authproxy.SignedGetByPassword(ctx, &apb.AuthenticatePasswordRequest{Email: user, Password: pw})
+	if err != nil {
+		fmt.Printf("Failed to authenticate user %s: %s (from %s, accessing %s)\n", user, utils.ErrorString(err), f.PeerIP(), f.String())
+		return nil, err
+	}
+	if !cr.Valid {
+		fmt.Println(cr.LogMessage)
+		return nil, fmt.Errorf("%s", cr.PublicMessage)
+	}
+	u := common.VerifySignedUser(cr.User)
+	if u == nil {
+		return nil, fmt.Errorf("invalid user-signature")
+	}
+	if !u.Active {
+		fmt.Printf("not active\n")
+		return nil, fmt.Errorf("Not active")
+	}
+	if *debug {
+		fmt.Printf("Authenticated user %s %s (%s): \n", u.FirstName, u.LastName, u.Email)
+	}
+	return cr.User, nil
+}
+
+// expect user in the format of [USERID].token and pw to be a token
+// error if cannot be authenticated
+func (f *FProxy) authenticateByUserIDAndToken(user, pw string) (*apb.SignedUser, error) {
+	userid := strings.TrimSuffix(user, ".token")
+	ctx := tokens.ContextWithToken()
+	cr, err := authproxy.SignedGetByToken(ctx, &apb.AuthenticateTokenRequest{Token: pw})
+	if err != nil {
+		return nil, err
+	}
+	if !cr.Valid {
+		fmt.Println(cr.LogMessage)
+		return nil, fmt.Errorf("%s", cr.PublicMessage)
+	}
+	u := common.VerifySignedUser(cr.User)
+	if u == nil {
+		return nil, fmt.Errorf("invalid user-signature")
+	}
+	if !u.Active {
+		fmt.Printf("not active\n")
+		return nil, fmt.Errorf("Not active")
+	}
+	if u.ID != userid {
+		fmt.Printf("Userid mismatch (\"%s\"!=\"%s\")\n", userid, u.ID)
+		return nil, fmt.Errorf("wrong userid")
+	}
+	if *debug {
+		fmt.Printf("Authenticated user %s %s (%s): \n", u.FirstName, u.LastName, u.Email)
+	}
+	return cr.User, nil
+
+}

@@ -36,6 +36,11 @@ func (asp *authServerProxy) SignedGetByPassword(ctx context.Context, req *apb.Au
 	return cr, err
 }
 
+// TODO: cache this as well
+func (asp *authServerProxy) SignedGetByToken(ctx context.Context, req *apb.AuthenticateTokenRequest) (*apb.SignedAuthResponse, error) {
+	cr, err := AuthServer.SignedGetByToken(ctx, req)
+	return cr, err
+}
 func pw_key(req *apb.AuthenticatePasswordRequest) string {
 	return req.Email + "/" + req.Password
 }
