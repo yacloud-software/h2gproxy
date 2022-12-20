@@ -15,11 +15,13 @@ var (
 )
 
 type grpc_conn struct {
-	Name           string
-	Conn           *grpc.ClientConn
-	stream_counter int
-	failed         bool
-	lock           sync.Mutex
+	Name                 string
+	Conn                 *grpc.ClientConn
+	stream_counter       int
+	total_stream_counter int
+	failed               bool
+	lock                 sync.Mutex
+	counter              int
 }
 
 func (g *grpc_conn) AvailableForNewStreams() bool {
@@ -31,7 +33,11 @@ func (g *grpc_conn) AvailableForNewStreams() bool {
 	}
 	return true
 }
+
 func GetGRPCConnection(name string) *grpc_conn {
+	fmt.Printf("(1) Got %d connections\n", len(con))
+	grpc_closer()
+	fmt.Printf("(2) Got %d connections\n", len(con))
 	for _, c := range con {
 		if c.Name == name && c.AvailableForNewStreams() {
 			return c
@@ -59,9 +65,11 @@ func GetGRPCConnection(name string) *grpc_conn {
 	grpc_conn_lock.Unlock()
 	return res
 }
+
 func (g *grpc_conn) streamCounterInc() {
 	g.lock.Lock()
 	g.stream_counter++
+	g.total_stream_counter++
 	g.lock.Unlock()
 }
 func (g *grpc_conn) streamCounterDec() {
@@ -125,4 +133,30 @@ func (c *client_stream) Finish() {
 func (c *client_stream) Fail(err error) {
 	c.conn.Fail(err)
 	c.Finish()
+}
+func grpc_closer() {
+	grpc_conn_lock.Lock()
+	defer grpc_conn_lock.Unlock()
+	var res []*grpc_conn
+	var closing []*grpc_conn
+	for _, c := range con {
+		remove := false
+		if c.failed {
+			remove = true
+		}
+		if c.total_stream_counter > 10 && c.stream_counter == 0 {
+			remove = true
+		}
+		if remove {
+			closing = append(closing, c)
+		} else {
+			res = append(res, c)
+		}
+	}
+	for _, c := range closing {
+		c.Conn.Close()
+		c.Conn = nil
+		c.failed = true
+	}
+	con = res
 }

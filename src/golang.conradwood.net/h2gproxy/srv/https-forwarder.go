@@ -24,8 +24,9 @@ import (
 )
 
 var (
-	single_cert = flag.String("cert_host", "", "if set, only retrieve and service this certificate")
-	httpsport   = flag.String("https_port", "", "The port to start the HTTPs listener on")
+	last_cert_refresh time.Time
+	single_cert       = flag.String("cert_host", "", "if set, only retrieve and service this certificate")
+	httpsport         = flag.String("https_port", "", "The port to start the HTTPs listener on")
 	//	certdir     = flag.String("certs_dir", "/etc/certs", "The directory in which the certs live (one dir per hostname, certificate.pem and key.pem in each direcetory")
 	certmap            = make(map[string]*tls.Certificate)
 	certs              []tls.Certificate
@@ -56,6 +57,10 @@ func cert_refresher() {
 // load all certificates...
 
 func cert_refresh() error {
+	if time.Since(last_cert_refresh) < time.Duration(15)*time.Second {
+		return nil
+	}
+	last_cert_refresh = time.Now()
 	certLock.Lock()
 	defer certLock.Unlock()
 	fmt.Printf("[certs] refreshing...\n")
