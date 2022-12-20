@@ -3,6 +3,7 @@ package srv
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/dustin/go-humanize"
 	lb "golang.conradwood.net/apis/h2gproxy"
@@ -16,6 +17,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+)
+
+var (
+	experimental = flag.Bool("experimental", false, "enable experimental mode")
 )
 
 // a backend handler must implement this
@@ -270,6 +275,9 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 	}
 	if err != nil {
 		close(chan_out)
+		if ExperimentalMode() {
+			close(chan_in) // abort...
+		}
 		if *debug {
 			fmt.Printf("[streamproxy] returned from BackendStream() with error: %s\n", err)
 		}
@@ -283,6 +291,9 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 		fmt.Printf("[streamproxy] waiting for backend to complete\n")
 	}
 	wg.Wait()
+	if ExperimentalMode() {
+		close(chan_in)
+	}
 	if *debug {
 		fmt.Printf("[streamproxy] backend completed\n")
 	}
@@ -345,7 +356,9 @@ func (sp *StreamProxy) stream_in(wg *sync.WaitGroup, in chan *lb.BodyData, body 
 			break
 		}
 	}
-	close(in)
+	if !ExperimentalMode() {
+		close(in)
+	}
 	wg.Done()
 	if *debug {
 		fmt.Printf("[streamproxy] inchannel done\n")
@@ -448,4 +461,8 @@ func fixIP(remoteaddr string) string {
 		res = xs[0]
 	}
 	return res
+}
+
+func ExperimentalMode() bool {
+	return *experimental
 }
