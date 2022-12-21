@@ -288,6 +288,7 @@ func getcert(chi *tls.ClientHelloInfo) (*tls.Certificate, error) {
 		return c, nil
 	}
 	go request(hostname)
+	time.Sleep(time.Duration(1) * time.Second)
 	c = certmap["public.conradwood.net"] // our default
 	if c != nil {
 		return c, nil

@@ -12,6 +12,7 @@ import (
 	"golang.conradwood.net/go-easyops/prometheus"
 	"golang.conradwood.net/go-easyops/tokens"
 	"golang.conradwood.net/go-easyops/utils"
+	"golang.conradwood.net/h2gproxy/httplogger"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -67,6 +68,7 @@ type FProxy struct {
 	added_cookies        map[string]*h2gproxy.Cookie
 	session_cookie       string
 	session              *apb.SignedSession
+	logreq               httplogger.HTTPRequest // to log start/end and updates for this request
 }
 
 func (f *FProxy) SetUser(a *apb.SignedUser) {

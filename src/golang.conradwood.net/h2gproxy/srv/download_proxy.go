@@ -112,8 +112,9 @@ func (j *download_proxy) BackendStream(ctx context.Context, fcr *lb.StreamReques
 		}
 		if err != nil {
 			fmt.Printf("[downloadproxy] error encountered: %s\n", utils.ErrorString(err))
-			stream.Fail(err)
-			return err
+			break
+			//			stream.Fail(err)
+			//			return err
 		}
 		if resp.Response != nil {
 			*out = *resp.Response

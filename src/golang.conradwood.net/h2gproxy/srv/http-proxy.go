@@ -16,7 +16,6 @@ import (
 	"fmt"
 	apb "golang.conradwood.net/apis/auth"
 	pb "golang.conradwood.net/apis/h2gproxy"
-	hpb "golang.conradwood.net/apis/httpkpi"
 	us "golang.conradwood.net/apis/usagestats"
 	"golang.conradwood.net/go-easyops/auth"
 	"golang.conradwood.net/go-easyops/client"
@@ -65,8 +64,8 @@ var (
 	ip_hack          = flag.Bool("ip_hack", false, "if enabled creates a file in /tmp/h2gproxy/ips for each sending ip")
 	print_timing     = flag.Bool("print_timing", false, "print timing information for each request")
 	debug_throttle   = flag.Bool("debug_throttle", false, "print rate throttling debug information")
-	logQ             *httplogger.AsyncLogQueue
-	timsummary       = prometheus.NewSummaryVec(
+
+	timsummary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "h2gproxy_req_summary",
 			Help: "Summmary for observed requests",
@@ -321,14 +320,7 @@ func getUserIdentifier(user *apb.User) string {
 
 // create a new proxy and store the request and responsewrite in it
 func NewProxy(w http.ResponseWriter, r *http.Request, h *HTTPForwarder, tls bool, port int) *FProxy {
-	var err error
-	if logQ == nil {
-		logQ, err = httplogger.NewAsyncLogQueue()
-		if err != nil {
-			fmt.Printf("Cannot instantiate Logger! (%s)\n", err)
-			return nil
-		}
-	}
+
 	// create new fproxy
 	res := &FProxy{
 		port:       port,
@@ -348,6 +340,7 @@ func NewProxy(w http.ResponseWriter, r *http.Request, h *HTTPForwarder, tls bool
 		}
 	}
 	res.loginProxy = false
+	res.logreq = httplogger.DefaultHTTPLogger().RequestStarted(res.FullURL(), res.PeerIP())
 
 	return res
 }
@@ -937,21 +930,26 @@ func (f *FProxy) SetAndLogFailure(code int32) {
 			"targethost":    f.targetHost,
 			"userid":        getUserIdentifier(f.user)}).Inc()
 	*/
-	ph, _, err := net.SplitHostPort(f.remoteHost)
-	if err != nil {
-		ph = f.remoteHost
-	}
-	ncr := hpb.NewCallRequest{}
-	ncr.Service = f.hf.def.TargetService
-	ncr.TargetHost = f.targetHost
-	ncr.RemoteHost = ph
-	ncr.RequestURL = f.req.URL.String()
-	ncr.ResponseCode = code
-	ncr.ResponseTimeMS = 0
-	if f.unsigneduser != nil {
-		ncr.UserID = f.unsigneduser.ID
-	}
-	logQ.LogHTTP(&ncr)
+	var err error
+	/*
+		ph, _, err := net.SplitHostPort(f.remoteHost)
+		if err != nil {
+			ph = f.remoteHost
+		}
+
+			ncr := hpb.NewCallRequest{}
+			ncr.Service = f.hf.def.TargetService
+			ncr.TargetHost = f.targetHost
+			ncr.RemoteHost = ph
+			ncr.RequestURL = f.req.URL.String()
+			ncr.ResponseCode = code
+			ncr.ResponseTimeMS = 0
+			if f.unsigneduser != nil {
+				ncr.UserID = f.unsigneduser.ID
+			}
+	*/
+	f.logreq.RequestFinished(uint32(code), f.hf.def.TargetService, "")
+
 	f.AddContext()
 
 	if *debug {
@@ -997,27 +995,31 @@ func (f *FProxy) LogResponse() {
 	if *add_hist {
 		f.ObserveTiming(f.ResponseTime)
 	}
-	ph, _, err := net.SplitHostPort(f.remoteHost)
-	if err != nil {
-		ph = f.remoteHost
-	}
-	ncr := hpb.NewCallRequest{}
-	ncr.Service = f.hf.def.TargetService
-	ncr.TargetHost = f.targetHost
-	ncr.RemoteHost = ph
-	ncr.RequestURL = f.req.URL.String()
-	ncr.ResponseCode = int32(f.statusCode)
-	ncr.ResponseTimeMS = int64(f.ResponseTime.Milliseconds())
-	ncr.Group = f.hf.def.ConfigName
-	if !f.redirectedToWeblogin {
-		ncr.Group = f.hf.def.ConfigName
-		if f.unsigneduser != nil {
-			ncr.UserID = f.unsigneduser.ID
+	var err error
+	/*
+		ph, _, err := net.SplitHostPort(f.remoteHost)
+		if err != nil {
+			ph = f.remoteHost
 		}
-	} else {
-		ncr.Group = "weblogin"
-	}
-	logQ.LogHTTP(&ncr)
+		ncr := hpb.NewCallRequest{}
+		ncr.Service = f.hf.def.TargetService
+		ncr.TargetHost = f.targetHost
+		ncr.RemoteHost = ph
+		ncr.RequestURL = f.req.URL.String()
+		ncr.ResponseCode = int32(f.statusCode)
+		ncr.ResponseTimeMS = int64(f.ResponseTime.Milliseconds())
+		ncr.Group = f.hf.def.ConfigName
+		if !f.redirectedToWeblogin {
+			ncr.Group = f.hf.def.ConfigName
+			if f.unsigneduser != nil {
+				ncr.UserID = f.unsigneduser.ID
+			}
+		} else {
+			ncr.Group = "weblogin"
+		}
+		logQ.LogHTTP(&ncr)
+	*/
+	f.logreq.RequestFinished(uint32(f.statusCode), f.hf.def.TargetService, "")
 	f.AddContext()
 
 	if *logusage {
