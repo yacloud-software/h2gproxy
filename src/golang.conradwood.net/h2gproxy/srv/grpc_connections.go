@@ -17,18 +17,18 @@ var (
 type grpc_conn struct {
 	Name                 string
 	Conn                 *grpc.ClientConn
-	stream_counter       int
-	total_stream_counter int
+	stream_counter       int //currently open streams
+	total_stream_counter int // total opened
+	opened               int // how many peeps use this connection (one might have a connection with 0 or 2+ streams)
 	failed               bool
 	lock                 sync.Mutex
-	counter              int
 }
 
 func (g *grpc_conn) AvailableForNewStreams() bool {
 	if g.failed {
 		return false
 	}
-	if g.stream_counter > 3 {
+	if g.stream_counter > 30 {
 		return false
 	}
 	return true
@@ -44,12 +44,16 @@ func GetGRPCConnection(name string) *grpc_conn {
 	}
 	for _, c := range con {
 		if c.Name == name && c.AvailableForNewStreams() {
+			grpc_conn_lock.Lock()
+			c.opened++
+			grpc_conn_lock.Unlock()
 			return c
 		}
 	}
 	grpc_conn_lock.Lock()
 	for _, c := range con {
 		if c.Name == name && c.AvailableForNewStreams() {
+			c.opened++
 			grpc_conn_lock.Unlock()
 			return c
 		}
@@ -61,15 +65,25 @@ func GetGRPCConnection(name string) *grpc_conn {
 	grpc_conn_lock.Lock()
 	for _, c := range con {
 		if c.Name == name && c.AvailableForNewStreams() {
+			c.opened++
 			grpc_conn_lock.Unlock()
 			return c
 		}
 	}
 	con = append(con, res)
+	res.opened++
 	grpc_conn_lock.Unlock()
 	return res
 }
 
+func (g *grpc_conn) Close() {
+	grpc_conn_lock.Lock()
+	if g.opened == 0 {
+		panic("g.opened < 0!")
+	}
+	g.opened--
+	grpc_conn_lock.Unlock()
+}
 func (g *grpc_conn) streamCounterInc() {
 	g.lock.Lock()
 	g.stream_counter++
@@ -140,15 +154,14 @@ func (c *client_stream) Fail(err error) {
 }
 func grpc_closer() {
 	grpc_conn_lock.Lock()
-	defer grpc_conn_lock.Unlock()
 	var res []*grpc_conn
 	var closing []*grpc_conn
 	for _, c := range con {
 		remove := false
-		if c.failed {
+		if c.failed && c.opened == 0 {
 			remove = true
 		}
-		if c.total_stream_counter > 10 && c.stream_counter == 0 {
+		if c.total_stream_counter > 10 && c.opened == 0 {
 			remove = true
 		}
 		if remove {
@@ -158,9 +171,16 @@ func grpc_closer() {
 		}
 	}
 	for _, c := range closing {
+		c.failed = true
+	}
+	con = res
+	grpc_conn_lock.Unlock()
+
+	// slow(er) - outside the lock
+	for _, c := range closing {
 		c.Conn.Close()
 		c.Conn = nil
 		c.failed = true
 	}
-	con = res
+
 }

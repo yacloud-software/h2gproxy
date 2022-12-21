@@ -2,6 +2,7 @@ package httplogger
 
 import (
 	"fmt"
+	"golang.conradwood.net/go-easyops/utils"
 	"os"
 	"time"
 )
@@ -26,8 +27,12 @@ func (d *disklogger) RequestStarted(url string, peer string) HTTPRequest {
 }
 func (d *disk_http_request) RequestProgressed(msg string) {
 }
-func (d *disk_http_request) RequestFinished(httpcode uint32, backend string, msg string) {
-	d.Printf("finished %d %s", httpcode, msg)
+func (d *disk_http_request) RequestFinished(httpcode uint32, backend string, msg string, err error) {
+	es := ""
+	if err != nil && httpcode != 404 {
+		es = utils.ErrorString(err)
+	}
+	d.Printf("finished %d %s%s for %s", httpcode, msg, es, d.url)
 }
 func (d *disk_http_request) Printf(format string, args ...interface{}) {
 	val := fmt.Sprintf(format, args...)

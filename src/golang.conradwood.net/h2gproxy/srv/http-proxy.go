@@ -389,6 +389,7 @@ func (f *FProxy) execute() {
 	}
 	if f.hf.IsDownloadProxy() {
 		DownloadProxy(f)
+		processTimings(f)
 		return
 	}
 	if f.hf.IsFancyProxy() {
@@ -447,13 +448,8 @@ func (f *FProxy) execute() {
 	f.headers_in = headersToString(f.req.Header)
 	f.ReleaseResponse() // this means fproxy won't be responsible for the response. It's an error to send data through fproxy thereafter
 	rv.ServeHTTP(f.writer, f.req)
-	if *print_timing {
-		for _, t := range f.Timings {
-			dur := t.end.Sub(t.start) / time.Millisecond
-			fmt.Printf("[timing] %s=%d ", t.name, dur)
-		}
-		fmt.Println()
-	}
+	processTimings(f)
+
 	/*
 		if *debug {
 			fmt.Printf("request: %v\n", f.req)
@@ -491,7 +487,7 @@ func (f *FProxy) director2(req *http.Request) {
 			fmt.Printf("access to %s from %s denied (only allowed from RFC1918 addresses)\n", path, f.remoteHost)
 			req.URL = f.Errorurl
 			req.Host = *DefaultHost
-			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_EXTERNAL)
+			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_EXTERNAL, fmt.Errorf("need RFC1918 address"))
 			return
 		}
 	}
@@ -508,7 +504,7 @@ func (f *FProxy) director2(req *http.Request) {
 			fmt.Printf("Failed to lookup targetservice %s for path %s: %s\n", f.hf.def.TargetService, path, err)
 			req.URL = f.Errorurl
 			req.Host = *DefaultHost
-			f.SetAndLogFailure(INTERNAL_ERROR_NO_TARGET)
+			f.SetAndLogFailure(INTERNAL_ERROR_NO_TARGET, err)
 			return
 		}
 		dest_host = f.hf.lastHost
@@ -540,7 +536,7 @@ func (f *FProxy) director2(req *http.Request) {
 				fmt.Printf("Failed to lookup loginservice %s for path %s: %s\n", f.hf.def.TargetService, path, err)
 				req.URL = f.Errorurl
 				req.Host = *DefaultHost
-				f.SetAndLogFailure(INTERNAL_ERROR_NO_LOGIN_BACKEND)
+				f.SetAndLogFailure(INTERNAL_ERROR_NO_LOGIN_BACKEND, err)
 				return
 			}
 			// set the stuff the weblogin thing needs:
@@ -564,7 +560,7 @@ func (f *FProxy) director2(req *http.Request) {
 			fmt.Printf("User %v email is not (yet) verified (path=%s)\n", f.unsigneduser, path)
 			req.URL = f.Errorurl
 			req.Host = *DefaultHost
-			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_EMAILVERIFY)
+			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_EMAILVERIFY, fmt.Errorf("user email not verified"))
 			return
 		}
 	}
@@ -577,7 +573,7 @@ func (f *FProxy) director2(req *http.Request) {
 			fmt.Printf("User %v is not in any of the groups for path %s\n", f.unsigneduser, path)
 			req.URL = f.Errorurl
 			req.Host = *DefaultHost
-			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_GROUP)
+			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_GROUP, fmt.Errorf("internal_access_denied_group"))
 			return
 		}
 	}
@@ -597,7 +593,7 @@ func (f *FProxy) director2(req *http.Request) {
 		fmt.Printf("Should not happen (path=%s,urlpath=%s)!!\n", path, f.hf.def.URLPath)
 		req.URL = f.Errorurl
 		req.Host = *DefaultHost
-		f.SetAndLogFailure(INTERNAL_ERROR_BUG)
+		f.SetAndLogFailure(INTERNAL_ERROR_BUG, fmt.Errorf("internal error: urlpath is off"))
 		return
 	}
 	// strip out the urlpath (the stuff we matched on)
@@ -639,7 +635,7 @@ func (f *FProxy) director2(req *http.Request) {
 		fmt.Printf("WTF?? %s encountered url parse error: %s\n", us, err)
 		req.Host = *DefaultHost
 		req.URL = f.Errorurl
-		f.SetAndLogFailure(INTERNAL_ERROR_CONFIG_ERROR)
+		f.SetAndLogFailure(INTERNAL_ERROR_CONFIG_ERROR, err)
 		return
 	}
 
@@ -908,7 +904,8 @@ func normalizeStatusCode(code int) string {
 
 // request could not be made, we log the fact
 // (e.g. no backend is available)
-func (f *FProxy) SetAndLogFailure(code int32) {
+func (f *FProxy) SetAndLogFailure(code int32, be_err error) {
+	var err error
 	f.SetStatus(int(code))
 	fmt.Printf("Failed forwarding \"%s\" to \"%s\": code=%d for user %s\n", f.hf.def.TargetService, f.targetHost, code, f.currentUser())
 	reqCounter.With(prometheus.Labels{
@@ -930,7 +927,7 @@ func (f *FProxy) SetAndLogFailure(code int32) {
 			"targethost":    f.targetHost,
 			"userid":        getUserIdentifier(f.user)}).Inc()
 	*/
-	var err error
+
 	/*
 		ph, _, err := net.SplitHostPort(f.remoteHost)
 		if err != nil {
@@ -948,7 +945,7 @@ func (f *FProxy) SetAndLogFailure(code int32) {
 				ncr.UserID = f.unsigneduser.ID
 			}
 	*/
-	f.logreq.RequestFinished(uint32(code), f.hf.def.TargetService, "")
+	f.logreq.RequestFinished(uint32(code), f.hf.def.TargetService, "", be_err)
 
 	f.AddContext()
 
@@ -1019,7 +1016,7 @@ func (f *FProxy) LogResponse() {
 		}
 		logQ.LogHTTP(&ncr)
 	*/
-	f.logreq.RequestFinished(uint32(f.statusCode), f.hf.def.TargetService, "")
+	f.logreq.RequestFinished(uint32(f.statusCode), f.hf.def.TargetService, "", f.err)
 	f.AddContext()
 
 	if *logusage {
@@ -1365,5 +1362,18 @@ func AddUserIDHeaders(f *FProxy, req *http.Request) {
 	for k, v := range ms {
 		req.Header.Set(k, v)
 	}
+
+}
+
+func processTimings(f *FProxy) {
+	if !*print_timing {
+		return
+	}
+	fmt.Printf("[timing] %d timings:\n", len(f.Timings))
+	for _, t := range f.Timings {
+		dur := t.end.Sub(t.start).Seconds()
+		fmt.Printf("[timing] %s=%0.2f\n", t.name, dur)
+	}
+	fmt.Println()
 
 }

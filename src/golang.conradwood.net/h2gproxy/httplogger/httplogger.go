@@ -14,7 +14,7 @@ type HTTPLogger interface {
 }
 type HTTPRequest interface {
 	RequestProgressed(msg string)
-	RequestFinished(httpcode uint32, backend string, msg string)
+	RequestFinished(httpcode uint32, backend string, msg string, err error)
 }
 
 func DefaultHTTPLogger() HTTPLogger {

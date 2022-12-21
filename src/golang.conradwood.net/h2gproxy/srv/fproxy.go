@@ -269,6 +269,10 @@ func (f *FProxy) write_headers() {
 	f.response_headers_written = true
 }
 func (f *FProxy) SetStatus(code int) {
+	if f.response_headers_written {
+		fmt.Printf("WARNING attempt to set http code to %d (previously %d) after headers were written", code, f.statusCode)
+
+	}
 	f.statusCode = code
 }
 
@@ -412,7 +416,7 @@ func (f *FProxy) createUserHeaders() (map[string]string, error) {
 		suser, err := utils.Marshal(f.unsigneduser)
 		if err != nil {
 			fmt.Printf("Failed to marshal user: %s\n", utils.ErrorString(err))
-			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_NONVALID)
+			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_NONVALID, err)
 			return nil, err
 		}
 		res["X-SIGNEDUSER"] = suser
@@ -420,7 +424,7 @@ func (f *FProxy) createUserHeaders() (map[string]string, error) {
 		suser, err = utils.Marshal(f.signeduser)
 		if err != nil {
 			fmt.Printf("Failed to marshal signed user: %s\n", utils.ErrorString(err))
-			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_NONVALID)
+			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_NONVALID, err)
 			return nil, err
 		}
 		res["X-USERWITHSIGNATURE"] = suser

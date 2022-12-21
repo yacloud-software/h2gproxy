@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/dustin/go-humanize"
-	lb "golang.conradwood.net/apis/h2gproxy"
+	h2g "golang.conradwood.net/apis/h2gproxy"
 	ic "golang.conradwood.net/apis/rpcinterceptor"
 	"golang.conradwood.net/go-easyops/auth"
 	"golang.conradwood.net/go-easyops/client"
@@ -28,10 +28,10 @@ type StreamingProxy interface {
 
 	// concrete implementation to connect to a backend
 	// the proxy will be called with two streams for upload and download requests
-	// the "out" (lb.ServeRequest) is actually a return value. It will be processed once
+	// the "out" (h2g.ServeRequest) is actually a return value. It will be processed once
 	// the first bodydata arrives in out_stream (or it is closed or the function returns). the proxy is supposed to modify it
 	// Important: backendstream handler must close(out_stream) when done writing
-	BackendStream(ctx context.Context, in *lb.StreamRequest, in_stream chan *lb.BodyData, out *lb.StreamResponse, out_stream chan *lb.BodyData) error
+	BackendStream(ctx context.Context, in *h2g.StreamRequest, out_stream chan *h2g.BodyData) error
 }
 
 type StreamProxy struct {
@@ -128,68 +128,74 @@ retry:
 	var httpError *HTTPError
 	public_error_message := ""
 	privileged_error_message := ""
-	/******************** did the backend return an error ? ******************/
-	if err != nil {
-		st := status.Convert(err)
-		public_error_message = get_public_error_message(err)
-		privileged_error_message = utils.ErrorString(err)
-		message := st.Message()
-		code := st.Code()
-		msg := fmt.Sprintf("[streamproxy] API (type %d) Call (%s), authenticated()=%v, late_auth=%v, failed: code=%d message=%s", g.f.hf.def.Api, g.f.String(), a.Authenticated(), late_auth_attempted, code, message)
-		fmt.Println(msg)
-		fmt.Printf("[streamproxy] API (type %d) Call (%s) failed: %s\n", g.f.hf.def.Api, g.f.String(), utils.ErrorString(err))
-		// sometimes the backend (especially the html backend) may ask us to authenticate a user
-		// this happens, if, for example some parts of a backend are accessible by anyone (even non-authenticated people)
-		// and some need authentication. we deal with this here.
 
-		// sometimes we actually identified a user (but user is not yet verified)
-		if a.User() != nil && !a.User().EmailVerified && a.Authenticated() && !late_auth_attempted {
-			late_auth_attempted = true
-			g.f.SetUser(a.SignedUser())
-			if *debug_rpc {
-				fmt.Printf("[grpcprocy] have user %s, but email not verified, thus it was not passed to the backend\n", auth.Description(g.f.unsigneduser))
-			}
-			nctx, err := createContext(g.f, a, rp)
-			if err != nil {
-				g.f.ProcessError(err, 500, "failed to create a user context")
-				return
-			}
-			if g.verifyEmail(nctx) {
-				goto retry
-			}
-			return
-		}
-
-		// if we didn't try so before, attempt weblogin
-		if code == codes.Unauthenticated && !a.Authenticated() && !late_auth_attempted {
-			late_auth_attempted = true
-			b := g.late_authenticate()
-			if b {
-				goto retry
-			}
-			return
-		}
-
-		g.f.customHeaders(&ExtraInfo{Error: err, Message: msg})
-		httpError = grpcToHTTP(code)
-		httpError.ErrorMessage = public_error_message
-		if auth.IsRoot(nctx) {
-			httpError.ExtendedErrorString = privileged_error_message
-		}
-
-		g.f.SetStatus(httpError.ErrorCode)
-		if *debug {
-			fmt.Printf("[streamproxy] Returning HTTP error: %d\n", g.f.statusCode)
-		}
-
-		resp, err := json.Marshal(httpError)
-		if err != nil {
-			fmt.Printf("Failed to marshal http error: %s\n", err)
-		}
-		g.f.Write(resp)
+	if err == nil {
+		g.f.LogResponse()
+		return
 	}
 
-	g.f.LogResponse()
+	/******************** the backend return an error ? ******************/
+	// very elaborate error handler....
+
+	st := status.Convert(err)
+	public_error_message = get_public_error_message(err)
+	privileged_error_message = utils.ErrorString(err)
+	message := st.Message()
+	code := st.Code()
+	msg := fmt.Sprintf("[streamproxy] API (type %d) Call (%s), authenticated()=%v, late_auth=%v, failed: code=%d message=%s", g.f.hf.def.Api, g.f.String(), a.Authenticated(), late_auth_attempted, code, message)
+	fmt.Println(msg)
+	fmt.Printf("[streamproxy] API (type %d) Call (%s) failed: %s\n", g.f.hf.def.Api, g.f.String(), utils.ErrorString(err))
+	// sometimes the backend (especially the html backend) may ask us to authenticate a user
+	// this happens, if, for example some parts of a backend are accessible by anyone (even non-authenticated people)
+	// and some need authentication. we deal with this here.
+
+	// sometimes we actually identified a user (but user is not yet verified)
+	if a.User() != nil && !a.User().EmailVerified && a.Authenticated() && !late_auth_attempted {
+		late_auth_attempted = true
+		g.f.SetUser(a.SignedUser())
+		if *debug_rpc {
+			fmt.Printf("[grpcprocy] have user %s, but email not verified, thus it was not passed to the backend\n", auth.Description(g.f.unsigneduser))
+		}
+		nctx, lerr := createContext(g.f, a, rp)
+		if lerr != nil {
+			g.f.ProcessError(err, 500, "failed to create a user context")
+			return
+		}
+		if g.verifyEmail(nctx) {
+			goto retry
+		}
+		return
+	}
+
+	// if we didn't try so before, attempt weblogin
+	if code == codes.Unauthenticated && !a.Authenticated() && !late_auth_attempted {
+		late_auth_attempted = true
+		b := g.late_authenticate()
+		if b {
+			goto retry
+		}
+		return
+	}
+
+	g.f.customHeaders(&ExtraInfo{Error: err, Message: msg})
+	httpError = grpcToHTTP(code)
+	httpError.ErrorMessage = public_error_message
+	if auth.IsRoot(nctx) {
+		httpError.ExtendedErrorString = privileged_error_message
+	}
+
+	g.f.SetStatus(httpError.ErrorCode)
+	if *debug {
+		fmt.Printf("[streamproxy] Returning HTTP error: %d\n", g.f.statusCode)
+	}
+
+	resp, lerr := json.Marshal(httpError)
+	if lerr != nil {
+		fmt.Printf("Failed to marshal http error: %s\n", err)
+	}
+	g.f.Write(resp)
+
+	g.f.SetAndLogFailure(int32(httpError.ErrorCode), err)
 	return
 }
 
@@ -200,11 +206,8 @@ retry:
 */
 func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (context.Context, error) {
 
-	// read the request:
-	body := g.f.RequestBody()
-
 	// build up the grpc proto
-	sv := &lb.StreamRequest{Port: uint32(g.f.port)}
+	sv := &h2g.StreamRequest{Port: uint32(g.f.port)}
 	sv.Host = strings.ToLower(g.f.req.Host)
 	sv.Path = g.f.req.URL.Path
 	sv.Method = g.f.req.Method
@@ -217,7 +220,7 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 		if strings.ToLower(name) == "user-agent" && len(values) > 0 {
 			sv.UserAgent = values[0]
 		}
-		h := &lb.Header{Name: name}
+		h := &h2g.Header{Name: name}
 		sv.Headers = append(sv.Headers, h)
 		h.Values = values
 	}
@@ -228,7 +231,7 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 
 	// careful here - we do *not* accept multiple values for a given field.
 	for name, value := range g.f.RequestValues() {
-		p := &lb.Parameter{Name: name, Value: value}
+		p := &h2g.Parameter{Name: name, Value: value}
 		sv.Parameters = append(sv.Parameters, p)
 	}
 	/***************************************************************
@@ -264,19 +267,18 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 	/***************************************************************
 	// make the RPC Call
 	***************************************************************/
-	resp := &lb.StreamResponse{}
-	chan_in := make(chan *lb.BodyData)
+
+	chan_in := make(chan *h2g.BodyData)
 	// the channel has a large buffer, because we need to decouple the backend speed
 	// from the download speed
 	// this has the potential for a nasty DoS. We probably need to limit overall ram
 	// consumption and start denying clients access if too many buffers are in use
-	chan_out := make(chan *lb.BodyData, 1000000)
+	chan_out := make(chan *h2g.BodyData, 1000000)
 	var wg sync.WaitGroup // we have to wait until input and output streams are completed.
-	wg.Add(2)
-	go g.stream_in(&wg, chan_in, body)
-	go g.stream_out(&wg, chan_out, resp)
+	wg.Add(1)
+	go g.stream_out(&wg, chan_out) // backend->browser
 	started := time.Now()
-	err = g.p.BackendStream(ctx, sv, chan_in, resp, chan_out)
+	err = g.p.BackendStream(ctx, sv, chan_out) // typicalls calls downloadproxy, blocks until stream completed
 	elapsed := time.Since(started)
 	cnc()
 	if *debug {
@@ -340,42 +342,8 @@ func (g *StreamProxy) late_authenticate() bool {
 	return g.f.WebLogin()
 }
 
-// copy the data uploaded by the browser to the backend
-func (sp *StreamProxy) stream_in(wg *sync.WaitGroup, in chan *lb.BodyData, body []byte) {
-	max_size := 4096
-	offset := 0
-	done := false
-	if *debug {
-		fmt.Printf("[streamproxy] sending %d bytes to backend\n", len(body))
-	}
-	for {
-		if len(body) == 0 {
-			break
-		}
-		bd := &lb.BodyData{}
-		end := offset + max_size
-		if len(body) < end {
-			end = len(body)
-			done = true
-		}
-		bd.Data = body[offset:end]
-		in <- bd
-		offset = offset + max_size
-		if done {
-			break
-		}
-	}
-	if !ExperimentalMode() {
-		close(in)
-	}
-	wg.Done()
-	if *debug {
-		fmt.Printf("[streamproxy] inchannel done\n")
-	}
-}
-
 // the backend sent back a streamresponse - send this back to browser
-func (sp *StreamProxy) processStreamResponse(resp *lb.StreamResponse) {
+func (sp *StreamProxy) processStreamResponse(resp *h2g.StreamResponse) {
 	// process stream response
 	mtype := "application/octet-stream"
 	if resp.MimeType != "" {
@@ -405,41 +373,53 @@ func (sp *StreamProxy) processStreamResponse(resp *lb.StreamResponse) {
 	if resp.StatusCode != 0 {
 		code = int(resp.StatusCode)
 	}
-	sp.f.SetStatus(code)
 
 	reqid := sp.f.requestid
 
 	if *debug {
-		fmt.Printf("Setting requestid header to \"%s\"\n", reqid)
+		fmt.Printf("Setting requestid header to \"%s\" and code to %d\n", reqid, code)
 	}
 	sp.f.SetHeader("X-LB-RequestID", reqid)
 	sp.f.SetStatus(code)
 }
 
 // copy the data from the backend to the browser. send streamresponse before first bodydata
-func (sp *StreamProxy) stream_out(wg *sync.WaitGroup, out chan *lb.BodyData, resp *lb.StreamResponse) {
+// the backend is expected to write to "out" channel, which this then copies to browser
+func (sp *StreamProxy) stream_out(wg *sync.WaitGroup, out chan *h2g.BodyData) {
 	first := true
 	size := 0
 	totalsize := uint64(0)
 	received := 0
 	for {
-		data, gotdata := <-out
+		bd, gotdata := <-out // gets us a "bodydata"
 		if !gotdata {
+			if bd != nil {
+				panic("developer misunderstood return values of channel")
+			}
+			if *debug {
+				fmt.Printf("Received %d objects on outchannel (backend->browser)\n", received)
+			}
 			break
 		}
+		sdr := bd.Response   // gets us a "StreamDataResponse" (with data and/or metadata)
+		resp := sdr.Response // gets us a "StreamResponse" (metadata)
 		received++
 		//		fmt.Printf("[streamproxy] Writing %d bytes to browser (first=%v)\n", len(data.Data), first)
-		if first {
-			sp.processStreamResponse(resp)
-			totalsize = resp.Size
-			first = false
 
+		if resp != nil {
+			if !first {
+				fmt.Printf("[streamproxy] meta data received AFTER data (%d bytes) was received\n", size)
+			} else {
+				sp.processStreamResponse(resp)
+				totalsize = resp.Size
+				first = false
+			}
 		}
 		if sp.f.writer == nil {
 			panic("writer is nil")
 		}
-		size = size + len(data.Data)
-		err := sp.f.Write(data.Data)
+		size = size + len(sdr.Data)
+		err := sp.f.Write(sdr.Data)
 		if err != nil {
 			fmt.Printf("WRITE ERROR: %s\n", err)
 			sp.write_err = err
@@ -447,12 +427,14 @@ func (sp *StreamProxy) stream_out(wg *sync.WaitGroup, out chan *lb.BodyData, res
 		}
 		sp.f.Flush()
 		if *debug {
-			fmt.Printf("[streamproxy] wrote %s of %s (chunk %d) bytes to browser\n", humanize.Bytes(uint64(size)), humanize.Bytes(totalsize), len(data.Data))
+			fmt.Printf("[streamproxy] wrote %s of %s (chunk %d) bytes to browser\n", humanize.Bytes(uint64(size)), humanize.Bytes(totalsize), len(sdr.Data))
 		}
 	}
-	if first && received > 0 {
-		sp.processStreamResponse(resp)
-	}
+	/*
+		if first && received > 0 {
+			sp.processStreamResponse(resp)
+		}
+	*/
 	wg.Done()
 	if *debug {
 		fmt.Printf("[streamproxy] outchannel done\n")

@@ -14,7 +14,7 @@ func (d *nooplogger) RequestStarted(url string, peer string) HTTPRequest {
 }
 func (d *noop_http_request) RequestProgressed(msg string) {
 }
-func (d *noop_http_request) RequestFinished(httpcode uint32, backend string, msg string) {
+func (d *noop_http_request) RequestFinished(httpcode uint32, backend string, msg string, err error) {
 }
 func (d *noop_http_request) Printf(format string, args ...interface{}) {
 }

@@ -43,7 +43,7 @@ func (f *FProxy) customHeaders(msg *ExtraInfo) {
 		f.SetHeader("Access-Control-Allow-Origin", orig)
 	}
 	f.SetHeader("Access-Control-Allow-Credentials", "true")
-	f.SetHeader("X-LB-Platform", "SingingCat ltd")
+	f.SetHeader("X-LB-Platform", "YACLOUD.EU")
 	f.SetHeader("X-LB-REQUESTID", f.requestid)
 
 	if f.unsigneduser == nil && f.signeduser == nil {
@@ -101,8 +101,8 @@ func (f *FProxy) customHeaders(msg *ExtraInfo) {
 			message := st.Message()
 			code := st.Code()
 			f.addHeader("GRPC-Message", message)
-			f.addHeader("GRP-Code", fmt.Sprintf("%d", code))
-			f.addHeader("GRP-Code-Text", fmt.Sprintf("%v", code))
+			f.addHeader("GRPC-Code", fmt.Sprintf("%d", code))
+			f.addHeader("GRPC-Code-Text", fmt.Sprintf("%v", code))
 			det := st.Details()
 			for i, d := range det {
 				f.addHeader(fmt.Sprintf("DetailMessage-%d", i), fmt.Sprintf("%v", d))
