@@ -235,7 +235,7 @@ message HostList {
 }
 
 message BodyData {
-  bytes Data = 1;
+  StreamDataResponse Response =1;
 }
 
 message ConfigureProberRequest {
