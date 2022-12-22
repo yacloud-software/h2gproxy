@@ -239,14 +239,8 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 	***************************************************************/
 	var ctx context.Context
 	var cnc context.CancelFunc
-	if ExperimentalMode() {
-		ctx, cnc, err = createCancellableContext(g.f, a, rp)
-	} else {
-		ctx, err = createContext(g.f, a, rp)
-		cnc = func() {
-			fmt.Printf("cancelled\n")
-		}
-	}
+	ctx, cnc, err = createCancellableContext(g.f, a, rp)
+
 	if err != nil {
 		fmt.Printf("[streamproxy] failed to create a new context: %s\n", err)
 		return nil, err
@@ -286,9 +280,7 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 	}
 	if err != nil {
 		close(chan_out)
-		if ExperimentalMode() {
-			close(chan_in) // abort...
-		}
+		close(chan_in) // abort...
 		if *debug {
 			fmt.Printf("[streamproxy] returned from BackendStream() with error: %s\n", err)
 		}
@@ -302,9 +294,7 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 		fmt.Printf("[streamproxy] waiting for backend to complete\n")
 	}
 	wg.Wait()
-	if ExperimentalMode() {
-		close(chan_in)
-	}
+	close(chan_in)
 	if *debug {
 		fmt.Printf("[streamproxy] backend completed\n")
 	}
