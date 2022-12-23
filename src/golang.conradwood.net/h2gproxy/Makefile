@@ -1,5 +1,5 @@
 .PHONY:	client server probe logreader
-all:	client server probe
+all:	client server probe logreader
 server:
 	cd server && go install ${LDFLAGS} h2gproxy-server.go `ls -1 *.go |grep -v h2gproxy-server.go`
 probe:
