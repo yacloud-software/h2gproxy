@@ -65,6 +65,7 @@ func (j *download_proxy) BackendStream(ctx context.Context, fcr *lb.StreamReques
 		return err
 	}
 	t.Done()
+	t = j.f.AddTiming("startsend")
 	if err := stream.SendMsg(fcr); err != nil {
 		stream.Fail(err)
 		return err
@@ -76,7 +77,10 @@ func (j *download_proxy) BackendStream(ctx context.Context, fcr *lb.StreamReques
 	if *debug {
 		fmt.Printf("[downloadproxy] - starting recv() loop\n")
 	}
+	t.Done()
+	t = j.f.AddTiming("backend")
 	sent := 0
+
 	for {
 		resp := &lb.StreamDataResponse{}
 		// TODO: handle streamresponse here instead of only data
@@ -86,6 +90,7 @@ func (j *download_proxy) BackendStream(ctx context.Context, fcr *lb.StreamReques
 		}
 		if err != nil {
 			fmt.Printf("[downloadproxy] error encountered: %s\n", utils.ErrorString(err))
+			t.Done()
 			stream.Fail(err)
 			return err
 		}
@@ -102,6 +107,7 @@ func (j *download_proxy) BackendStream(ctx context.Context, fcr *lb.StreamReques
 		fmt.Printf("[downloadproxy] sent %d objects to outchannel (backend->browser)\n", sent)
 	}
 	stream.Finish()
+	t.Done()
 	close(out_stream)
 	if *debug {
 		fmt.Printf("[downloadproxy] done\n")
