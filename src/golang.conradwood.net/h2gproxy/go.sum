@@ -62,8 +62,6 @@ golang.conradwood.net/apis/usagestats v1.1.1968 h1:O2pvij8ddz9qegqiQ6gNa3n5GJT/1
 golang.conradwood.net/apis/usagestats v1.1.1968/go.mod h1:28r5k4V/rdaEVpCsCIs52wjHZqkHMYEjbCyxmmAex4Y=
 golang.conradwood.net/apis/weblogin v1.1.1968 h1:tOKISmyP6hdbokLwe5M7Vo/ejAA84hYLBXKytT3Nr70=
 golang.conradwood.net/apis/weblogin v1.1.1968/go.mod h1:Y+xdAjdWnvVsYLx7pQ2rPR8Dk+hyPfzcFLOrPpqlxWA=
-golang.conradwood.net/go-easyops v0.1.14843 h1:Aq2hihXOwrzCBaHE5B4jl4jgnhZ/yqDlYURVkQDiz+U=
-golang.conradwood.net/go-easyops v0.1.14843/go.mod h1:esMJkzxaY5YlzMZNfEdaUGORt/E4AJq2dhSKkZ4/OHU=
 golang.conradwood.net/go-easyops v0.1.14844 h1:r+EJOIONPlYtO7otpkAAlmfkmKKBdJCYH3uOOT0pLlw=
 golang.conradwood.net/go-easyops v0.1.14844/go.mod h1:esMJkzxaY5YlzMZNfEdaUGORt/E4AJq2dhSKkZ4/OHU=
 golang.org/x/net v0.4.0 h1:Q5QPcMlvfxFTAPV0+07Xz/MpK9NTXu2VDUuy0FeMfaU=
