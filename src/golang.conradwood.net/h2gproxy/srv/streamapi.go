@@ -47,6 +47,8 @@ func NewStreamProxy(f *FProxy, sp StreamingProxy) *StreamProxy {
 
 // we forward via grpc...
 func (g *StreamProxy) Proxy() {
+	t_total := g.f.AddTiming("stream_total")
+	defer t_total.Done()
 	if rc == nil {
 		rc = ic.NewRPCInterceptorServiceClient(client.Connect("rpcinterceptor.RPCInterceptorService"))
 	}
@@ -55,6 +57,7 @@ func (g *StreamProxy) Proxy() {
 	}
 	g.f.SetHeader("Connection", "close")
 	var err error
+	t_auth := g.f.AddTiming("stream_auth")
 	a := &authResult{}
 	a, err = json_auth(g.f) // always check if we got auth stuff
 	if g.f.hf.def.NeedAuth && !a.Authenticated() {
@@ -120,6 +123,7 @@ retry:
 	if *debug {
 		fmt.Printf("Stream request from %s to %s\n", g.f.PeerIP(), g.f.String())
 	}
+	t_auth.Done()
 	g.f.Started = time.Now()
 	/************ now call the backend ****************************/
 	nctx, err := g.streamproxy(rp, a)
@@ -205,7 +209,6 @@ retry:
 **************************************************************
 */
 func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (context.Context, error) {
-
 	// build up the grpc proto
 	sv := &h2g.StreamRequest{Port: uint32(g.f.port)}
 	sv.Host = strings.ToLower(g.f.req.Host)
@@ -237,10 +240,11 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 	/***************************************************************
 	// build a useful context from authresult & intercept response
 	***************************************************************/
+	t_ctx := g.f.AddTiming("stream_create_context")
 	var ctx context.Context
 	var cnc context.CancelFunc
 	ctx, cnc, err = createCancellableContext(g.f, a, rp)
-
+	t_ctx.Done()
 	if err != nil {
 		fmt.Printf("[streamproxy] failed to create a new context: %s\n", err)
 		return nil, err
@@ -376,6 +380,9 @@ func (sp *StreamProxy) processStreamResponse(resp *h2g.StreamResponse) {
 // copy the data from the backend to the browser. send streamresponse before first bodydata
 // the backend is expected to write to "out" channel, which this then copies to browser
 func (sp *StreamProxy) stream_out(wg *sync.WaitGroup, out chan *h2g.BodyData) {
+	t_chanout := sp.f.AddTiming("stream_chanout")
+	defer t_chanout.Done()
+
 	first := true
 	size := 0
 	totalsize := uint64(0)

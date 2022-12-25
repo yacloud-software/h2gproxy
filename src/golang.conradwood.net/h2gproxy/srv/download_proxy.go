@@ -47,7 +47,6 @@ func (j *download_proxy) BackendStream(ctx context.Context, fcr *lb.StreamReques
 		fmt.Printf("[downloadproxy] - streaming %s\n", j.targetservice)
 		fmt.Printf("[downloadproxy] in: %s\n", fcr.Path)
 	}
-
 	// connect to your backend and start streaming from it
 	t := j.f.AddTiming("open_grpc_connection")
 	cc := GetGRPCConnection(j.targetservice)
