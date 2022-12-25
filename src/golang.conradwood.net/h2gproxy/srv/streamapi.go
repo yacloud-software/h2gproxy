@@ -419,11 +419,14 @@ func (sp *StreamProxy) stream_out(wg *sync.WaitGroup, out chan *h2g.BodyData) {
 			sp.write_err = err
 			break
 		}
-		sp.f.Flush()
+		if sp.f.hf.def.LowLatency {
+			sp.f.Flush()
+		}
 		if *debug {
 			fmt.Printf("[streamproxy] wrote %s of %s (chunk %d) bytes to browser\n", humanize.Bytes(uint64(size)), humanize.Bytes(totalsize), len(sdr.Data))
 		}
 	}
+	sp.f.Flush()
 	/*
 		if first && received > 0 {
 			sp.processStreamResponse(resp)
