@@ -266,7 +266,6 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 	// make the RPC Call
 	***************************************************************/
 
-	chan_in := make(chan *h2g.BodyData)
 	// the channel has a large buffer, because we need to decouple the backend speed
 	// from the download speed
 	// this has the potential for a nasty DoS. We probably need to limit overall ram
@@ -284,7 +283,6 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 	}
 	if err != nil {
 		close(chan_out)
-		close(chan_in) // abort...
 		if *debug {
 			fmt.Printf("[streamproxy] returned from BackendStream() with error: %s\n", err)
 		}
@@ -298,7 +296,6 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 		fmt.Printf("[streamproxy] waiting for backend to complete\n")
 	}
 	wg.Wait()
-	close(chan_in)
 	if *debug {
 		fmt.Printf("[streamproxy] backend completed\n")
 	}
