@@ -20,6 +20,7 @@ import (
 )
 
 var (
+	always_flush = flag.Bool("always_flush", false, "if true ignore low-latency flag and flush each data piece")
 	experimental = flag.Bool("experimental", false, "enable experimental mode")
 )
 
@@ -421,7 +422,7 @@ func (sp *StreamProxy) stream_out(wg *sync.WaitGroup, out chan *h2g.BodyData) {
 				sp.write_err = err
 				break
 			}
-			if sp.f.hf.def.LowLatency || never_flushed {
+			if sp.f.hf.def.LowLatency || never_flushed || *always_flush {
 				sp.f.Flush()
 				never_flushed = false
 			}
