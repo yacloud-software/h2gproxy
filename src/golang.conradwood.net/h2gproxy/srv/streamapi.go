@@ -384,6 +384,7 @@ func (sp *StreamProxy) stream_out(wg *sync.WaitGroup, out chan *h2g.BodyData) {
 	size := 0
 	totalsize := uint64(0)
 	received := 0
+	never_flushed := true
 	for {
 		bd, gotdata := <-out // gets us a "bodydata"
 		if !gotdata {
@@ -419,8 +420,9 @@ func (sp *StreamProxy) stream_out(wg *sync.WaitGroup, out chan *h2g.BodyData) {
 			sp.write_err = err
 			break
 		}
-		if sp.f.hf.def.LowLatency {
+		if sp.f.hf.def.LowLatency || never_flushed {
 			sp.f.Flush()
+			never_flushed = false
 		}
 		if *debug {
 			fmt.Printf("[streamproxy] wrote %s of %s (chunk %d) bytes to browser\n", humanize.Bytes(uint64(size)), humanize.Bytes(totalsize), len(sdr.Data))
