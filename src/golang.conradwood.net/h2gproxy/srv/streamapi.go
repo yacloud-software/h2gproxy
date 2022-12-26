@@ -413,16 +413,18 @@ func (sp *StreamProxy) stream_out(wg *sync.WaitGroup, out chan *h2g.BodyData) {
 		if sp.f.writer == nil {
 			panic("writer is nil")
 		}
-		size = size + len(sdr.Data)
-		err := sp.f.Write(sdr.Data)
-		if err != nil {
-			fmt.Printf("WRITE ERROR: %s\n", err)
-			sp.write_err = err
-			break
-		}
-		if sp.f.hf.def.LowLatency || never_flushed {
-			sp.f.Flush()
-			never_flushed = false
+		if (sdr != nil) && len(sdr.Data) > 0 {
+			size = size + len(sdr.Data)
+			err := sp.f.Write(sdr.Data)
+			if err != nil {
+				fmt.Printf("WRITE ERROR: %s\n", err)
+				sp.write_err = err
+				break
+			}
+			if sp.f.hf.def.LowLatency || never_flushed {
+				sp.f.Flush()
+				never_flushed = false
+			}
 		}
 		if *debug {
 			fmt.Printf("[streamproxy] wrote %s of %s (chunk %d) bytes to browser\n", humanize.Bytes(uint64(size)), humanize.Bytes(totalsize), len(sdr.Data))
