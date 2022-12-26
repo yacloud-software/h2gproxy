@@ -8,6 +8,14 @@ import (
 )
 
 var (
+	timbsummary = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name: "h2gproxy_req_summary_breakdown",
+			Help: "Summmary for observed requests",
+		},
+		[]string{"config", "timing"},
+	)
+
 	timdist = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "h2gproxy_req_timing_breakdown",
@@ -20,7 +28,7 @@ var (
 )
 
 func init() {
-	prometheus.MustRegister(timdist)
+	prometheus.MustRegister(timdist, timbsummary)
 }
 
 type Timing struct {
@@ -51,7 +59,9 @@ func processTimings(f *FProxy) {
 		dur := t.end.Sub(t.start).Seconds()
 		l := prometheus.Labels{"config": f.hf.def.ConfigName, "timing": t.name}
 		timdist.With(l).Add(dur)
+		timbsummary.With(l).Observe(dur)
 	}
+
 	if !*print_timing {
 		return
 	}
