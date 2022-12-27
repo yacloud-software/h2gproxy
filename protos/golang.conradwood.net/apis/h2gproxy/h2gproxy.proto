@@ -221,6 +221,7 @@ message AddConfigHTTPRequest {
   uint32 MaxDuration = 31;
   // for certain configurations, such as apis or proxies we might only want to do basic auth or tokens or
   bool DisableFormBasedAuth=32;
+  bool LowLatency=33; // optimize for lower latency (send responses sooner rather than buffering)
 }
 
 message HostListEntry {
