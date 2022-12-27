@@ -20,6 +20,7 @@ import (
 )
 
 var (
+	debug_stream = flag.Bool("debug_stream", false, "debug streaming proxy")
 	always_flush = flag.Bool("always_flush", false, "if true ignore low-latency flag and flush each data piece")
 	experimental = flag.Bool("experimental", false, "enable experimental mode")
 )
@@ -55,6 +56,9 @@ func (g *StreamProxy) Proxy() {
 	}
 	if *printHeaders {
 		fmt.Println(headersToString(g.f.req.Header))
+	}
+	if *debug_stream {
+		fmt.Printf("[streamproxy] starting request %s\n", g.f.String())
 	}
 	g.f.SetHeader("Connection", "close")
 	var err error
@@ -135,6 +139,7 @@ retry:
 	privileged_error_message := ""
 
 	if err == nil {
+		g.f.Flush()
 		g.f.LogResponse()
 		return
 	}
@@ -279,12 +284,12 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 	err = g.p.BackendStream(ctx, sv, chan_out) // typicalls calls downloadproxy, blocks until stream completed
 	elapsed := time.Since(started)
 	cnc()
-	if *debug {
+	if *debug_stream {
 		fmt.Printf("[streamproxy] BackendStream() returned after %v\n", elapsed)
 	}
 	if err != nil {
 		close(chan_out)
-		if *debug {
+		if *debug_stream {
 			fmt.Printf("[streamproxy] returned from BackendStream() with error: %s\n", err)
 		}
 
@@ -293,7 +298,7 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 
 	}
 	// no error on backend - wait for streams to complete
-	if *debug {
+	if *debug_stream {
 		fmt.Printf("[streamproxy] waiting for backend to complete\n")
 	}
 	wg.Wait()
@@ -392,8 +397,8 @@ func (sp *StreamProxy) stream_out(wg *sync.WaitGroup, out chan *h2g.BodyData) {
 			if bd != nil {
 				panic("developer misunderstood return values of channel")
 			}
-			if *debug {
-				fmt.Printf("Received %d objects on outchannel (backend->browser)\n", received)
+			if *debug_stream {
+				fmt.Printf("[streamproxy] Received %d objects on outchannel (backend->browser)\n", received)
 			}
 			break
 		}
@@ -406,6 +411,9 @@ func (sp *StreamProxy) stream_out(wg *sync.WaitGroup, out chan *h2g.BodyData) {
 			if !first {
 				fmt.Printf("[streamproxy] meta data received AFTER data (%d bytes) was received\n", size)
 			} else {
+				if *debug_stream {
+					fmt.Printf("[streamproxy] Received stream response (code=%d)\n", resp.StatusCode)
+				}
 				sp.processStreamResponse(resp)
 				totalsize = resp.Size
 				first = false
@@ -415,6 +423,9 @@ func (sp *StreamProxy) stream_out(wg *sync.WaitGroup, out chan *h2g.BodyData) {
 			panic("writer is nil")
 		}
 		if (sdr != nil) && len(sdr.Data) > 0 {
+			if *debug_stream {
+				fmt.Printf("Received %d bytes from backend\n", len(sdr.Data))
+			}
 			size = size + len(sdr.Data)
 			err := sp.f.Write(sdr.Data)
 			if err != nil {
@@ -431,7 +442,6 @@ func (sp *StreamProxy) stream_out(wg *sync.WaitGroup, out chan *h2g.BodyData) {
 			fmt.Printf("[streamproxy] wrote %s of %s (chunk %d) bytes to browser\n", humanize.Bytes(uint64(size)), humanize.Bytes(totalsize), len(sdr.Data))
 		}
 	}
-	sp.f.Flush()
 	/*
 		if first && received > 0 {
 			sp.processStreamResponse(resp)

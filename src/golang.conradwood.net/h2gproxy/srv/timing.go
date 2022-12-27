@@ -68,7 +68,7 @@ func processTimings(f *FProxy) {
 	fmt.Printf("[timing] %d timings:\n", len(f.Timings))
 	for _, t := range f.Timings {
 		dur := t.end.Sub(t.start).Seconds()
-		fmt.Printf("[timing] %s=%0.2f\n", t.name, dur)
+		fmt.Printf("[timing] %s=%0.2fs\n", t.name, dur)
 	}
 	fmt.Println()
 

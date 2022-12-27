@@ -266,11 +266,14 @@ func (f *FProxy) write_headers() {
 	}
 
 	f.writer.WriteHeader(f.statusCode)
+	if *debug {
+		fmt.Printf("[fproxy] headers written\n")
+	}
 	f.response_headers_written = true
 }
 func (f *FProxy) SetStatus(code int) {
 	if f.response_headers_written {
-		fmt.Printf("WARNING attempt to set http code to %d (previously %d) after headers were written\n", code, f.statusCode)
+		fmt.Printf("[%s] WARNING attempt to set http code to %d (previously %d) after headers were written\n", f.String(), code, f.statusCode)
 
 	}
 	f.statusCode = code
@@ -333,6 +336,9 @@ func (f *FProxy) Flush() {
 
 // writes headers too
 func (f *FProxy) Write(buf []byte) error {
+	if *debug {
+		fmt.Printf("[fproxy] Writing %d bytes\n", len(buf))
+	}
 	if f.response_released {
 		panic("write after response was released")
 	}
