@@ -20,7 +20,6 @@ import (
 )
 
 var (
-	always_flush = flag.Bool("always_flush", false, "if true ignore low-latency flag and flush each data piece")
 	experimental = flag.Bool("experimental", false, "enable experimental mode")
 )
 
@@ -48,8 +47,6 @@ func NewStreamProxy(f *FProxy, sp StreamingProxy) *StreamProxy {
 
 // we forward via grpc...
 func (g *StreamProxy) Proxy() {
-	t_total := g.f.AddTiming("stream_total")
-	defer t_total.Done()
 	if rc == nil {
 		rc = ic.NewRPCInterceptorServiceClient(client.Connect("rpcinterceptor.RPCInterceptorService"))
 	}
@@ -58,7 +55,6 @@ func (g *StreamProxy) Proxy() {
 	}
 	g.f.SetHeader("Connection", "close")
 	var err error
-	t_auth := g.f.AddTiming("stream_auth")
 	a := &authResult{}
 	a, err = json_auth(g.f) // always check if we got auth stuff
 	if g.f.hf.def.NeedAuth && !a.Authenticated() {
@@ -124,7 +120,6 @@ retry:
 	if *debug {
 		fmt.Printf("Stream request from %s to %s\n", g.f.PeerIP(), g.f.String())
 	}
-	t_auth.Done()
 	g.f.Started = time.Now()
 	/************ now call the backend ****************************/
 	nctx, err := g.streamproxy(rp, a)
@@ -210,6 +205,7 @@ retry:
 **************************************************************
 */
 func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (context.Context, error) {
+
 	// build up the grpc proto
 	sv := &h2g.StreamRequest{Port: uint32(g.f.port)}
 	sv.Host = strings.ToLower(g.f.req.Host)
@@ -241,11 +237,10 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 	/***************************************************************
 	// build a useful context from authresult & intercept response
 	***************************************************************/
-	t_ctx := g.f.AddTiming("stream_create_context")
 	var ctx context.Context
 	var cnc context.CancelFunc
 	ctx, cnc, err = createCancellableContext(g.f, a, rp)
-	t_ctx.Done()
+
 	if err != nil {
 		fmt.Printf("[streamproxy] failed to create a new context: %s\n", err)
 		return nil, err
@@ -267,6 +262,7 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 	// make the RPC Call
 	***************************************************************/
 
+	chan_in := make(chan *h2g.BodyData)
 	// the channel has a large buffer, because we need to decouple the backend speed
 	// from the download speed
 	// this has the potential for a nasty DoS. We probably need to limit overall ram
@@ -284,6 +280,7 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 	}
 	if err != nil {
 		close(chan_out)
+		close(chan_in) // abort...
 		if *debug {
 			fmt.Printf("[streamproxy] returned from BackendStream() with error: %s\n", err)
 		}
@@ -297,6 +294,7 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 		fmt.Printf("[streamproxy] waiting for backend to complete\n")
 	}
 	wg.Wait()
+	close(chan_in)
 	if *debug {
 		fmt.Printf("[streamproxy] backend completed\n")
 	}
@@ -378,14 +376,10 @@ func (sp *StreamProxy) processStreamResponse(resp *h2g.StreamResponse) {
 // copy the data from the backend to the browser. send streamresponse before first bodydata
 // the backend is expected to write to "out" channel, which this then copies to browser
 func (sp *StreamProxy) stream_out(wg *sync.WaitGroup, out chan *h2g.BodyData) {
-	t_chanout := sp.f.AddTiming("stream_chanout")
-	defer t_chanout.Done()
-
 	first := true
 	size := 0
 	totalsize := uint64(0)
 	received := 0
-	never_flushed := true
 	for {
 		bd, gotdata := <-out // gets us a "bodydata"
 		if !gotdata {
@@ -414,24 +408,18 @@ func (sp *StreamProxy) stream_out(wg *sync.WaitGroup, out chan *h2g.BodyData) {
 		if sp.f.writer == nil {
 			panic("writer is nil")
 		}
-		if (sdr != nil) && len(sdr.Data) > 0 {
-			size = size + len(sdr.Data)
-			err := sp.f.Write(sdr.Data)
-			if err != nil {
-				fmt.Printf("WRITE ERROR: %s\n", err)
-				sp.write_err = err
-				break
-			}
-			if sp.f.hf.def.LowLatency || never_flushed || *always_flush {
-				sp.f.Flush()
-				never_flushed = false
-			}
+		size = size + len(sdr.Data)
+		err := sp.f.Write(sdr.Data)
+		if err != nil {
+			fmt.Printf("WRITE ERROR: %s\n", err)
+			sp.write_err = err
+			break
 		}
+		sp.f.Flush()
 		if *debug {
 			fmt.Printf("[streamproxy] wrote %s of %s (chunk %d) bytes to browser\n", humanize.Bytes(uint64(size)), humanize.Bytes(totalsize), len(sdr.Data))
 		}
 	}
-	sp.f.Flush()
 	/*
 		if first && received > 0 {
 			sp.processStreamResponse(resp)

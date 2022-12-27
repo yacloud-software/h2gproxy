@@ -3,33 +3,12 @@ package srv
 import (
 	"flag"
 	"fmt"
-	"golang.conradwood.net/go-easyops/prometheus"
 	"time"
 )
 
 var (
-	timbsummary = prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
-			Name: "h2gproxy_req_summary_breakdown",
-			Help: "Summmary for observed requests",
-		},
-		[]string{"config", "timing"},
-	)
-
-	timdist = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "h2gproxy_req_timing_breakdown",
-			Help: "V=1 UNIT-none DESC=counter increases by number of seconds for each timing",
-		},
-		[]string{"config", "timing"},
-	)
 	debug_timing = flag.Bool("print_timing_live", false, "if true, print timing as and when timings are taken")
-	print_timing = flag.Bool("print_timing", false, "print timing information for each request")
 )
-
-func init() {
-	prometheus.MustRegister(timdist, timbsummary)
-}
 
 type Timing struct {
 	name  string
@@ -51,25 +30,4 @@ func (t *Timing) IsValid() bool {
 		return false
 	}
 	return !t.start.IsZero()
-}
-
-// called at the end of each request
-func processTimings(f *FProxy) {
-	for _, t := range f.Timings {
-		dur := t.end.Sub(t.start).Seconds()
-		l := prometheus.Labels{"config": f.hf.def.ConfigName, "timing": t.name}
-		timdist.With(l).Add(dur)
-		timbsummary.With(l).Observe(dur)
-	}
-
-	if !*print_timing {
-		return
-	}
-	fmt.Printf("[timing] %d timings:\n", len(f.Timings))
-	for _, t := range f.Timings {
-		dur := t.end.Sub(t.start).Seconds()
-		fmt.Printf("[timing] %s=%0.2f\n", t.name, dur)
-	}
-	fmt.Println()
-
 }
