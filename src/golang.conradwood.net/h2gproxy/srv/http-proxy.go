@@ -62,7 +62,6 @@ var (
 	debug_groups     = flag.Bool("debug_groups", false, "enable to debug group match issues")
 	debug_redirect   = flag.Bool("debug_redirect", false, "enable debug of redirects")
 	ip_hack          = flag.Bool("ip_hack", false, "if enabled creates a file in /tmp/h2gproxy/ips for each sending ip")
-	print_timing     = flag.Bool("print_timing", false, "print timing information for each request")
 	debug_throttle   = flag.Bool("debug_throttle", false, "print rate throttling debug information")
 
 	timsummary = prometheus.NewSummaryVec(
@@ -1362,18 +1361,5 @@ func AddUserIDHeaders(f *FProxy, req *http.Request) {
 	for k, v := range ms {
 		req.Header.Set(k, v)
 	}
-
-}
-
-func processTimings(f *FProxy) {
-	if !*print_timing {
-		return
-	}
-	fmt.Printf("[timing] %d timings:\n", len(f.Timings))
-	for _, t := range f.Timings {
-		dur := t.end.Sub(t.start).Seconds()
-		fmt.Printf("[timing] %s=%0.2f\n", t.name, dur)
-	}
-	fmt.Println()
 
 }

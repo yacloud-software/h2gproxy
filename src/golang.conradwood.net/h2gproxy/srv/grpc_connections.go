@@ -2,6 +2,7 @@ package srv
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"golang.conradwood.net/go-easyops/client"
 	"google.golang.org/grpc"
@@ -10,6 +11,7 @@ import (
 )
 
 var (
+	reuse_after    = flag.Int("max_streams_for_con", 0, "if non zero, reconnect to target after a stream has served this many streams")
 	con            []*grpc_conn
 	grpc_conn_lock sync.Mutex
 )
@@ -25,10 +27,13 @@ type grpc_conn struct {
 }
 
 func (g *grpc_conn) AvailableForNewStreams() bool {
+	if *reuse_after == 0 {
+		return true
+	}
 	if g.failed {
 		return false
 	}
-	if g.stream_counter > 30 {
+	if g.stream_counter > *reuse_after {
 		return false
 	}
 	return true
@@ -153,6 +158,9 @@ func (c *client_stream) Fail(err error) {
 	c.Finish()
 }
 func grpc_closer() {
+	if *reuse_after == 0 {
+		return
+	}
 	grpc_conn_lock.Lock()
 	var res []*grpc_conn
 	var closing []*grpc_conn
@@ -161,7 +169,7 @@ func grpc_closer() {
 		if c.failed && c.opened == 0 {
 			remove = true
 		}
-		if c.total_stream_counter > 10 && c.opened == 0 {
+		if c.total_stream_counter > *reuse_after && c.opened == 0 {
 			remove = true
 		}
 		if remove {
