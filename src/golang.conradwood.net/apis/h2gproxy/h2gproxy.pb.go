@@ -1164,6 +1164,11 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for DownloadStreamer service
 
 type DownloadStreamerClient interface {
+	//
+	// Implementors Note: There are two types of errors, that somewhat overlap:
+	// 1. The backend service encounters an unhandled error
+	// 2. The backend service is unable to locate a resource (e.g. URL returns 404)
+	// The streaming proxy distinguishes between errors returned from the backend vs http codes indicated through stream response. Generally, if the backend suceeds, that is, the codepath goes through anticipated states, it should not throw an error, but indicate the status through its response instead. errors should be reserved for errors encountered by the backend itself. That is, don't just blindly wrap errors ;)
 	StreamHTTP(ctx context.Context, in *StreamRequest, opts ...grpc.CallOption) (DownloadStreamer_StreamHTTPClient, error)
 }
 
@@ -1210,6 +1215,11 @@ func (x *downloadStreamerStreamHTTPClient) Recv() (*StreamDataResponse, error) {
 // Server API for DownloadStreamer service
 
 type DownloadStreamerServer interface {
+	//
+	// Implementors Note: There are two types of errors, that somewhat overlap:
+	// 1. The backend service encounters an unhandled error
+	// 2. The backend service is unable to locate a resource (e.g. URL returns 404)
+	// The streaming proxy distinguishes between errors returned from the backend vs http codes indicated through stream response. Generally, if the backend suceeds, that is, the codepath goes through anticipated states, it should not throw an error, but indicate the status through its response instead. errors should be reserved for errors encountered by the backend itself. That is, don't just blindly wrap errors ;)
 	StreamHTTP(*StreamRequest, DownloadStreamer_StreamHTTPServer) error
 }
 

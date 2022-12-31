@@ -9,7 +9,7 @@ import (
 	"golang.conradwood.net/apis/weblogin"
 	"golang.conradwood.net/go-easyops/auth"
 	"golang.conradwood.net/go-easyops/authremote"
-	"golang.conradwood.net/go-easyops/tokens"
+	//	"golang.conradwood.net/go-easyops/tokens"
 	"net/http"
 	"time"
 )
@@ -59,7 +59,7 @@ func (f *FProxy) WebLogin() bool {
 	}
 	ctx := getUserContext(f)
 	if ctx == nil {
-		ctx = tokens.ContextWithToken()
+		ctx = createBootstrapContext()
 	}
 
 	h, err := wl.GetLoginPage(ctx, wreq)
@@ -193,7 +193,7 @@ func WebLoginProxy(f *FProxy) {
 
 	ctx := getUserContext(f)
 	if ctx == nil {
-		ctx = tokens.ContextWithToken()
+		ctx = createBootstrapContext()
 	}
 	wr, err := wl.ServeHTML(ctx, wreq) // might return error or might return funny status code in body instead
 	if err != nil {
@@ -267,7 +267,7 @@ func WebloginCheck(webloginpara string) (*apb.SignedUser, []*h2gproxy.Cookie, er
 	}
 	ps := map[string]string{"weblogin": webloginpara}
 	wlr := &weblogin.WebloginRequest{Submitted: ps}
-	ctx := tokens.ContextWithToken()
+	ctx := createBootstrapContext()
 	wr, err := wl.VerifyURL(ctx, wlr)
 	if err != nil {
 		return nil, nil, err
@@ -301,7 +301,7 @@ func webloginGetRedirectTarget(f *FProxy) string {
 		UserAgent: f.GetHeader("user-agent"),
 	}
 
-	ctx := tokens.ContextWithToken()
+	ctx := createBootstrapContext()
 	wr, err := wl.SaveState(ctx, wreq)
 	if err != nil {
 		return fmt.Sprintf("https://www.%s/?linkid=errorpage&title=LoginUnavailable", *ssodomain)

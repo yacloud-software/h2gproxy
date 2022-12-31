@@ -14,8 +14,9 @@ import (
 	cm "golang.conradwood.net/apis/certmanager"
 	"golang.conradwood.net/apis/common"
 	pb "golang.conradwood.net/apis/h2gproxy"
+	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/cache"
-	"golang.conradwood.net/go-easyops/tokens"
+	//	"golang.conradwood.net/go-easyops/tokens"
 	"golang.conradwood.net/go-easyops/utils"
 	"net/http"
 	"strings"
@@ -64,7 +65,7 @@ func cert_refresh() error {
 	certLock.Lock()
 	defer certLock.Unlock()
 	fmt.Printf("[certs] refreshing...\n")
-	ctx := tokens.ContextWithToken()
+	ctx := authremote.Context()
 	var certlist *cm.CertNameList
 	//var certlist string
 	var err error
@@ -83,7 +84,8 @@ func cert_refresh() error {
 		if *debug {
 			fmt.Printf("[certs] cert: %s\n", c.Hostname)
 		}
-		ctx := tokens.ContextWithToken()
+		//		ctx := createBootstrapContext()
+		ctx := authremote.Context()
 		pcr := &cm.PublicCertRequest{Hostname: c.Hostname}
 		cert, err := certManager.GetPublicCertificate(ctx, pcr)
 		if err != nil {
@@ -168,7 +170,8 @@ func request(name string) {
 		name = name[:idx]
 	}
 	fmt.Printf("Requesting \"%s\"\n", name)
-	ctx := tokens.ContextWithToken()
+	//ctx := createBootstrapContext()
+	ctx := createBootstrapContext()
 	pcr := &cm.PublicCertRequest{Hostname: name}
 	// does certmanager have the cert (and we don't?)
 	_, err := certManager.GetPublicCertificate(ctx, pcr)
@@ -196,7 +199,7 @@ func request(name string) {
 			break
 		}
 		time.Sleep(t)
-		ctx := tokens.ContextWithToken()
+		ctx := createBootstrapContext()
 		_, err := certManager.GetPublicCertificate(ctx, pcr)
 		if err == nil {
 			break

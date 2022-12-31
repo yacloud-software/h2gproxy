@@ -10,7 +10,8 @@ import (
 	ic "golang.conradwood.net/apis/rpcinterceptor"
 	"golang.conradwood.net/go-easyops/common"
 	"golang.conradwood.net/go-easyops/prometheus"
-	"golang.conradwood.net/go-easyops/tokens"
+	//	"golang.conradwood.net/go-easyops/tokens"
+	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/utils"
 	"golang.conradwood.net/h2gproxy/httplogger"
 	"io/ioutil"
@@ -104,7 +105,7 @@ func (f *FProxy) GoodRequest() {
 	}
 	go func(ff *FProxy) {
 		ip := ff.PeerIP()
-		_, err := antidos.GetAntiDOSClient().GoodRequest(tokens.ContextWithToken(), &antidos.IPGoodRequest{IP: ip})
+		_, err := antidos.GetAntiDOSClient().GoodRequest(authremote.Context(), &antidos.IPGoodRequest{IP: ip})
 		if err == nil {
 			ff.antidos_notified = true
 			return
@@ -128,7 +129,7 @@ func (f *FProxy) AntiDOS(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	msg = p + msg
 	ip := f.PeerIP()
-	_, err := antidos.GetAntiDOSClient().IPFailure(tokens.ContextWithToken(), &antidos.IPFailureRequest{IP: ip, Message: msg})
+	_, err := antidos.GetAntiDOSClient().IPFailure(authremote.Context(), &antidos.IPFailureRequest{IP: ip, Message: msg})
 	if err == nil {
 		f.antidos_notified = true
 		return
@@ -498,7 +499,8 @@ func (f *FProxy) authenticateUser(user, pw string) (*apb.SignedUser, error) {
 		// assuming userid & token instead of user and password
 		return f.authenticateByUserIDAndToken(user, pw)
 	}
-	ctx := tokens.ContextWithToken()
+	ctx := authremote.Context()
+	//ctx := createBootstrapContext()
 	cr, err := authproxy.SignedGetByPassword(ctx, &apb.AuthenticatePasswordRequest{Email: user, Password: pw})
 	if err != nil {
 		fmt.Printf("Failed to authenticate user %s: %s (from %s, accessing %s)\n", user, utils.ErrorString(err), f.PeerIP(), f.String())
@@ -526,7 +528,7 @@ func (f *FProxy) authenticateUser(user, pw string) (*apb.SignedUser, error) {
 // error if cannot be authenticated
 func (f *FProxy) authenticateByUserIDAndToken(user, pw string) (*apb.SignedUser, error) {
 	userid := strings.TrimSuffix(user, ".token")
-	ctx := tokens.ContextWithToken()
+	ctx := authremote.Context()
 	cr, err := authproxy.SignedGetByToken(ctx, &apb.AuthenticateTokenRequest{Token: pw})
 	if err != nil {
 		return nil, err

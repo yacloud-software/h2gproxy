@@ -10,7 +10,7 @@ import (
 	"golang.conradwood.net/apis/antidos"
 	apb "golang.conradwood.net/apis/auth"
 	"golang.conradwood.net/go-easyops/common"
-	"golang.conradwood.net/go-easyops/tokens"
+	//	"golang.conradwood.net/go-easyops/tokens"
 	"golang.conradwood.net/go-easyops/utils"
 	"net/url"
 	"strings"
@@ -59,7 +59,7 @@ func json_auth(f *FProxy) (*authResult, error) {
 	res.UserFromParameter()
 	res.UserFromBasicAuth()
 	if res.attempted && !res.Authenticated() {
-		antidos.GetAntiDOSClient().IPFailure(tokens.ContextWithToken(), &antidos.IPFailureRequest{IP: f.PeerIP()})
+		antidos.GetAntiDOSClient().IPFailure(createBootstrapContext(), &antidos.IPFailureRequest{IP: f.PeerIP()})
 	}
 	return res, nil
 }

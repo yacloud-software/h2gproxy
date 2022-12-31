@@ -4,7 +4,6 @@ import (
 	"fmt"
 	apb "golang.conradwood.net/apis/auth"
 	"golang.conradwood.net/go-easyops/common"
-	"golang.conradwood.net/go-easyops/tokens"
 	"net/http"
 	"sync"
 )
@@ -43,7 +42,7 @@ func TokenToUser(token string) (*apb.SignedUser, error) {
 	}
 
 	// do the "real" lookup
-	gdr, err := AuthServer.SignedGetByToken(tokens.ContextWithToken(), &apb.AuthenticateTokenRequest{Token: token})
+	gdr, err := AuthServer.SignedGetByToken(createBootstrapContext(), &apb.AuthenticateTokenRequest{Token: token})
 	if err != nil {
 		if *debug {
 			fmt.Printf("Error getting user for token %s: %s\n", token, err)

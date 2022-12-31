@@ -65,7 +65,7 @@ func (g *GRPCProxy) Proxy() {
 		}
 		// if we tried and failed it's forbidden. otherwise send challenge
 		if a.GotCredentials() {
-			g.f.err = errors.AccessDenied(tokens.ContextWithToken(), "access denied for user %s", a.User())
+			g.f.err = errors.AccessDenied(createBootstrapContext(), "access denied for user %s", a.User())
 			g.f.SetStatus(401) // maybe this should be 401?
 			g.f.Write([]byte("access denied"))
 			g.f.LogResponse()
@@ -104,7 +104,7 @@ func (g *GRPCProxy) Proxy() {
 		InMetadata: g.f.md,
 	}
 	// we need a 'default' context to actually call intercept rpc
-	ctx := tokens.ContextWithToken()
+	ctx := createBootstrapContext()
 	rp, err := rc.InterceptRPC(ctx, ireq)
 	if err != nil {
 		fmt.Printf("[grpcprocy] Failed to call intercept rpc: %s\n", utils.ErrorString(err))

@@ -20,7 +20,7 @@ import (
 	"golang.conradwood.net/go-easyops/auth"
 	"golang.conradwood.net/go-easyops/client"
 	"golang.conradwood.net/go-easyops/prometheus"
-	"golang.conradwood.net/go-easyops/tokens"
+	//	"golang.conradwood.net/go-easyops/tokens"
 	"golang.conradwood.net/go-easyops/utils"
 	"golang.conradwood.net/h2gproxy/httplogger"
 	"golang.org/x/net/context"
@@ -1349,7 +1349,7 @@ func (f *FProxy) Context() context.Context {
 	if f.ctx != nil {
 		return f.ctx
 	}
-	return tokens.ContextWithToken()
+	return createBootstrapContext()
 }
 
 func AddUserIDHeaders(f *FProxy, req *http.Request) {

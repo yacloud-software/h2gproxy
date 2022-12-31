@@ -7,15 +7,25 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	ic "golang.conradwood.net/apis/rpcinterceptor"
+	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/client"
+	"golang.conradwood.net/go-easyops/cmdline"
+	"golang.conradwood.net/go-easyops/ctx"
 	"golang.conradwood.net/go-easyops/rpc"
 	"golang.conradwood.net/go-easyops/tokens"
 	"google.golang.org/grpc/metadata"
+	"time"
 )
 
 var (
 	debugctx = flag.Bool("debug_ctx", false, "debug context transformations and user metadata")
 )
+
+// create a context that may be used to call rpcinterceptor
+func createBootstrapContext() context.Context {
+	//	return tokens.ContextWithToken()
+	return authremote.Context()
+}
 
 func createContext(f *FProxy, a *authResult, rp *ic.InterceptRPCResponse) (context.Context, error) {
 	secs := f.hf.def.MaxDuration
@@ -25,6 +35,13 @@ func createContext(f *FProxy, a *authResult, rp *ic.InterceptRPCResponse) (conte
 		} else {
 			secs = 10
 		}
+	}
+	if cmdline.ContextWithBuilder() {
+		cb := ctx.NewContextBuilder()
+		cb.WithTimeout(time.Duration(secs) * time.Second)
+		cb.WithUser(rp.SignedCallerUser)
+		cb.WithCallingService(rp.SignedCallerService)
+		return cb.ContextWithAutoCancel(), nil
 	}
 	octx := tokens.ContextWithTokenAndTimeout(uint64(secs))
 	return createContextWith(octx, f, a, rp)

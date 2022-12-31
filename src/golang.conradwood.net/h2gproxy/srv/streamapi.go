@@ -114,7 +114,7 @@ func (g *StreamProxy) Proxy() {
 		InMetadata: g.f.md,
 	}
 	// we need a 'default' context to actually call intercept rpc
-	ctx := tokens.ContextWithToken()
+	ctx := createBootstrapContext()
 	rp, err := rc.InterceptRPC(ctx, ireq)
 	if err != nil {
 		fmt.Printf("Failed to call intercept rpc: %s\n", utils.ErrorString(err))

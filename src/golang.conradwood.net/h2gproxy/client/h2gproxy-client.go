@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"golang.conradwood.net/apis/common"
 	pb "golang.conradwood.net/apis/h2gproxy"
-	ar "golang.conradwood.net/go-easyops/authremote"
-	"golang.conradwood.net/go-easyops/tokens"
+	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/utils"
 	"golang.conradwood.net/h2gproxy/shared"
 	"os"
@@ -29,7 +28,7 @@ func main() {
 	var err error
 	flag.Parse()
 	lbc = pb.GetH2GProxyServiceClient()
-	ctx := tokens.ContextWithToken()
+	ctx := authremote.Context()
 	if *cons {
 		showConnections()
 		os.Exit(0)
@@ -56,7 +55,7 @@ func main() {
 	fmt.Printf("Done\n")
 }
 func show() {
-	cfg, err := lbc.GetConfig(tokens.ContextWithToken(), &common.Void{})
+	cfg, err := lbc.GetConfig(authremote.Context(), &common.Void{})
 	utils.Bail("failed to get config", err)
 	for _, c := range cfg.Config {
 		fmt.Printf("[%2d] %s\n", c.Api, c.URLPath)
@@ -66,7 +65,7 @@ func show() {
 	}
 }
 func show_hosts() {
-	hl, err := lbc.GetKnownHosts(tokens.ContextWithToken(), &common.Void{})
+	hl, err := lbc.GetKnownHosts(authremote.Context(), &common.Void{})
 	utils.Bail("failed to get known hosts", err)
 	format := "%30s %5v %5v %5v\n"
 	fmt.Printf(format, "Hostname", "Cert", "http", "https")
@@ -81,7 +80,7 @@ func configProber(ctx context.Context, status bool) {
 
 }
 func showConnections() {
-	ctx := ar.Context()
+	ctx := authremote.Context()
 	fmt.Printf("Showing tcp connections...\n")
 	tsl, err := lbc.GetTCPSessions(ctx, &common.Void{})
 	utils.Bail("failed to get sessions", err)
