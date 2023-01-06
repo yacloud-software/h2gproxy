@@ -43,7 +43,8 @@ func createContext(f *FProxy, a *authResult, rp *ic.InterceptRPCResponse) (conte
 		cb.WithCallingService(rp.SignedCallerService)
 		return cb.ContextWithAutoCancel(), nil
 	}
-	octx := tokens.ContextWithTokenAndTimeout(uint64(secs))
+	//	octx := tokens.ContextWithTokenAndTimeout(uint64(secs))
+	octx := authremote.ContextWithTimeout(time.Duration(secs) * time.Second)
 	return createContextWith(octx, f, a, rp)
 }
 
@@ -56,7 +57,12 @@ func createCancellableContext(f *FProxy, a *authResult, rp *ic.InterceptRPCRespo
 			secs = 10
 		}
 	}
-	octx, cnc := tokens.Context2WithTokenAndTimeout(uint64(secs))
+	cb := ctx.NewContextBuilder()
+	cb.WithTimeout(time.Duration(secs) * time.Second)
+	cb.WithUser(rp.SignedCallerUser)
+	cb.WithCallingService(rp.SignedCallerService)
+	octx, cnc := cb.Context()
+	//	octx, cnc := tokens.Context2WithTokenAndTimeout(uint64(secs))
 	ctx, err := createContextWith(octx, f, a, rp)
 	if err != nil {
 		return nil, nil, err
@@ -122,7 +128,7 @@ func (f *FProxy) rebuildContextFromScratch(a *authResult) error {
 		InMetadata: f.md,
 	}
 	// we need a 'default' context to actually call intercept rpc
-	ctx := tokens.ContextWithToken()
+	ctx := authremote.Context()
 	rp, err := rc.InterceptRPC(ctx, ireq)
 	if err != nil {
 		return err
