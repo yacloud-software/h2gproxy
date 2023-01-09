@@ -39,6 +39,7 @@ func createContext(f *FProxy, a *authResult, rp *ic.InterceptRPCResponse) (conte
 	if cmdline.ContextWithBuilder() {
 		cb := ctx.NewContextBuilder()
 		cb.WithTimeout(time.Duration(secs) * time.Second)
+		cb.WithSession(f.session)
 		cb.WithUser(rp.SignedCallerUser)
 		cb.WithCallingService(rp.SignedCallerService)
 		return cb.ContextWithAutoCancel(), nil

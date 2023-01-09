@@ -239,6 +239,7 @@ func (g *GRPCProxy) grpcproxy(rp *ic.InterceptRPCResponse, a *authResult) (conte
 	***************************************************************/
 	//fmt.Printf("Context with user: %v\n", g.f.user)
 	var ctx context.Context
+	sv.SessionToken, _ = g.f.GetSessionToken()
 	nctx, err := createContext(g.f, a, rp)
 	if err != nil {
 		fmt.Printf("[grpcproxy] failed to create a new context: %s\n", utils.ErrorString(err))
@@ -272,7 +273,6 @@ func (g *GRPCProxy) grpcproxy(rp *ic.InterceptRPCResponse, a *authResult) (conte
 	/***************************************************************
 	// make the RPC Call
 	***************************************************************/
-	sv.SessionToken, _ = g.f.GetSessionToken()
 	resp, err := g.p.Serve(ctx, sv) // calls the backend
 	g.f.add_session_cookie(resp, err)
 	if err != nil {
