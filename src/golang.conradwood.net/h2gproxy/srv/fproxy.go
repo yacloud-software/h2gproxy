@@ -273,6 +273,9 @@ func (f *FProxy) write_headers() {
 	f.response_headers_written = true
 }
 func (f *FProxy) SetStatus(code int) {
+	if code == f.statusCode {
+		return
+	}
 	if f.response_headers_written {
 		fmt.Printf("[%s] WARNING attempt to set http code to %d (previously %d) after headers were written\n", f.String(), code, f.statusCode)
 

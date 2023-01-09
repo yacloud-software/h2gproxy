@@ -59,8 +59,15 @@ func createCancellableContext(f *FProxy, a *authResult, rp *ic.InterceptRPCRespo
 	}
 	cb := ctx.NewContextBuilder()
 	cb.WithTimeout(time.Duration(secs) * time.Second)
-	cb.WithUser(rp.SignedCallerUser)
+	if a.signedUser != nil {
+		cb.WithUser(a.signedUser)
+	} else {
+		cb.WithUser(rp.SignedCallerUser)
+	}
+
 	cb.WithCallingService(rp.SignedCallerService)
+	cb.WithCreatorService(rp.SignedCallerService)
+	cb.WithSession(f.session)
 	octx, cnc := cb.Context()
 	//	octx, cnc := tokens.Context2WithTokenAndTimeout(uint64(secs))
 	ctx, err := createContextWith(octx, f, a, rp)
@@ -74,6 +81,20 @@ func createContextWith(octx context.Context, f *FProxy, a *authResult, rp *ic.In
 	if octx.Err() != nil {
 		// no point calling out with a failed context
 		return nil, octx.Err()
+	}
+	if cmdline.ContextWithBuilder() {
+		cb := ctx.NewContextBuilder()
+		cb.WithParentContext(octx)
+		if a.signedUser != nil {
+			cb.WithUser(a.signedUser)
+		} else {
+			cb.WithUser(rp.SignedCallerUser)
+		}
+		cb.WithCallingService(rp.SignedCallerService)
+		cb.WithCreatorService(rp.SignedCallerService)
+		cb.WithSession(f.session)
+		ctx := cb.ContextWithAutoCancel()
+		return ctx, nil
 	}
 	ctx, cs := rpc.ContextWithCallState(octx)
 
@@ -112,6 +133,22 @@ func (f *FProxy) rebuildContextFromScratch(a *authResult) error {
 	if a == nil {
 		return nil
 	}
+
+	if a != nil && (a.User() != nil) {
+		f.SetUser(a.signedUser)
+	}
+
+	if cmdline.ContextWithBuilder() {
+		_, svc := authremote.GetLocalUsers()
+		cb := ctx.NewContextBuilder()
+		cb.WithUser(a.signedUser)
+		cb.WithCallingService(svc)
+		cb.WithCreatorService(svc)
+		cb.WithSession(f.session)
+		f.ctx = cb.ContextWithAutoCancel()
+		return nil
+	}
+
 	if rc == nil {
 		rc = ic.NewRPCInterceptorServiceClient(client.Connect("rpcinterceptor.RPCInterceptorService"))
 	}
@@ -120,9 +157,7 @@ func (f *FProxy) rebuildContextFromScratch(a *authResult) error {
 		UserToken:    "", //do we?
 		ServiceToken: tokens.GetServiceTokenParameter(),
 	}
-	if a != nil && (a.User() != nil) {
-		f.SetUser(a.signedUser)
-	}
+
 	ireq := &ic.InterceptRPCRequest{Service: "h2gproxy",
 		Method:     "createcontext",
 		InMetadata: f.md,
