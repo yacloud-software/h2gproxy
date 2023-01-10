@@ -36,6 +36,7 @@ require (
 	golang.conradwood.net/apis/errorlogger v1.1.2073 // indirect
 	golang.conradwood.net/apis/goeasyops v1.1.2082 // indirect
 	golang.conradwood.net/apis/objectstore v1.1.2073 // indirect
+	golang.conradwood.net/go-easyops v0.1.15118 // indirect
 	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
 	golang.yacloud.eu/apis/urlcacher v1.1.2073 // indirect
