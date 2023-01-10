@@ -1,6 +1,5 @@
 package httplogger
 
-import ()
 
 type nooplogger struct {
 }
