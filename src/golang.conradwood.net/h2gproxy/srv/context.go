@@ -23,7 +23,7 @@ var (
 
 // create a context that may be used to call rpcinterceptor
 func createBootstrapContext() context.Context {
-	//	return tokens.ContextWithToken()
+	//	return authremote.Context()
 	return authremote.Context()
 }
 
