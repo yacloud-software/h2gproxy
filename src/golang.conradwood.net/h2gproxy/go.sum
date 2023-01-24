@@ -44,8 +44,8 @@ golang.conradwood.net/apis/deploymonkey v1.1.2124 h1:cp+3zIZOk9P0ObWret3IbEhOD+R
 golang.conradwood.net/apis/deploymonkey v1.1.2124/go.mod h1:M8RpCnenyinjf/+rm6zRUQ4WlW0Ehfl7nVe1/g1+BE8=
 golang.conradwood.net/apis/echoservice v1.1.2124 h1:g1bdCJQl+IhVi0Nie07WXi7LgPSlkat0dHFdA5d47W0=
 golang.conradwood.net/apis/echoservice v1.1.2124/go.mod h1:97SQAneyCG+BiO3yvIHkWP6VrA4JFGDmMIq/71MKQpc=
-golang.conradwood.net/apis/errorlogger v1.1.2124 h1:QpDHo/mmO8QD5U6FgdWskbkWLePUa2kmtVheO4ucEM0=
-golang.conradwood.net/apis/errorlogger v1.1.2124/go.mod h1:ZYRfyGGEY/sESyd1OSu/9cOQY9FUusT437Hatico91w=
+golang.conradwood.net/apis/errorlogger v1.1.2125 h1:De+F4/GVmr337kYkwyG3sHka8x/SDTiITh49QIsNl7Q=
+golang.conradwood.net/apis/errorlogger v1.1.2125/go.mod h1:BMcsc9Yr5Ib0Bwmah9SApGoEFVRSpCD1M1I7ptQoMyM=
 golang.conradwood.net/apis/framework v1.1.2124 h1:mfpkcU5OxPxze/pFlTgBMTpv9lFdjj1IKv90n/YB80k=
 golang.conradwood.net/apis/framework v1.1.2124/go.mod h1:TiycFK1My0XhOroSDzV5hpgAcKVwcmvasQfRo/aUMZA=
 golang.conradwood.net/apis/goeasyops v1.1.2124 h1:B4fHsIELtXeXI58RkHqSGP2yAWVXD0wegy1laukHDIs=
@@ -62,8 +62,8 @@ golang.conradwood.net/apis/usagestats v1.1.2124 h1:34m5/aC0d8tcNCOWrQSu9nLN+ztxx
 golang.conradwood.net/apis/usagestats v1.1.2124/go.mod h1:6T1kMrYDx/A2Ubp68hFWHaoJW5dLb+kuHw3TffpO8As=
 golang.conradwood.net/apis/weblogin v1.1.2124 h1:R7ejZS/nGzESLwyc4xcx2veBYapEfQqoLj2inXLDSfs=
 golang.conradwood.net/apis/weblogin v1.1.2124/go.mod h1:b2qFvOUT4b7K1ZvpLTl3AFaScUaK9fMYZJNUVoUHOPs=
-golang.conradwood.net/go-easyops v0.1.15691 h1:MOPbdllTY1A7XkIMAwWJqgtsMjPHCvilIKdNOTDyngs=
-golang.conradwood.net/go-easyops v0.1.15691/go.mod h1:tfUzNOsdMQv895pHandu7vlf5QCP28MApp6b9k4RhD8=
+golang.conradwood.net/go-easyops v0.1.15769 h1:znlLMqPUJqrOQZlexa5hYXhEvqX1K5eFmh21/X0Pzm4=
+golang.conradwood.net/go-easyops v0.1.15769/go.mod h1:iBkXAVr5MlActjkvvFN0ZRSgzpGqmeZjaJANdvb6SAY=
 golang.org/x/net v0.5.0 h1:GyT4nK/YDHSqa1c4753ouYCDajOYKTja9Xb/OHtgvSw=
 golang.org/x/net v0.5.0/go.mod h1:DivGGAXEgPSlEBzxGzZI+ZLohi+xUj054jfeKui00ws=
 golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
