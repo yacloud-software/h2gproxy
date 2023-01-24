@@ -25,6 +25,7 @@ import (
 )
 
 var (
+	disable_http2     = flag.Bool("disable_http2", true, "http2 implementation seems to randomly throw GOAWAY errors with go get")
 	last_cert_refresh time.Time
 	single_cert       = flag.String("cert_host", "", "if set, only retrieve and service this certificate")
 	httpsport         = flag.String("https_port", "", "The port to start the HTTPs listener on")
@@ -270,6 +271,9 @@ func startHTTPS(r *HTTPForwarder, adr string, port int) error {
 		r.server = &http.Server{
 			Addr:    adr,
 			Handler: httpsMux,
+		}
+		if *disable_http2 {
+			r.server.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
 		}
 		tlsConfig = &tls.Config{}
 		// this stuff is important:
