@@ -28,7 +28,7 @@ var (
 	disable_http2     = flag.Bool("disable_http2", true, "http2 implementation seems to randomly throw GOAWAY errors with go get")
 	last_cert_refresh time.Time
 	single_cert       = flag.String("cert_host", "", "if set, only retrieve and service this certificate")
-	httpsport         = flag.String("https_port", "", "The port to start the HTTPs listener on")
+	httpsport         = flag.String("https_port", "4443", "The port to start the HTTPs listener on")
 	//	certdir     = flag.String("certs_dir", "/etc/certs", "The directory in which the certs live (one dir per hostname, certificate.pem and key.pem in each direcetory")
 	certmap            = make(map[string]*tls.Certificate)
 	certs              []tls.Certificate

@@ -33,7 +33,7 @@ var (
 	// the routes to apply to incoming requests
 	routeLock          = sync.Mutex{}
 	routes             []*HTTPForwarder
-	httpport           = flag.String("http_port", "1080", "The port to start the HTTP listener on. multiple ports may be comma-delimited")
+	httpport           = flag.String("http_port", "4080", "The port to start the HTTP listener on. multiple ports may be comma-delimited")
 	debug_match        = flag.Bool("debug_match", false, "true to debug the matching of requests")
 	debug_lookup       = flag.Bool("debug_lookup", false, "true to debug the lookup of targets for requests")
 	http_read_timeout  = flag.Int("http_read_timeout", 90, "golang http.Server read timeout in seconds")
