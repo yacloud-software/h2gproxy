@@ -109,18 +109,8 @@ func (g *StreamProxy) Proxy() {
 		return
 	}
 
-	ireq := &ic.InterceptRPCRequest{Service: "h2gproxy",
-		Method:     "jsonproxy",
-		InMetadata: g.f.md,
-	}
-	// we need a 'default' context to actually call intercept rpc
-	ctx := createBootstrapContext()
-	rp, err := rc.InterceptRPC(ctx, ireq)
-	if err != nil {
-		fmt.Printf("Failed to call intercept rpc: %s\n", utils.ErrorString(err))
-		return
-	}
-	g.f.requestid = rp.RequestID
+	reqid := NewRequestID()
+	g.f.requestid = reqid
 	late_auth_attempted := false
 retry:
 	// check for non-verified users
@@ -131,7 +121,7 @@ retry:
 	t_auth.Done()
 	g.f.Started = time.Now()
 	/************ now call the backend ****************************/
-	nctx, err := g.streamproxy(rp, a)
+	nctx, err := g.streamproxy(a)
 	g.f.ResponseTime = time.Since(g.f.Started)
 
 	var httpError *HTTPError
@@ -166,7 +156,7 @@ retry:
 		if *debug_rpc {
 			fmt.Printf("[grpcprocy] have user %s, but email not verified, thus it was not passed to the backend\n", auth.Description(g.f.unsigneduser))
 		}
-		nctx, lerr := createContext(g.f, a, rp)
+		nctx, lerr := createContext(g.f, a)
 		if lerr != nil {
 			g.f.ProcessError(err, 500, "failed to create a user context")
 			return
@@ -214,7 +204,7 @@ retry:
 // Wrapper and Buffer around the streaming backend
 **************************************************************
 */
-func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (context.Context, error) {
+func (g *StreamProxy) streamproxy(a *authResult) (context.Context, error) {
 	// build up the grpc proto
 	sv := &h2g.StreamRequest{Port: uint32(g.f.port)}
 	sv.Host = strings.ToLower(g.f.req.Host)
@@ -249,7 +239,7 @@ func (g *StreamProxy) streamproxy(rp *ic.InterceptRPCResponse, a *authResult) (c
 	t_ctx := g.f.AddTiming("stream_create_context")
 	var ctx context.Context
 	var cnc context.CancelFunc
-	ctx, cnc, err = createCancellableContext(g.f, a, rp)
+	ctx, cnc, err = createCancellableContext(g.f, a)
 	t_ctx.Done()
 	if err != nil {
 		fmt.Printf("[streamproxy] failed to create a new context: %s\n", err)

@@ -99,18 +99,8 @@ func (g *GRPCProxy) Proxy() {
 		return
 	}
 
-	ireq := &ic.InterceptRPCRequest{Service: "h2gproxy",
-		Method:     "jsonproxy",
-		InMetadata: g.f.md,
-	}
-	// we need a 'default' context to actually call intercept rpc
-	ctx := createBootstrapContext()
-	rp, err := rc.InterceptRPC(ctx, ireq)
-	if err != nil {
-		fmt.Printf("[grpcprocy] Failed to call intercept rpc: %s\n", utils.ErrorString(err))
-		return
-	}
-	g.f.requestid = rp.RequestID
+	reqid := NewRequestID()
+	g.f.requestid = reqid
 	late_auth_attempted := false
 retry:
 	// check for non-verified users
@@ -121,7 +111,7 @@ retry:
 
 	g.f.Started = time.Now()
 	/************ now call the backend ****************************/
-	nctx, err := g.grpcproxy(rp, a)
+	nctx, err := g.grpcproxy(a)
 	//	elapsed := time.Now().Sub(g.f.Started)
 	//	ms := elapsed.Nanoseconds() / 1000 / 1000
 	g.f.ResponseTime = time.Since(g.f.Started)
@@ -158,7 +148,7 @@ retry:
 			if *debug_rpc {
 				fmt.Printf("[grpcproxy] have user %s, but email not verified, thus it was not passed to the backend\n", auth.Description(a.User()))
 			}
-			nctx, err := createContext(g.f, a, rp)
+			nctx, err := createContext(g.f, a)
 			if err != nil {
 				g.f.ProcessError(err, 500, "failed to create a user context")
 				return
@@ -203,7 +193,7 @@ retry:
 }
 
 // returns the context we used to call the function...
-func (g *GRPCProxy) grpcproxy(rp *ic.InterceptRPCResponse, a *authResult) (context.Context, error) {
+func (g *GRPCProxy) grpcproxy(a *authResult) (context.Context, error) {
 	/***************************************************************
 	// build the proto to call jsonapimultiplexer or others
 	***************************************************************/
@@ -240,7 +230,7 @@ func (g *GRPCProxy) grpcproxy(rp *ic.InterceptRPCResponse, a *authResult) (conte
 	//fmt.Printf("Context with user: %v\n", g.f.user)
 	var ctx context.Context
 	sv.SessionToken, _ = g.f.GetSessionToken()
-	nctx, err := createContext(g.f, a, rp)
+	nctx, err := createContext(g.f, a)
 	if err != nil {
 		fmt.Printf("[grpcproxy] failed to create a new context: %s\n", utils.ErrorString(err))
 		return nil, err
@@ -324,10 +314,7 @@ func (g *GRPCProxy) grpcproxy(rp *ic.InterceptRPCResponse, a *authResult) (conte
 
 	}
 	g.f.SetHeader("content-type", fmt.Sprintf("%s; charset=utf-8", mtype))
-	reqid := "NA"
-	if rp != nil {
-		reqid = rp.RequestID
-	}
+	reqid := "(1)grpcproxyneedsreqid"
 	if *debug {
 		fmt.Printf("Setting requestid header to \"%s\"\n", reqid)
 	}
