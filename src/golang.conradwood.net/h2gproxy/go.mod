@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	github.com/dustin/go-humanize v1.0.1
-	github.com/golang/protobuf v1.5.2
 	golang.conradwood.net/apis/antidos v1.1.2144
 	golang.conradwood.net/apis/auth v1.1.2144
 	golang.conradwood.net/apis/certmanager v1.1.2144
@@ -16,7 +15,7 @@ require (
 	golang.conradwood.net/apis/rpcinterceptor v1.1.2144
 	golang.conradwood.net/apis/usagestats v1.1.2144
 	golang.conradwood.net/apis/weblogin v1.1.2144
-	golang.conradwood.net/go-easyops v0.1.16322
+	golang.conradwood.net/go-easyops v0.1.16334
 	golang.org/x/net v0.5.0
 	google.golang.org/grpc v1.52.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -25,6 +24,7 @@ require (
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
