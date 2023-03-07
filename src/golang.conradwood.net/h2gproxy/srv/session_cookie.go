@@ -80,7 +80,7 @@ func (f *FProxy) GetSessionToken() (string, error) {
 		return f.session.SessionID, nil
 	}
 	c, err := f.req.Cookie(SESSION_COOKIE_NAME)
-	if *debug_session && c == nil || c.Value == "" {
+	if *debug_session && (c == nil || c.Value == "") {
 		fmt.Printf("Session - no session cookie received\n")
 	}
 
