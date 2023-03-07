@@ -340,12 +340,16 @@ func NewProxy(w http.ResponseWriter, r *http.Request, h *HTTPForwarder, tls bool
 	}
 	res.loginProxy = false
 	res.logreq = httplogger.DefaultHTTPLogger().RequestStarted(res.FullURL(), res.PeerIP())
-
+	StartRequest(res)
 	return res
 }
 
 // execute the request (called by the http handler)
 func (f *FProxy) execute() {
+	f.execute_raw()
+	EndRequest(f)
+}
+func (f *FProxy) execute_raw() {
 	reqCounterIn.With(prometheus.Labels{
 		"name":          f.hf.def.ConfigName,
 		"targetservice": f.hf.def.TargetService,

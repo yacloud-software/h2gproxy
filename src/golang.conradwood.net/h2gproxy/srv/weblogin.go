@@ -10,6 +10,7 @@ import (
 	"golang.conradwood.net/go-easyops/auth"
 	"golang.conradwood.net/go-easyops/authremote"
 	//	"golang.conradwood.net/go-easyops/tokens"
+	"golang.yacloud.eu/apis/session"
 	"net/http"
 	"time"
 )
@@ -68,6 +69,9 @@ func (f *FProxy) WebLogin() bool {
 		return false
 	}
 	debugWl("processed without error. (httpcode=%d,Authenticated=%v,Cookies:%#v)", h.HTTPCode, h.Authenticated, h.Cookies)
+	if h != nil && h.Session != nil {
+		f.session = h.Session
+	}
 	if h.Token != "" {
 		d := f.CookieDomain()
 		debugWl("Set cookie (expiry %d seconds, host=%s,domain=%s)\n", h.CookieLivetime, req.Host, d)
@@ -209,6 +213,9 @@ func WebLoginProxy(f *FProxy) {
 		}
 		return
 	}
+	if wr != nil && wr.Session != nil {
+		f.session = wr.Session
+	}
 	if wr.HTTPCode != 0 {
 		f.AntiDOS("failed to serve html: %s", err)
 		f.err = fmt.Errorf("Error (weblogin serves http code %d)", wr.HTTPCode)
@@ -260,7 +267,7 @@ func getUserContext(f *FProxy) context.Context {
 	return ctx
 }
 
-func WebloginCheck(webloginpara string) (*apb.SignedUser, []*h2gproxy.Cookie, error) {
+func WebloginCheck(webloginpara string) (*session.Session, *apb.SignedUser, []*h2gproxy.Cookie, error) {
 	debugWl("invoked WebloginCheck()")
 	if wl == nil {
 		wl = weblogin.GetWebloginClient()
@@ -270,19 +277,20 @@ func WebloginCheck(webloginpara string) (*apb.SignedUser, []*h2gproxy.Cookie, er
 	ctx := createBootstrapContext()
 	wr, err := wl.VerifyURL(ctx, wlr)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
+
 	if wr.User == nil {
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	}
 	su, err := GetSignedUser(ctx, wr.User)
 	if err != nil {
-		return nil, nil, err
+		return wr.Session, nil, nil, err
 	}
 	if len(wr.Cookies) > 0 {
-		return su, wr.Cookies, nil
+		return wr.Session, su, wr.Cookies, nil
 	}
-	return su, nil, nil
+	return wr.Session, su, nil, nil
 }
 func webloginGetRedirectTarget(f *FProxy) string {
 	if wl == nil {

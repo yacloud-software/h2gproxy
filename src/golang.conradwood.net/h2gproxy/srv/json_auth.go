@@ -176,10 +176,13 @@ func (a *authResult) UserFromWeblogin() *apb.SignedUser {
 	if wls == "" {
 		return nil
 	}
-	u, c, err := WebloginCheck(wls)
+	sess, u, c, err := WebloginCheck(wls)
 	if err != nil {
 		fmt.Printf("Weblogin failed: %s\n", err)
 		return nil
+	}
+	if sess != nil {
+		a.f.session = sess
 	}
 	if u == nil {
 		// weblogin does not think this is valid

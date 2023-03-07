@@ -14,6 +14,7 @@ import (
 	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/utils"
 	"golang.conradwood.net/h2gproxy/httplogger"
+	"golang.yacloud.eu/apis/session"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -67,11 +68,13 @@ type FProxy struct {
 	antidos_notified     bool
 	port                 int // the port the request came in on
 	added_cookies        map[string]*h2gproxy.Cookie
-	session_cookie       string
-	session              *apb.SignedSession
+	session              *session.Session       //*apb.SignedSession
 	logreq               httplogger.HTTPRequest // to log start/end and updates for this request
 }
 
+func (f *FProxy) GetUser() *apb.User {
+	return f.unsigneduser
+}
 func (f *FProxy) SetUser(a *apb.SignedUser) {
 	if a == nil {
 		fmt.Printf("[fproxy] cleared user\n")
