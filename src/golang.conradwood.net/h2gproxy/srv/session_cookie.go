@@ -188,6 +188,7 @@ func (f *FProxy) GetNewSessionRequest() *sessionmanager.NewSessionRequest {
 		un = fmt.Sprintf("%s %s", u.FirstName, u.LastName)
 		ue = u.Email
 	}
+	host := f.req.Host
 	nsr := &sessionmanager.NewSessionRequest{
 		IPAddress:   f.PeerIP(),
 		UserAgent:   f.GetUserAgent(),
@@ -195,7 +196,7 @@ func (f *FProxy) GetNewSessionRequest() *sessionmanager.NewSessionRequest {
 		UserID:      us,
 		Username:    un,
 		Useremail:   ue,
-		TriggerHost: f.GetHeader("host"),
+		TriggerHost: host,
 	}
 	return nsr
 }
