@@ -66,6 +66,30 @@ func (f *FProxy) xisSessionValid(ctx context.Context, session string) (bool, *se
 	*/
 }
 
+// get it from cookie or parameters and return it (or nil)
+func (f *FProxy) get_session_from_request(ctx context.Context) *session.Session {
+	sess_para := f.QueryValues()["sess"]
+	if sess_para != "" {
+		t, sess := f.xisSessionValid(ctx, sess_para)
+		if t {
+			return sess
+		}
+	}
+	c, err := f.req.Cookie(SESSION_COOKIE_NAME)
+	if *debug_session && (c == nil || c.Value == "") {
+		fmt.Printf("Session - no session cookie received\n")
+	}
+	if err == nil && c != nil && c.Value != "" {
+		t, sess := f.xisSessionValid(ctx, c.Value)
+		if t {
+			return sess
+		}
+	}
+
+	return nil
+
+}
+
 // get or create a session token
 // called (or should be called) before calling a backend
 func (f *FProxy) GetSessionToken() (string, error) {
@@ -79,22 +103,14 @@ func (f *FProxy) GetSessionToken() (string, error) {
 	if f.session != nil {
 		return f.session.SessionID, nil
 	}
-	c, err := f.req.Cookie(SESSION_COOKIE_NAME)
-	if *debug_session && (c == nil || c.Value == "") {
-		fmt.Printf("Session - no session cookie received\n")
-	}
+	sess := f.get_session_from_request(ctx)
 
-	if c != nil && c.Value != "" {
-		t, sess := f.xisSessionValid(ctx, c.Value)
-		if t {
-			f.session = sess
-			if *debug_session {
-				fmt.Printf("Session - got valid session (%s) from cookie\n", print_session_id(c.Value))
-			}
-			return sess.SessionID, nil
-		} else {
-			fmt.Printf("Session from cookie (%s) not valid\n", print_session_id(c.Value))
+	if sess != nil {
+		f.session = sess
+		if *debug_session {
+			fmt.Printf("Session - got valid session (%s) from cookie\n", print_session_id(sess.SessionID))
 		}
+		return sess.SessionID, nil
 	}
 
 	nsr := f.GetNewSessionRequest()
