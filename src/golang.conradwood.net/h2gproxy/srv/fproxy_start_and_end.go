@@ -13,19 +13,22 @@ var (
 )
 
 func StartRequest(f *FProxy) {
-	if *single_thread {
-		single_thread_lock.Lock()
+	if !*single_thread {
+		return
 	}
+	single_thread_lock.Lock()
 	fmt.Printf("--------------------------- STARTED ----------------\n")
 	printSession(f.session)
 }
 
 func EndRequest(f *FProxy) {
+	if !*single_thread {
+		return
+	}
 	printSession(f.session)
 	fmt.Printf("--------------------------- FINISHED ----------------\n")
-	if *single_thread {
-		single_thread_lock.Unlock()
-	}
+	single_thread_lock.Unlock()
+
 }
 
 func printSession(s *session.Session) {
