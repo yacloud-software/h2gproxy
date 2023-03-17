@@ -31,6 +31,10 @@ func (f *FProxy) doesTypeNeedSession() bool {
 	if f.hf.IsDownloadProxy() {
 		return false
 	}
+	if f.IsKnownCLITool() {
+		return false
+	}
+
 	return true
 }
 func (f *FProxy) xisSessionValid(ctx context.Context, session string) (bool, *session.Session) {
