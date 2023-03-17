@@ -24,6 +24,15 @@ var (
 	debug_session = flag.Bool("debug_session", false, "debug session stuff")
 )
 
+func (f *FProxy) doesTypeNeedSession() bool {
+	if f.hf.IsJsonAPI() {
+		return false
+	}
+	if f.hf.IsDownloadProxy() {
+		return false
+	}
+	return true
+}
 func (f *FProxy) xisSessionValid(ctx context.Context, session string) (bool, *session.Session) {
 	if *debug_session {
 		fmt.Printf("Session - isSessionValid()\n")
@@ -112,7 +121,9 @@ func (f *FProxy) GetSessionToken() (string, error) {
 		}
 		return sess.SessionID, nil
 	}
-
+	if !f.doesTypeNeedSession() {
+		return "", nil
+	}
 	nsr := f.GetNewSessionRequest()
 	sr, err := sessionmanager.GetSessionManagerClient().NewSession(ctx, nsr)
 	if err != nil {
@@ -137,6 +148,9 @@ func (f *FProxy) GetSessionToken() (string, error) {
 // must be called after backend and before sending response to webbrowser
 // (sets a cookie if required)
 func (f *FProxy) add_session_cookie(response *h2gproxy.ServeResponse, serr error) (*h2gproxy.ServeResponse, error) {
+	if !f.doesTypeNeedSession() {
+		return response, serr
+	}
 	if *debug_session {
 		fmt.Printf("Session - add_session_cookie()()\n")
 	}
