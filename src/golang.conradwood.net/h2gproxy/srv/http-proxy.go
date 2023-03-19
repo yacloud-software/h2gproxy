@@ -817,6 +817,12 @@ func (f *FProxy) responseHandler2(resp *http.Response) (err error) {
 	// for this url
 	//
 	if resp.StatusCode == 401 {
+		if f.hf.def.WebBackendAuthenticatesOnly {
+			if *debug {
+				fmt.Printf("Passing 401 to client application (%v)\n", f.req.URL)
+			}
+			return
+		}
 		if f.hf.def.NeedAuth {
 			fmt.Printf("Statuscode: 401 found in response to %v AND we got needauth=true in config [user #%s, %s]!\n", f.req.URL, f.unsigneduser.ID, f.unsigneduser.Email)
 			resp.StatusCode = 501

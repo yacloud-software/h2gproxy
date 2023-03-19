@@ -1,8 +1,15 @@
 // client create: DownloadStreamerClient
+/*
+  Created by /home/cnw/devel/go/go-tools/src/golang.conradwood.net/gotools/protoc-gen-cnw/protoc-gen-cnw.go
+*/
+
 /* geninfo:
    filename  : protos/golang.conradwood.net/apis/h2gproxy/h2gproxy.proto
    gopackage : golang.conradwood.net/apis/h2gproxy
    importname: ai_0
+   clientfunc: GetDownloadStreamer
+   serverfunc: NewDownloadStreamer
+   lookupfunc: DownloadStreamerLookupID
    varname   : client_DownloadStreamerClient_0
    clientname: DownloadStreamerClient
    servername: DownloadStreamerServer
@@ -33,8 +40,9 @@ func GetDownloadStreamerClient() DownloadStreamerClient {
        return client_DownloadStreamerClient_0
     }
 
-    client_DownloadStreamerClient_0 = NewDownloadStreamerClient(client.Connect("h2gproxy.DownloadStreamer"))
+    client_DownloadStreamerClient_0 = NewDownloadStreamerClient(client.Connect(DownloadStreamerLookupID()))
     lock_DownloadStreamerClient_0.Unlock()
     return client_DownloadStreamerClient_0
 }
 
+func DownloadStreamerLookupID() string { return "h2gproxy.DownloadStreamer" } // returns the ID suitable for lookup in the registry. treat as opaque, subject to change.
