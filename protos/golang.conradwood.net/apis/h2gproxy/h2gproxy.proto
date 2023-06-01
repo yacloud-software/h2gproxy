@@ -228,7 +228,7 @@ message AddConfigHTTPRequest {
   // for certain configurations, such as apis or proxies we might only want to do basic auth or tokens or
   bool DisableFormBasedAuth=32;
   bool LowLatency=33; // optimize for lower latency (send responses sooner rather than buffering)
-  bool WebBackendAuthenticatesOnly=34; // only applicable to apitype web, if backend sends 401/403 it will be passed to the client
+  bool WebBackendAuthenticatesOnly=34; // only applicable to apitype web, if backend sends 401/403 it will be passed to the client. h2gproxy thus will never be in the path to authenticate user. This can be useful for the many broken webframeworks, as typically found in php, python(django/uwsgi/foo)
 }
 
 message HostListEntry {
