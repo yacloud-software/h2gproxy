@@ -173,7 +173,7 @@ retry:
 
 		g.f.customHeaders(&ExtraInfo{Error: err, Message: msg})
 
-		httpError = grpcToHTTPMap[code]
+		httpError = grpcToHTTP(code)
 		httpError.ErrorMessage = public_error_message
 		if auth.IsRoot(nctx) {
 			httpError.ExtendedErrorString = privileged_error_message
