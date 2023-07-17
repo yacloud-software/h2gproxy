@@ -15,7 +15,7 @@ require (
 	golang.conradwood.net/apis/rpcinterceptor v1.1.2309
 	golang.conradwood.net/apis/usagestats v1.1.2238
 	golang.conradwood.net/apis/weblogin v1.1.2238
-	golang.conradwood.net/go-easyops v0.1.17944
+	golang.conradwood.net/go-easyops v0.1.17825
 	golang.org/x/net v0.11.0
 	golang.yacloud.eu/apis/session v1.1.2309
 	golang.yacloud.eu/apis/sessionmanager v1.1.2238
