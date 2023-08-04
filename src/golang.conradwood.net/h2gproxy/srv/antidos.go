@@ -47,6 +47,8 @@ func AntiDOS_HTTPHandler(w http.ResponseWriter, r *http.Request, port int) bool 
 		return false
 	}
 	page := AntiDOS_BuildBlackListPage(ip)
+	w.WriteHeader(http.StatusForbidden)
+	w.Header()["content-type"] = []string{"text/html"}
 	w.Header()["content-type"] = []string{"text/html"}
 	w.Write(page)
 	return true
