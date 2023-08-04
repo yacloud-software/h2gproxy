@@ -16,6 +16,9 @@ var (
 
 /*****************************
 * streaming download proxy
+*
+* apitype: download
+*
 *****************************/
 
 type download_proxy struct {

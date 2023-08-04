@@ -25,6 +25,10 @@ var (
 	experimental = flag.Bool("experimental", false, "enable experimental mode")
 )
 
+/*
+* used by streamingapis, e.g. BackendStream called for apitype:download
+ */
+
 // a backend handler must implement this
 type StreamingProxy interface {
 
