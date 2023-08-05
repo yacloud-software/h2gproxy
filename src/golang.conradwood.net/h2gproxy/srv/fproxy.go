@@ -132,7 +132,15 @@ func (f *FProxy) AntiDOS(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	msg = p + msg
 	ip := f.PeerIP()
-	_, err := antidos.GetAntiDOSClient().IPFailure(authremote.Context(), &antidos.IPFailureRequest{IP: ip, Message: msg})
+	adreq := &antidos.IPFailureRequest{
+		IP:      ip,
+		Message: msg,
+	}
+	if f.unsigneduser != nil {
+		//add user if one
+		adreq.UserID = f.unsigneduser.ID
+	}
+	_, err := antidos.GetAntiDOSClient().IPFailure(authremote.Context(), adreq)
 	if err == nil {
 		f.antidos_notified = true
 		return
