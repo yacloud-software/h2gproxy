@@ -132,15 +132,7 @@ func (f *FProxy) AntiDOS(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	msg = p + msg
 	ip := f.PeerIP()
-	adreq := &antidos.IPFailureRequest{
-		IP:      ip,
-		Message: msg,
-	}
-	if f.unsigneduser != nil {
-		//add user if one
-		adreq.UserID = f.unsigneduser.ID
-	}
-	_, err := antidos.GetAntiDOSClient().IPFailure(authremote.Context(), adreq)
+	_, err := antidos.GetAntiDOSClient().IPFailure(authremote.Context(), &antidos.IPFailureRequest{IP: ip, Message: msg})
 	if err == nil {
 		f.antidos_notified = true
 		return
@@ -198,14 +190,20 @@ func (f *FProxy) RequestValues() map[string]string {
 		}
 	}
 	// if it is a post we might have a funny url string (which are also values)
+	// but we might also have other things.
 	if f.req.Method == "POST" {
-		values, err := url.ParseQuery(string(f.RequestBody()))
-		if err == nil {
-			for k, v := range values {
-				if len(v) < 1 {
-					continue
+		ct := strings.ToLower(f.GetHeader("content-type"))
+		if ct == "text/json" || ct == "application/json" {
+			res["body"] = string(f.RequestBody())
+		} else {
+			values, err := url.ParseQuery(string(f.RequestBody()))
+			if err == nil {
+				for k, v := range values {
+					if len(v) < 1 {
+						continue
+					}
+					res[k] = v[0]
 				}
-				res[k] = v[0]
 			}
 		}
 	}

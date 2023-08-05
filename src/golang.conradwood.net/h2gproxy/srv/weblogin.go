@@ -217,7 +217,7 @@ func WebLoginProxy(f *FProxy) {
 		f.session = wr.Session
 	}
 	if wr.HTTPCode != 0 {
-		f.AntiDOS("failed to serve html: %s", err)
+		f.AntiDOS("failed to serve weblogin (code == %d)", wr.HTTPCode)
 		f.err = fmt.Errorf("Error (weblogin serves http code %d)", wr.HTTPCode)
 		f.SetStatus(int(wr.HTTPCode))
 		f.Write(wr.Body)
