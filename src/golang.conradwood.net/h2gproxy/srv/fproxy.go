@@ -137,6 +137,7 @@ func (f *FProxy) AntiDOS(format string, args ...interface{}) {
 		Message: msg,
 	}
 	if f.unsigneduser != nil {
+		//add user if one
 		adreq.UserID = f.unsigneduser.ID
 	}
 	_, err := antidos.GetAntiDOSClient().IPFailure(authremote.Context(), adreq)
