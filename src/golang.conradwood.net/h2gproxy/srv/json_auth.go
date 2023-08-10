@@ -61,7 +61,7 @@ func json_auth(f *FProxy) (*authResult, error) {
 	if res.attempted && !res.Authenticated() {
 		antidos.GetAntiDOSClient().IPFailure(createBootstrapContext(), &antidos.IPFailureRequest{
 			IP:      f.PeerIP(),
-			Message: "could not authenticate from bearer, cookie, weblogin, parameter or basicauth",
+			Message: "could not authenticate access to " + f.String() + " by any means",
 		})
 	}
 	return res, nil
