@@ -72,6 +72,10 @@ type FProxy struct {
 	logreq               httplogger.HTTPRequest // to log start/end and updates for this request
 }
 
+func (f *FProxy) NeedsAuth() bool {
+	return f.hf.def.NeedAuth
+}
+
 func (f *FProxy) GetUser() *apb.User {
 	return f.unsigneduser
 }
