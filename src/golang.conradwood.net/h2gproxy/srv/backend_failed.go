@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	enable_backend_failure_handling = flag.Bool("enable_backend_failure_reporting", false, "tell antidos every time backend fails")
+	enable_backend_failure_handling = flag.Bool("enable_backend_failure_reporting", true, "tell antidos every time backend fails")
 )
 
 // handle a backend_failure
