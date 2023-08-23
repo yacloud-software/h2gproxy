@@ -14,6 +14,9 @@ var (
 
 // handle a backend_failure
 func backend_failure(f *FProxy, err error) {
+	if err == nil {
+		return
+	}
 	if !*enable_backend_failure_handling {
 		return
 	}
