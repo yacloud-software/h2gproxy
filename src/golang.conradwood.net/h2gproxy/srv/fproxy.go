@@ -255,6 +255,12 @@ func (f *FProxy) PeerIP() string {
 	h := f.req.RemoteAddr
 	return h
 }
+func (f *FProxy) RequestedHost() string {
+	return f.req.Host
+}
+func (f *FProxy) RequestedPath() string {
+	return f.req.URL.Path
+}
 
 // this means fproxy won't be responsible for the response. It's an error to send data through fproxy thereafter
 func (f *FProxy) ReleaseResponse() {
@@ -588,4 +594,9 @@ func verify_user(f *FProxy) {
 		fmt.Printf("[verifyuser] User email is not verified. not accepting user\n")
 		f.SetUser(nil)
 	}
+}
+
+// report http failure to antidos
+func (f *FProxy) ReportHTTPFailure() {
+
 }

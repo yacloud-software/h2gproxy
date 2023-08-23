@@ -5,7 +5,6 @@ import (
 	//	"golang.conradwood.net/apis/create"
 	"golang.conradwood.net/apis/h2gproxy"
 	//	hm "golang.conradwood.net/apis/htmlserver"
-	jm "golang.conradwood.net/apis/jsonapimultiplexer"
 	"golang.conradwood.net/go-easyops/client"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -13,33 +12,10 @@ import (
 )
 
 var (
-	multi jm.JSONApiMultiplexerClient
 	//	html  hm.HTMLServerServiceClient
 	htmls    = make(map[string]Ihtmlserve)
 	htmllock sync.Mutex
 )
-
-/*****************************
-* json
-*****************************/
-// OBSOLETE. jsonstuff now goes through web-proxy
-
-type json_proxy struct {
-}
-
-func (j *json_proxy) Serve(ctx context.Context, in *h2gproxy.ServeRequest) (*h2gproxy.ServeResponse, error) {
-	if multi == nil {
-		multi = jm.NewJSONApiMultiplexerClient(client.Connect("jsonapimultiplexer.JSONApiMultiplexer"))
-	}
-	return multi.Serve(ctx, in)
-
-}
-
-func JSONProxy(f *FProxy) {
-	jp := &json_proxy{}
-	gp := NewGrpcProxy(f, jp)
-	gp.Proxy()
-}
 
 /*****************************
 * web

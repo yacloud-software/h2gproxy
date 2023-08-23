@@ -9,7 +9,6 @@ import (
 	h2g "golang.conradwood.net/apis/h2gproxy"
 	ic "golang.conradwood.net/apis/rpcinterceptor"
 	"golang.conradwood.net/go-easyops/auth"
-	"golang.conradwood.net/go-easyops/client"
 	"golang.conradwood.net/go-easyops/tokens"
 	"golang.conradwood.net/go-easyops/utils"
 	"google.golang.org/grpc/codes"
@@ -55,9 +54,7 @@ func NewStreamProxy(f *FProxy, sp StreamingProxy) *StreamProxy {
 func (g *StreamProxy) Proxy() {
 	t_total := g.f.AddTiming("stream_total")
 	defer t_total.Done()
-	if rc == nil {
-		rc = ic.NewRPCInterceptorServiceClient(client.Connect("rpcinterceptor.RPCInterceptorService"))
-	}
+
 	if *printHeaders {
 		fmt.Println(headersToString(g.f.req.Header))
 	}
@@ -180,6 +177,8 @@ retry:
 		}
 		return
 	}
+	// "late" authentication isn't a failure, so we only report it back here
+	backend_failure(g.f, err)
 
 	g.f.customHeaders(&ExtraInfo{Error: err, Message: msg})
 	httpError = grpcToHTTP(code)

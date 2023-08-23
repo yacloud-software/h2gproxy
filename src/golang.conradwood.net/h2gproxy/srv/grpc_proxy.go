@@ -9,7 +9,7 @@ import (
 	h2g "golang.conradwood.net/apis/h2gproxy"
 	ic "golang.conradwood.net/apis/rpcinterceptor"
 	"golang.conradwood.net/go-easyops/auth"
-	"golang.conradwood.net/go-easyops/client"
+	//	"golang.conradwood.net/go-easyops/client"
 	"golang.conradwood.net/go-easyops/errors"
 	"golang.conradwood.net/go-easyops/tokens"
 	"golang.conradwood.net/go-easyops/utils"
@@ -21,7 +21,6 @@ import (
 )
 
 var (
-	rc            ic.RPCInterceptorServiceClient
 	send_www_auth = flag.Bool("grpc_proxy_send_www_auth", false, "if true send a 'Basic' www-authenticate header whenever the backend requires authentication to complete a call. if false, send an empty www-authenticate header")
 	print_rpc     = flag.Bool("print_rpc", false, "print rpc payload before calling gRPC backends")
 	debug_rpc     = flag.Bool("debug_grpc_proxy", false, "debug grpc proxy")
@@ -45,9 +44,6 @@ func NewGrpcProxy(f *FProxy, p ProxyConfig) *GRPCProxy {
 func (g *GRPCProxy) Proxy() {
 	if *printHeaders {
 		fmt.Println(headersToString(g.f.req.Header))
-	}
-	if rc == nil {
-		rc = ic.NewRPCInterceptorServiceClient(client.Connect("rpcinterceptor.RPCInterceptorService"))
 	}
 	var err error
 	a := &authResult{}
@@ -119,74 +115,81 @@ retry:
 	var httpError *HTTPError
 	public_error_message := ""
 	privileged_error_message := ""
-	/******************** did the backend return an error ? ******************/
-	if err != nil {
-		if g.f.unsigneduser == nil { // if not authenticated and error, tell antidos about it
-			if antidos_err(err) {
-				g.f.AntiDOS("backend serving returned error (%s) and no unsigneduser", err)
-			}
-		}
-		g.f.err = err
-		st := status.Convert(err)
-		public_error_message = get_public_error_message(err)
-		privileged_error_message = utils.ErrorString(err)
-		message := st.Message()
-		code := st.Code()
-		msg := fmt.Sprintf("[grpcproxy] API (type %d) Call (%s), authenticated()=%v, late_auth=%v, failed: code=%d message=%s", g.f.hf.def.Api, g.f.String(), a.Authenticated(), late_auth_attempted, code, message)
-		if *debug_rpc {
-			fmt.Println(msg)
-			fmt.Printf("[grpcproxy] API (type %d) Call (%s) failed: %s\n", g.f.hf.def.Api, g.f.String(), utils.ErrorString(err))
-		}
-		// sometimes the backend (especially the html backend) may ask us to authenticate a user
-		// this happens, if, for example some parts of a backend are accessible by anyone (even non-authenticated people)
-		// and some need authentication. we deal with this here.
-
-		// sometimes we actually identified a user (but user is not yet verified)
-		if a.User() != nil && !a.User().EmailVerified && a.Authenticated() && !late_auth_attempted {
-			late_auth_attempted = true
-			g.f.SetUser(a.SignedUser())
-			if *debug_rpc {
-				fmt.Printf("[grpcproxy] have user %s, but email not verified, thus it was not passed to the backend\n", auth.Description(a.User()))
-			}
-			nctx, err := createContext(g.f, a)
-			if err != nil {
-				g.f.ProcessError(err, 500, "failed to create a user context")
-				return
-			}
-			if g.verifyEmail(nctx) {
-				goto retry
-			}
-			return
-		}
-		// if we didn't try so before, attempt weblogin
-		if code == codes.Unauthenticated && !a.Authenticated() && !late_auth_attempted {
-			if *debug_rpc {
-				fmt.Printf("[gprcproxy] Late authentication\n")
-			}
-			late_auth_attempted = true
-			b := g.late_authenticate()
-			if b {
-				goto retry
-			}
-			return
-		}
-
-		g.f.customHeaders(&ExtraInfo{Error: err, Message: msg})
-
-		httpError = grpcToHTTP(code)
-		httpError.ErrorMessage = public_error_message
-		if auth.IsRoot(nctx) {
-			httpError.ExtendedErrorString = privileged_error_message
-		}
-
-		g.f.SetStatus(httpError.ErrorCode)
-
-		resp, err := json.Marshal(httpError)
-		if err != nil {
-			fmt.Printf("Failed to marshal http error: %s\n", err)
-		}
-		g.f.Write(resp)
+	if err == nil {
+		// all done - request completed
+		g.f.LogResponse()
+		return
 	}
+
+	/******************** backend returned an error ******************/
+	if g.f.unsigneduser == nil { // if not authenticated and error, tell antidos about it
+		if antidos_err(err) {
+			g.f.AntiDOS("backend serving returned error (%s) and no unsigneduser", err)
+		}
+	}
+	g.f.err = err
+	st := status.Convert(err)
+	public_error_message = get_public_error_message(err)
+	privileged_error_message = utils.ErrorString(err)
+	message := st.Message()
+	code := st.Code()
+	msg := fmt.Sprintf("[grpcproxy] API (type %d) Call (%s), authenticated()=%v, late_auth=%v, failed: code=%d message=%s", g.f.hf.def.Api, g.f.String(), a.Authenticated(), late_auth_attempted, code, message)
+	if *debug_rpc {
+		fmt.Println(msg)
+		fmt.Printf("[grpcproxy] API (type %d) Call (%s) failed: %s\n", g.f.hf.def.Api, g.f.String(), utils.ErrorString(err))
+	}
+	// sometimes the backend (especially the html backend) may ask us to authenticate a user
+	// this happens, if, for example some parts of a backend are accessible by anyone (even non-authenticated people)
+	// and some need authentication. we deal with this here.
+
+	// sometimes we actually identified a user (but user is not yet verified)
+	if a.User() != nil && !a.User().EmailVerified && a.Authenticated() && !late_auth_attempted {
+		late_auth_attempted = true
+		g.f.SetUser(a.SignedUser())
+		if *debug_rpc {
+			fmt.Printf("[grpcproxy] have user %s, but email not verified, thus it was not passed to the backend\n", auth.Description(a.User()))
+		}
+		nctx, err := createContext(g.f, a)
+		if err != nil {
+			g.f.ProcessError(err, 500, "failed to create a user context")
+			return
+		}
+		if g.verifyEmail(nctx) {
+			goto retry
+		}
+		return
+	}
+	// if we didn't try so before, attempt weblogin
+	if code == codes.Unauthenticated && !a.Authenticated() && !late_auth_attempted {
+		if *debug_rpc {
+			fmt.Printf("[gprcproxy] Late authentication\n")
+		}
+		late_auth_attempted = true
+		b := g.late_authenticate()
+		if b {
+			goto retry
+		}
+		return
+	}
+
+	// "late" authentication isn't a failure, so we only report it back here
+	backend_failure(g.f, err)
+
+	g.f.customHeaders(&ExtraInfo{Error: err, Message: msg})
+
+	httpError = grpcToHTTP(code)
+	httpError.ErrorMessage = public_error_message
+	if auth.IsRoot(nctx) {
+		httpError.ExtendedErrorString = privileged_error_message
+	}
+
+	g.f.SetStatus(httpError.ErrorCode)
+
+	resp, err := json.Marshal(httpError)
+	if err != nil {
+		fmt.Printf("Failed to marshal http error: %s\n", err)
+	}
+	g.f.Write(resp)
 
 	g.f.LogResponse()
 	return
@@ -203,7 +206,7 @@ func (g *GRPCProxy) grpcproxy(a *authResult) (context.Context, error) {
 	// build up the grpc proto
 	sv := &h2g.ServeRequest{Body: string(body)}
 	sv.Host = strings.ToLower(g.f.req.Host)
-	sv.Path = g.f.req.URL.Path
+	sv.Path = g.f.RequestedPath()
 	sv.Method = g.f.req.Method
 	sv.SourceIP = fixIP(g.f.req.RemoteAddr)
 

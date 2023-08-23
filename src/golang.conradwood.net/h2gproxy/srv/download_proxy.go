@@ -70,10 +70,12 @@ func (j *download_proxy) BackendStream(ctx context.Context, fcr *lb.StreamReques
 	t.Done()
 	t = j.f.AddTiming("startsend")
 	if err := stream.SendMsg(fcr); err != nil {
+		backend_failure(j.f, err)
 		stream.Fail(err)
 		return err
 	}
 	if err := stream.CloseSend(); err != nil {
+		backend_failure(j.f, err)
 		stream.Fail(err)
 		return err
 	}
@@ -92,6 +94,7 @@ func (j *download_proxy) BackendStream(ctx context.Context, fcr *lb.StreamReques
 			break
 		}
 		if err != nil {
+			backend_failure(j.f, err)
 			fmt.Printf("[downloadproxy] error encountered: %s\n", utils.ErrorString(err))
 			t.Done()
 			stream.Fail(err)
