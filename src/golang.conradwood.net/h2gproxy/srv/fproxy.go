@@ -2,6 +2,7 @@ package srv
 
 import (
 	"context"
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"golang.conradwood.net/apis/antidos"
@@ -449,7 +450,6 @@ func (f *FProxy) createUserHeaders() (map[string]string, error) {
 		res["REMOTE_USER"] = f.unsigneduser.Email
 		res["REMOTE_FULLNAME"] = f.unsigneduser.FirstName + " " + f.unsigneduser.LastName
 		res["REMOTE_USERID"] = f.unsigneduser.ID
-
 		suser, err := utils.Marshal(f.unsigneduser)
 		if err != nil {
 			fmt.Printf("Failed to marshal user: %s\n", utils.ErrorString(err))
@@ -465,6 +465,9 @@ func (f *FProxy) createUserHeaders() (map[string]string, error) {
 			return nil, err
 		}
 		res["X-USERWITHSIGNATURE"] = suser
+		authheader := f.unsigneduser.Email + ":foo"
+		authheader64 := base64.StdEncoding.EncodeToString([]byte(authheader))
+		res["AUTHORIZATION"] = fmt.Sprintf("Basic %s", authheader64)
 
 	}
 	return res, nil
