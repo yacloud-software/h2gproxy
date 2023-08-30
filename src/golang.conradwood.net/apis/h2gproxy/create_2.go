@@ -1,6 +1,6 @@
 // client create: H2GProxyServiceClient
 /*
-  Created by /srv/home/cnw/devel/go/go-tools/src/golang.conradwood.net/gotools/protoc-gen-cnw/protoc-gen-cnw.go
+  Created by /home/cnw/devel/go/yatools/src/golang.yacloud.eu/yatools/protoc-gen-cnw/protoc-gen-cnw.go
 */
 
 /* geninfo:
@@ -13,7 +13,7 @@
    varname   : client_H2GProxyServiceClient_1
    clientname: H2GProxyServiceClient
    servername: H2GProxyServiceServer
-   gscvname  : h2gproxy.H2GProxyService
+   gsvcname  : h2gproxy.H2GProxyService
    lockname  : lock_H2GProxyServiceClient_1
    activename: active_H2GProxyServiceClient_1
 */
@@ -62,3 +62,7 @@ func GetH2GProxyServiceClient() H2GProxyServiceClient {
 }
 
 func H2GProxyServiceLookupID() string { return "h2gproxy.H2GProxyService" } // returns the ID suitable for lookup in the registry. treat as opaque, subject to change.
+
+func init() {
+   client.RegisterDependency("h2gproxy.H2GProxyService")
+}
