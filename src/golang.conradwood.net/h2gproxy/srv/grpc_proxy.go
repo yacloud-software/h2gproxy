@@ -49,6 +49,15 @@ func (g *GRPCProxy) Proxy() {
 	a := &authResult{}
 	a, err = json_auth(g.f) // always check if we got auth stuff
 	if a.Authenticated() {
+		if a.User().ServiceAccount {
+			g.f.AddCookie(&h2g.Cookie{
+				Name:   COOKIE_NAME,
+				Value:  "---",
+				Expiry: uint32(time.Now().Add(0 - time.Duration(24)*time.Hour).Unix()),
+			})
+			g.f.SetStatus(401)
+			return
+		}
 		g.f.GoodRequest()
 	}
 	if g.f.hf.def.NeedAuth && !a.Authenticated() {
