@@ -716,7 +716,10 @@ func (f *FProxy) director2(req *http.Request) {
 	addHeaders(f, req)
 	f.headers_to_backend = headersToString(req.Header)
 	if *logrequests && *debug {
-		fmt.Printf("%s: req.Host=\"%s\", req.Header[Host]=\"%s\" (clientrequest: %s)\n", req.RemoteAddr, req.Host, req.Header["Host"], f.requested_host)
+		fmt.Printf("%s: req.Host=\"%s\", req.Header[Host]=\"%s\" (clientrequest: %s) method:%s\n", req.RemoteAddr, req.Host, req.Header["Host"], f.requested_host, req.Method)
+	}
+	if *debugRewrite {
+		fmt.Printf("asking backend for %s %s\n", req.Method, req.URL)
 	}
 
 }
@@ -771,6 +774,9 @@ func (f *FProxy) responseHandler2(resp *http.Response) (err error) {
 	ph, ps, err := net.SplitHostPort(resp.Request.URL.Host)
 	if err != nil && *debug {
 		fmt.Printf("Weird response url: %s\n", resp.Request.URL.Host)
+	}
+	if *debug {
+		fmt.Printf("Response target: %s %s\n", resp.Request.Method, resp.Request.URL)
 	}
 	port, err := strconv.Atoi(ps)
 	if err != nil {
