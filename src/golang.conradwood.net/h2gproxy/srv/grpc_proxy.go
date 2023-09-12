@@ -55,7 +55,6 @@ func (g *GRPCProxy) Proxy() {
 				Value:  "---",
 				Expiry: uint32(time.Now().Add(0 - time.Duration(24)*time.Hour).Unix()),
 			})
-			fmt.Printf("Access from serviceaccount declined (%s)\n", auth.UserIDString(a.User()))
 			g.f.SetStatus(401)
 			return
 		}
