@@ -49,4 +49,5 @@ func DownloadStreamerLookupID() string { return "h2gproxy.DownloadStreamer" } //
 
 func init() {
    client.RegisterDependency("h2gproxy.DownloadStreamer")
+   AddService("h2gproxy.DownloadStreamer")
 }

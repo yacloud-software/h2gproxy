@@ -65,4 +65,5 @@ func H2GProxyServiceLookupID() string { return "h2gproxy.H2GProxyService" } // r
 
 func init() {
    client.RegisterDependency("h2gproxy.H2GProxyService")
+   AddService("h2gproxy.H2GProxyService")
 }
