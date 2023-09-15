@@ -224,11 +224,6 @@ func main_handler(w http.ResponseWriter, r *http.Request, isTLS bool, port int) 
 	if f == nil {
 		return
 	}
-	// do we have to redirect this url to another one?
-	if hf.def.RedirectTo != "" {
-		f.RedirectTo(hf.def.RedirectTo, false)
-		return
-	}
 
 	f.Errorurl = errorurl
 	f.execute()

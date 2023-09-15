@@ -270,7 +270,7 @@ func (*H2gproxyServer) AddConfigHTTP(c context.Context, cr *pb.AddConfigHTTPRequ
 	if cr.URLPath == "" {
 		return nil, errors.New("URLPath required in AddConfigHTTP() call")
 	}
-	if cr.RedirectTo == "" {
+	if len(cr.RedirectRewrites) == 0 {
 		if cr.Api == 5 && cr.URLHostname == "" {
 			return nil, fmt.Errorf("[%s] does not set urlhost (%s) and apitype is proxy (%s)", cr.ConfigName, cr.URLHostname, cr.URLPath)
 		}
