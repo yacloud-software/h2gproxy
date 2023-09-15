@@ -270,23 +270,25 @@ func (*H2gproxyServer) AddConfigHTTP(c context.Context, cr *pb.AddConfigHTTPRequ
 	if cr.URLPath == "" {
 		return nil, errors.New("URLPath required in AddConfigHTTP() call")
 	}
-	if cr.Api == 5 && cr.URLHostname == "" {
-		return nil, fmt.Errorf("[%s] does not set urlhost (%s) and apitype is proxy (%s)", cr.ConfigName, cr.URLHostname, cr.URLPath)
-	}
-	if cr.Api != 0 && cr.TargetHost != "" {
-		return nil, fmt.Errorf("[%s] do not set targethost (%s) and apitype != 0 (%s)", cr.ConfigName, cr.TargetHost, cr.URLPath)
-	}
-	if (cr.TargetHost == "") && (cr.TargetService == "") {
-		return nil, fmt.Errorf("[%s] Either TargetHost or TargetService required in AddConfigHTTP() (api=%v) call", cr.ConfigName, cr.Api)
-	}
-	if (cr.TargetHost != "") && (cr.TargetPort == 0) {
-		return nil, errors.New(fmt.Sprintf("If TargetHost is specified, TargetPort is mandatory in AddConfigHTTP() call (%s)", cr.TargetHost))
-	}
-	if (cr.Groups != nil) && (len(cr.Groups) != 0) && (cr.NeedAuth == false) {
-		return nil, fmt.Errorf("Groups specified, but needauth=false in %s", cr.URLPath)
-	}
-	if cr.Api > 999 {
-		return nil, errors.New(fmt.Sprintf("Invalid api type (configname=%s)", cr.ConfigName))
+	if cr.RedirectTo == "" {
+		if cr.Api == 5 && cr.URLHostname == "" {
+			return nil, fmt.Errorf("[%s] does not set urlhost (%s) and apitype is proxy (%s)", cr.ConfigName, cr.URLHostname, cr.URLPath)
+		}
+		if cr.Api != 0 && cr.TargetHost != "" {
+			return nil, fmt.Errorf("[%s] do not set targethost (%s) and apitype != 0 (%s)", cr.ConfigName, cr.TargetHost, cr.URLPath)
+		}
+		if (cr.TargetHost == "") && (cr.TargetService == "") {
+			return nil, fmt.Errorf("[%s] Either TargetHost or TargetService required in AddConfigHTTP() (api=%v) call", cr.ConfigName, cr.Api)
+		}
+		if (cr.TargetHost != "") && (cr.TargetPort == 0) {
+			return nil, errors.New(fmt.Sprintf("If TargetHost is specified, TargetPort is mandatory in AddConfigHTTP() call (%s)", cr.TargetHost))
+		}
+		if (cr.Groups != nil) && (len(cr.Groups) != 0) && (cr.NeedAuth == false) {
+			return nil, fmt.Errorf("Groups specified, but needauth=false in %s", cr.URLPath)
+		}
+		if cr.Api > 999 {
+			return nil, errors.New(fmt.Sprintf("Invalid api type (configname=%s)", cr.ConfigName))
+		}
 	}
 	if cr.ConfigID == "" {
 		return nil, errors.New("entry MUST have a configid")
