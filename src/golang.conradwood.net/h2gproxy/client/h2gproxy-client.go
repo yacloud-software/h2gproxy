@@ -57,12 +57,21 @@ func main() {
 func show() {
 	cfg, err := lbc.GetConfig(authremote.Context(), &common.Void{})
 	utils.Bail("failed to get config", err)
+	t := utils.Table{}
+	t.AddHeaders("URLPath", "URLHostname", "api", "target", "note")
 	for _, c := range cfg.Config {
-		fmt.Printf("[%2d] %s\n", c.Api, c.URLPath)
-		if *full {
-			fmt.Printf("%#v\n", c)
+		t.AddUint32(c.Api)
+		t.AddString(c.URLPath)
+		t.AddString(c.URLHostname)
+		if c.TargetHost != "" {
+			t.AddString("http://" + c.TargetHost)
 		}
+		if c.TargetService != "" {
+			t.AddString(c.TargetService)
+		}
+		t.NewRow()
 	}
+	fmt.Println(t.ToPrettyString())
 }
 func show_hosts() {
 	hl, err := lbc.GetKnownHosts(authremote.Context(), &common.Void{})
