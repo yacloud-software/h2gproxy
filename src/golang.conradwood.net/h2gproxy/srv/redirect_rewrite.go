@@ -29,8 +29,10 @@ func RedirectRewrite(f *FProxy) {
 	}
 	q := f.req.URL.RequestURI() // everything after the host (inc path)
 	idx := strings.Index(q, "?")
-	q = q[idx:]
-	u = u + q
+	if idx != -1 {
+		q = q[idx:]
+		u = u + q
+	}
 	fmt.Printf("redirecting to: \"%s\"\n", u)
 	f.RedirectTo(u, false)
 }
