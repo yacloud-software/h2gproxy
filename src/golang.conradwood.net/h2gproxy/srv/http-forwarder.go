@@ -174,6 +174,7 @@ func main_handler(w http.ResponseWriter, r *http.Request, isTLS bool, port int) 
 		fmt.Printf("No route for this request: %s (looking for prefix=\"%s\")\n", r.URL, r.URL.String())
 		return
 	}
+
 	// check if we redirect this to https
 	if !isTLS {
 		if hf.didHTTPSUpgrade(w, r) {
@@ -223,6 +224,12 @@ func main_handler(w http.ResponseWriter, r *http.Request, isTLS bool, port int) 
 	if f == nil {
 		return
 	}
+	// do we have to redirect this url to another one?
+	if hf.def.RedirectTo != "" {
+		f.RedirectTo(hf.def.RedirectTo, false)
+		return
+	}
+
 	f.Errorurl = errorurl
 	f.execute()
 	f.Close()
