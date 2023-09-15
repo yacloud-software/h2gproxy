@@ -230,7 +230,13 @@ message AddConfigHTTPRequest {
   bool DisableFormBasedAuth=32;
   bool LowLatency=33; // optimize for lower latency (send responses sooner rather than buffering)
   bool WebBackendAuthenticatesOnly=34; // only applicable to apitype web, if backend sends 401/403 it will be passed to the client. h2gproxy thus will never be in the path to authenticate user. This can be useful for the many broken webframeworks, as typically found in php, python(django/uwsgi/foo)
-  string RedirectTo=35; // unconditionally sends a 307 redirect to this url
+  repeated RedirectRewrite RedirectRewrites=36; // if non empty, INCOMING requests' URLs will be matched, rewritten and a 307 redirect sent
+}
+// definition on how INBOUND request urls are rewritten and redirected
+message RedirectRewrite {
+  string MatchString=1; // match this string
+  string ReplaceWith=2; // replace the match with this string
+  string SetHost=3; // if string matched, set the hostname of the url to this
 }
 
 message HostListEntry {
