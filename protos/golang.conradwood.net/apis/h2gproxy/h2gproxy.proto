@@ -266,7 +266,13 @@ message TCPProxy {
 message ConfigFile {
   repeated TCPProxy Tcpproxy=1;
   repeated AddConfigHTTPRequest Httpproxy=2;
+  GlobalConfig GlobalConfig=3;
 }
+
+message GlobalConfig {
+  repeated string DebugHeaderGroups=1; // those groups will get private debugging headers, including error.logmessages
+}
+
 // the h2gproxyservice routes http requests to grpc backends (and other types of backends)
 service H2GProxyService {
   // create a new config. This doesn't affect current operation until apply is
