@@ -117,7 +117,7 @@ retry:
 
 	g.f.Started = time.Now()
 	/************ now call the backend ****************************/
-	nctx, err := g.grpcproxy(a)
+	_, err = g.grpcproxy(a)
 	//	elapsed := time.Now().Sub(g.f.Started)
 	//	ms := elapsed.Nanoseconds() / 1000 / 1000
 	g.f.ResponseTime = time.Since(g.f.Started)
@@ -189,7 +189,7 @@ retry:
 
 	httpError = grpcToHTTP(code)
 	httpError.ErrorMessage = public_error_message
-	if auth.IsRoot(nctx) {
+	if IsDebugHeaderGroup(g.f.GetUser()) {
 		httpError.ExtendedErrorString = privileged_error_message
 	}
 

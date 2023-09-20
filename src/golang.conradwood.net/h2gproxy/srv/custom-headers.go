@@ -148,15 +148,28 @@ func (f *FProxy) addHeader(name string, value string) {
 
 func IsDebugHeaderGroup(user *au.User) bool {
 	if user == nil {
+		if *debug {
+			fmt.Printf("[debugheadergroup] no user\n")
+		}
 		return false
 	}
 	gc := getGlobalConfigSection()
 	for _, ug := range user.Groups {
 		for _, dhg := range gc.DebugHeaderGroups {
 			if dhg == ug.ID {
+				if *debug {
+					fmt.Printf("[debugheadergroup] user group \"%s\" matched\n", ug.ID)
+				}
 				return true
 			}
+			if *debug {
+				fmt.Printf("[debugheadergroup] user group \"%s\" does not match \"%s\"\n", ug.ID, dhg)
+			}
+
 		}
+	}
+	if *debug {
+		fmt.Printf("[debugheadergroup] user does not deserve special headers\n")
 	}
 	return false
 }
