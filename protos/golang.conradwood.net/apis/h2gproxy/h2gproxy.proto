@@ -198,14 +198,14 @@ message AddConfigHTTPRequest {
   // additional requests past this limit are dropped with error
   int32 MaxInFlights = 23;
   /*
-    if 0 h2gproxy will forward http requests to http-only backends (no grpc)<br/>
-    if 1 h2gproxy will parse the form and forward via grpc to json-api-multiplexer backend<br/>
-    if 2 h2gproxy will parse the form and forward via grpc to htmlserver backend<br/>
-    if 3 h2gproxy will parse the form and forward via grpc to weblogin backend<br/>
-    if 4 h2gproxy will forward to (any specified) streaming grpc api backend<br/>
-    if 5 h2gproxy will forward to (any specified) streaming grpc proxying api backend with raw http information. An entry of this type will match if URLHostname matches partially. Security risk (see readme!)<br/>
+    if "none" (0) h2gproxy will forward http requests to http-only backends (no grpc)<br/>
+    if "json" (1) h2gproxy will parse the form and forward via grpc to json-api-multiplexer backend<br/>
+    if "html" (2) h2gproxy will parse the form and forward via grpc to htmlserver backend<br/>
+    if "weblogin" (3) h2gproxy will parse the form and forward via grpc to weblogin backend<br/>
+    if "download" (4) h2gproxy will forward to (any specified) streaming grpc api backend<br/>
+    if "proxy" (5) h2gproxy will forward to (any specified) streaming grpc proxying api backend with raw http information. An entry of this type will match if URLHostname matches partially. Security risk (see readme!)<br/>
   */
-  uint32 Api = 24;
+  string ApiType = 24;
   // if true h2gproxy will intercept Redirect (301) from backends and rewrite them
   // to match what the client sent (mainly for the many broken web frameworks out there)
   bool RewriteRedirectHost = 25;
@@ -257,7 +257,16 @@ message BodyData {
 message ConfigureProberRequest {
   bool ProberBackend = 1; // true: switches the prober backend on, false: switches it off
 }
-
+message TCPProxy {
+  uint32 Port=1;
+  string Target=2;
+  uint32 KeepAliveSeconds=3;
+}
+// defines the syntax of the config file
+message ConfigFile {
+  repeated TCPProxy Tcpproxy=1;
+  repeated AddConfigHTTPRequest Httpproxy=2;
+}
 // the h2gproxyservice routes http requests to grpc backends (and other types of backends)
 service H2GProxyService {
   // create a new config. This doesn't affect current operation until apply is
