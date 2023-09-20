@@ -172,12 +172,15 @@ func apply(cfg *Config) error {
 	// deal with special target "weblogin":
 	wl := false
 	for _, hf := range cfg.httpforwarders {
+		wls := ""
 		if hf.def.URLPath == "weblogin" {
+			wls = "weblogin "
 			wl = true
 		}
-		fmt.Printf("Route: %v\n", hf.def)
+		fmt.Printf("%sRoute: %v\n", wls, hf.def)
 	}
 	if !wl {
+		fmt.Printf("Added weblogin route explicitly\n")
 		// explicitly add /weblogin/
 		hf := &HTTPForwarder{isAbsolute: true,
 			def: &pb.AddConfigHTTPRequest{
@@ -210,9 +213,13 @@ func apply(cfg *Config) error {
 		}
 	}
 
-	SetHTTPRoutes(cfg.httpforwarders)
+	err := SetHTTPRoutes(cfg.httpforwarders)
 	curcfg = cfg
-	fmt.Printf("Config applied.\n")
+	if err != nil {
+		fmt.Printf("Failed to apply Config: %s\n", err)
+	} else {
+		fmt.Printf("Config applied.\n")
+	}
 	return nil
 }
 

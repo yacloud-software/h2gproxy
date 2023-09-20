@@ -180,7 +180,8 @@ func ApiType(h *pb.AddConfigHTTPRequest) uint32 {
 		return 1
 	} else if s == "html" {
 		return 2
-		// 3 -> weblogin
+	} else if s == "weblogin" {
+		return 3
 	} else if s == "download" {
 		return 4
 	} else if s == "proxy" {
