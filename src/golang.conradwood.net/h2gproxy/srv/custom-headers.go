@@ -154,6 +154,9 @@ func IsDebugHeaderGroup(user *au.User) bool {
 		return false
 	}
 	gc := getGlobalConfigSection()
+	if gc == nil {
+		return false
+	}
 	for _, ug := range user.Groups {
 		for _, dhg := range gc.DebugHeaderGroups {
 			if dhg == ug.ID {
