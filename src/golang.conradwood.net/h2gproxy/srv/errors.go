@@ -2,6 +2,7 @@ package srv
 
 import (
 	"fmt"
+	"golang.conradwood.net/go-easyops/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -59,6 +60,10 @@ func (f *FProxy) ProcessError(err error, code int, msg string) bool {
 	f.err = err
 	f.SetStatus(code)
 	f.WriteString(msg)
+	if IsDebugHeaderGroup(f.GetUser()) {
+		f.WriteString("-- full errormessage:<br/>")
+		f.WriteString(utils.ErrorString(err))
+	}
 	fmt.Printf("Error %s on %s (reported \"%s\" to user)\n", err, f.req.URL.Path, msg)
 	return true
 }

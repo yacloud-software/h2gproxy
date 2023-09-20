@@ -63,7 +63,7 @@ func (f *FProxy) customHeaders(msg *ExtraInfo) {
 		}
 	}
 	f.addHeader("Userid", user.ID)
-	if !auth.IsRootUser(user) && (!auth.IsInGroupByUser(user, "5")) {
+	if !auth.IsRootUser(user) && (!IsDebugHeaderGroup(user)) {
 		if *debug {
 			fmt.Printf("Custom-Headers: not inserted, user \"%s\" not rootuser.\n", user.ID)
 		}
@@ -144,4 +144,19 @@ func (f *FProxy) addHeader(name string, value string) {
 		fmt.Printf("Custom-Headers: New header value: \"%s\"\n", x)
 	}
 	f.SetHeader(fmt.Sprintf("X-LB-%s", name), x)
+}
+
+func IsDebugHeaderGroup(user *au.User) bool {
+	if user == nil {
+		return false
+	}
+	gc := getGlobalConfigSection()
+	for _, ug := range user.Groups {
+		for _, dhg := range gc.DebugHeaderGroups {
+			if dhg == ug.ID {
+				return true
+			}
+		}
+	}
+	return false
 }

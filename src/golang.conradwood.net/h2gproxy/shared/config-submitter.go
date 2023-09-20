@@ -36,19 +36,23 @@ func (l *lbpsimpl) CreateConfig(c context.Context, cr *pb.CreateConfigRequest) (
 	return l.lb.CreateConfig(c, cr)
 }
 
-type ConfigFile struct {
-	Tcpproxy  []*Tcpdef
-	Httpproxy []*Httpdef
-}
-type Tcpdef struct {
-	Port             int
-	Target           string
-	KeepAliveSeconds uint32
-}
+/*
+	type ConfigFile struct {
+		Tcpproxy  []*Tcpdef
+		Httpproxy []*Httpdef
+	}
+
+	type Tcpdef struct {
+		Port             int
+		Target           string
+		KeepAliveSeconds uint32
+	}
+*/
 
 // changed made here will need to be copied
 // into code below
 // this corresponds to the yaml config file structure
+
 type Httpdef struct {
 	pb.AddConfigHTTPRequest `yaml:",inline"`
 	Apitype                 string
@@ -66,25 +70,29 @@ func TargetString(hd *pb.AddConfigHTTPRequest) string {
 
 func SubmitClient(ctx context.Context, lb pb.H2GProxyServiceClient, fname string, def Httpdef) error {
 	lbps := lbpsimpl{lb: lb}
-	return Submit(ctx, &lbps, fname, def)
+	_, err := Submit(ctx, &lbps, fname, def)
+	return err
 }
-func Submit(ctx context.Context, lb lbps, fname string, def Httpdef) error {
+
+// read a config file and submit each route to "lb" (which is a h2gproxy server)
+// the Httpdef is a set of defaults to be used for values that are not set in a route
+func Submit(ctx context.Context, lb lbps, fname string, def Httpdef) (*pb.ConfigFile, error) {
 	fmt.Printf("Config: %s\n", fname)
 	fb, err := ioutil.ReadFile(fname)
 	if err != nil {
 		fmt.Printf("Failed to read file %s: %s\n", fname, err)
-		return err
+		return nil, err
 	}
-	gd := pb.ConfigFile{}
+	gd := &pb.ConfigFile{}
 	err = yaml.UnmarshalStrict(fb, &gd)
 	if err != nil {
 		fmt.Printf("Failed to parse file %s: %s\n", fname, err)
-		return err
+		return nil, err
 	}
 	ccr, err := lb.CreateConfig(ctx, &pb.CreateConfigRequest{})
 	if err != nil {
 		fmt.Printf("Failed to create config: %s\n", err)
-		return err
+		return gd, err
 	}
 	configid := ccr.ConfigID
 	fmt.Printf("Created config with id %s\n", configid)
@@ -100,7 +108,7 @@ func Submit(ctx context.Context, lb lbps, fname string, def Httpdef) error {
 
 		_, err := lb.AddConfigTCP(ctx, addreq)
 		if err != nil {
-			return err
+			return gd, err
 		}
 
 	}
@@ -164,12 +172,12 @@ func Submit(ctx context.Context, lb lbps, fname string, def Httpdef) error {
 		_, err := lb.AddConfigHTTP(ctx, addreq)
 		if err != nil {
 			fmt.Printf("Config Parser failed to submit it: %s\n", utils.ErrorString(err))
-			return err
+			return gd, err
 		}
 
 	}
 	_, err = lb.ApplyConfig(ctx, &pb.ApplyConfigRequest{ConfigID: configid})
-	return err
+	return gd, err
 }
 
 func ApiType(h *pb.AddConfigHTTPRequest) uint32 {

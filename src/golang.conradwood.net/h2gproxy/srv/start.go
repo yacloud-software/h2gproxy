@@ -33,21 +33,22 @@ var (
 		"/etc/h2gproxy/h2gproxy.yaml",
 		"configs/testing.yaml",
 	}
-	configctr              int
-	cfgfile_lastread       time.Time
-	printHeaders           = flag.Bool("print_headers", false, "if true print all headers sent and received")
-	run_probes             = flag.Bool("run_probes_and_exit", false, "start server, run probes and exit (with exit code). useful for quick tests or in CI")
-	activate_probe_backend = flag.Bool("activate_probe_backend", false, "if true, the server with automatically register prober endpoints (and expose them via http to the world and locally via grpc")
-	debug                  = flag.Bool("debug", false, "If true, the server will output more verbose logging")
-	testcfg                = flag.Bool("testcfg", false, "If true, the server will read the config file and exit immediately thereafter with an exitcode 0 or 10 indicating wether or not config file is valid")
-	port                   = flag.Int("port", 10052, "The server port")
-	cfgfile                = flag.String("config_file", "", "Initial and optional configfile to read on startup")
-	maxInFlights           = flag.Int("max_in_flights", 1000, "Maximum inflight connections for one endpoint")
-	configs                = make(map[string]*Config)
-	curcfg                 *Config
-	DefaultHost            = flag.String("default_host", "www.conradwood.net", "default host where to get icons from and where to go in cases of bad errors")
-	AuthServer             apb.AuthenticationServiceClient
-	usageStatsClient       us.UsageStatsServiceClient
+	last_parsed_config_file *pb.ConfigFile
+	configctr               int
+	cfgfile_lastread        time.Time
+	printHeaders            = flag.Bool("print_headers", false, "if true print all headers sent and received")
+	run_probes              = flag.Bool("run_probes_and_exit", false, "start server, run probes and exit (with exit code). useful for quick tests or in CI")
+	activate_probe_backend  = flag.Bool("activate_probe_backend", false, "if true, the server with automatically register prober endpoints (and expose them via http to the world and locally via grpc")
+	debug                   = flag.Bool("debug", false, "If true, the server will output more verbose logging")
+	testcfg                 = flag.Bool("testcfg", false, "If true, the server will read the config file and exit immediately thereafter with an exitcode 0 or 10 indicating wether or not config file is valid")
+	port                    = flag.Int("port", 10052, "The server port")
+	cfgfile                 = flag.String("config_file", "", "Initial and optional configfile to read on startup")
+	maxInFlights            = flag.Int("max_in_flights", 1000, "Maximum inflight connections for one endpoint")
+	configs                 = make(map[string]*Config)
+	curcfg                  *Config
+	DefaultHost             = flag.String("default_host", "www.conradwood.net", "default host where to get icons from and where to go in cases of bad errors")
+	AuthServer              apb.AuthenticationServiceClient
+	usageStatsClient        us.UsageStatsServiceClient
 )
 
 type Config struct {
@@ -91,7 +92,7 @@ func main() {
 
 	ctx := context.Background()
 	lb := H2gproxyServer{}
-	err = shared.Submit(ctx, &lb, fname, getDefaultHttpDef())
+	last_parsed_config_file, err = shared.Submit(ctx, &lb, fname, getDefaultHttpDef())
 	cfgfile_lastread = time.Now()
 
 	if !*testcfg {
@@ -341,18 +342,20 @@ func setupFileWatcher(filename string) {
 		if info.ModTime().After(cfgfile_lastread) {
 			ctx := context.Background()
 			lb := H2gproxyServer{}
-			err := shared.Submit(ctx, &lb, filename, getDefaultHttpDef())
+			cfgfile, err := shared.Submit(ctx, &lb, filename, getDefaultHttpDef())
 			if err != nil {
 				fmt.Printf("Failed to read config %s: %s\n", filename, err)
 				continue
 			}
 			cfgfile_lastread = now
+			last_parsed_config_file = cfgfile
 		}
 		if err != nil {
 			fmt.Printf("Error reading certs: %s\n", err)
 		}
 	}
 }
+
 func (*H2gproxyServer) GetConfig(ctx context.Context, req *common.Void) (*pb.Config, error) {
 	res := &pb.Config{}
 	cfg := curcfg
@@ -366,4 +369,8 @@ func getDefaultHttpDef() shared.Httpdef {
 	res := shared.Httpdef{}
 	res.MaxInFlights = int32(*maxInFlights)
 	return res
+}
+
+func getGlobalConfigSection() *pb.GlobalConfig {
+	return last_parsed_config_file.GlobalConfig
 }
