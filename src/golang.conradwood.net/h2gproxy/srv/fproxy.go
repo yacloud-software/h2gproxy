@@ -15,6 +15,7 @@ import (
 	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/utils"
 	"golang.conradwood.net/h2gproxy/httplogger"
+	"golang.conradwood.net/h2gproxy/shared"
 	"golang.yacloud.eu/apis/session"
 	"io/ioutil"
 	"net/http"
@@ -73,6 +74,9 @@ type FProxy struct {
 	logreq               httplogger.HTTPRequest // to log start/end and updates for this request
 }
 
+func (f *FProxy) Api() uint32 {
+	return shared.ApiType(f.hf.def)
+}
 func (f *FProxy) NeedsAuth() bool {
 	return f.hf.def.NeedAuth
 }

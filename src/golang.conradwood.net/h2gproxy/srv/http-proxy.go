@@ -155,54 +155,42 @@ type HTTPForwarder struct {
 }
 
 func (h *HTTPForwarder) ApiTypeName() string {
-	api := h.def.Api
-	if api == 0 {
-		return "none"
-	} else if api == 1 {
-		return "json"
-	} else if api == 2 {
-		return "html"
-	} else if api == 3 {
-		return "weblogin"
-	} else if api == 4 {
-		return "download"
-	}
-	return fmt.Sprintf("API-%d", api)
+	return h.def.ApiType
 }
 
 func (hf *HTTPForwarder) IsHTTPProxy() bool {
-	if hf.def.Api == 0 {
+	if hf.Api() == 0 {
 		return true
 	}
 	return false
 }
 
 func (hf *HTTPForwarder) IsWebAPI() bool {
-	if hf.def.Api == 2 {
+	if hf.Api() == 2 {
 		return true
 	}
 	return false
 }
 func (hf *HTTPForwarder) IsWebloginAPI() bool {
-	if hf.def.Api == 3 {
+	if hf.Api() == 3 {
 		return true
 	}
 	return false
 }
 func (hf *HTTPForwarder) IsDownloadProxy() bool {
-	if hf.def.Api == 4 {
+	if hf.Api() == 4 {
 		return true
 	}
 	return false
 }
 func (hf *HTTPForwarder) IsFancyProxy() bool {
-	if hf.def.Api == 5 {
+	if hf.Api() == 5 {
 		return true
 	}
 	return false
 }
 func (hf *HTTPForwarder) IsJsonAPI() bool {
-	if hf.def.Api == 1 {
+	if hf.Api() == 1 {
 		return true
 	}
 	return false
@@ -403,7 +391,7 @@ func (f *FProxy) execute_raw() {
 		return
 	}
 	if !f.hf.IsHTTPProxy() {
-		fmt.Printf("this (%s) is an unknown API type (%d)\n", f.String(), f.hf.def.Api)
+		fmt.Printf("this (%s) is an unknown API type (%d)\n", f.String(), f.hf.Api())
 		return
 	}
 	// it is an http -> http proxy thing

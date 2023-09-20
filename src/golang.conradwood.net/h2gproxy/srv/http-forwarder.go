@@ -14,6 +14,7 @@ import (
 	"golang.conradwood.net/go-easyops/errors"
 	"golang.conradwood.net/go-easyops/prometheus"
 	"golang.conradwood.net/go-easyops/utils"
+	"golang.conradwood.net/h2gproxy/shared"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -43,6 +44,9 @@ var (
 	gotRegistryClient  = false
 )
 
+func (r *HTTPForwarder) Api() uint32 {
+	return shared.ApiType(r.def)
+}
 func (r *HTTPForwarder) Stop() error {
 	if r.server != nil {
 		err := r.server.Shutdown(nil)

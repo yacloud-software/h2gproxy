@@ -29,7 +29,7 @@ func createBootstrapContext() context.Context {
 func createContext(f *FProxy, a *authResult) (context.Context, error) {
 	secs := f.hf.def.MaxDuration
 	if secs == 0 {
-		if f.hf.def.Api == 4 {
+		if f.Api() == 4 {
 			secs = 600 // streaming is longer by default
 		} else {
 			secs = 10
@@ -51,7 +51,7 @@ func createContext(f *FProxy, a *authResult) (context.Context, error) {
 func createCancellableContext(f *FProxy, a *authResult) (context.Context, context.CancelFunc, error) {
 	secs := f.hf.def.MaxDuration
 	if secs == 0 {
-		if f.hf.def.Api == 4 {
+		if f.Api() == 4 {
 			secs = 600 // streaming is longer by default
 		} else {
 			secs = 10

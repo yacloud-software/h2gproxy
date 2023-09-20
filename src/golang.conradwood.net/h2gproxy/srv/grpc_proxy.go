@@ -143,10 +143,10 @@ retry:
 	privileged_error_message = utils.ErrorString(err)
 	message := st.Message()
 	code := st.Code()
-	msg := fmt.Sprintf("[grpcproxy] API (type %d) Call (%s), authenticated()=%v, late_auth=%v, failed: code=%d message=%s", g.f.hf.def.Api, g.f.String(), a.Authenticated(), late_auth_attempted, code, message)
+	msg := fmt.Sprintf("[grpcproxy] API (type %s) Call (%s), authenticated()=%v, late_auth=%v, failed: code=%d message=%s", g.f.hf.def.ApiType, g.f.String(), a.Authenticated(), late_auth_attempted, code, message)
 	if *debug_rpc {
 		fmt.Println(msg)
-		fmt.Printf("[grpcproxy] API (type %d) Call (%s) failed: %s\n", g.f.hf.def.Api, g.f.String(), utils.ErrorString(err))
+		fmt.Printf("[grpcproxy] API (type %s) Call (%s) failed: %s\n", g.f.hf.def.ApiType, g.f.String(), utils.ErrorString(err))
 	}
 	// sometimes the backend (especially the html backend) may ask us to authenticate a user
 	// this happens, if, for example some parts of a backend are accessible by anyone (even non-authenticated people)

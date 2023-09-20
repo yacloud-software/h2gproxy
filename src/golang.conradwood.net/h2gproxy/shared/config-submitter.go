@@ -54,7 +54,7 @@ type Httpdef struct {
 	Apitype                 string
 }
 
-func (hd *Httpdef) TargetString() string {
+func TargetString(hd *pb.AddConfigHTTPRequest) string {
 	if hd.TargetService != "" {
 		if hd.PathPrefix != "" {
 			return fmt.Sprintf("%s[/%s]", hd.TargetService, hd.PathPrefix)
@@ -75,7 +75,7 @@ func Submit(ctx context.Context, lb lbps, fname string, def Httpdef) error {
 		fmt.Printf("Failed to read file %s: %s\n", fname, err)
 		return err
 	}
-	gd := ConfigFile{}
+	gd := pb.ConfigFile{}
 	err = yaml.UnmarshalStrict(fb, &gd)
 	if err != nil {
 		fmt.Printf("Failed to parse file %s: %s\n", fname, err)
@@ -105,7 +105,7 @@ func Submit(ctx context.Context, lb lbps, fname string, def Httpdef) error {
 
 	}
 	for _, hd := range gd.Httpproxy {
-		fmt.Printf("Config: Forwarding HTTP requests to %s:%s to \"%s\"\n", hd.URLHostname, hd.URLPath, hd.TargetString())
+		fmt.Printf("Config: Forwarding HTTP requests to %s:%s to \"%s\"\n", hd.URLHostname, hd.URLPath, TargetString(hd))
 		for _, header := range hd.Header {
 			fmt.Printf("   Header: %s\n", header)
 		}
@@ -157,8 +157,9 @@ func Submit(ctx context.Context, lb lbps, fname string, def Httpdef) error {
 			}
 		*/
 		hd.ConfigID = configid
-		hd.Api = hd.ApiType()
-		addreq := &hd.AddConfigHTTPRequest
+		//hd.Api = 1 //hd.ApiType()
+		addreq := hd
+		//		addreq := &hd.AddConfigHTTPRequest
 		//		fmt.Printf("AddReq: %#v\n", addreq)
 		_, err := lb.AddConfigHTTP(ctx, addreq)
 		if err != nil {
@@ -171,8 +172,8 @@ func Submit(ctx context.Context, lb lbps, fname string, def Httpdef) error {
 	return err
 }
 
-func (h *Httpdef) ApiType() uint32 {
-	s := strings.ToLower(h.Apitype)
+func ApiType(h *pb.AddConfigHTTPRequest) uint32 {
+	s := strings.ToLower(h.ApiType)
 	if s == "none" || s == "" {
 		return 0
 	} else if s == "json" {
@@ -186,4 +187,20 @@ func (h *Httpdef) ApiType() uint32 {
 		return 5
 	}
 	return 1000 // error
+}
+func ApiTypeByNum(num uint32) string {
+	if num == 0 {
+		return "none"
+	} else if num == 1 {
+		return "json"
+	} else if num == 2 {
+		return "html"
+	} else if num == 3 {
+		return "weblogin"
+	} else if num == 4 {
+		return "download"
+	} else if num == 5 {
+		return "proxy"
+	}
+	return fmt.Sprintf("unknown_api_type_%d", num)
 }

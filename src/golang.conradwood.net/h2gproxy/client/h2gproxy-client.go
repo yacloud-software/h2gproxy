@@ -60,7 +60,7 @@ func show() {
 	t := utils.Table{}
 	t.AddHeaders("URLPath", "URLHostname", "api", "target", "note")
 	for _, c := range cfg.Config {
-		t.AddUint32(c.Api)
+		t.AddString(c.ApiType)
 		t.AddString(c.URLPath)
 		t.AddString(c.URLHostname)
 		if c.TargetHost != "" {

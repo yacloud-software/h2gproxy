@@ -7,6 +7,7 @@ import (
 	pb "golang.conradwood.net/apis/h2gproxy"
 	"golang.conradwood.net/go-easyops/errors"
 	"golang.conradwood.net/go-easyops/utils"
+	"golang.conradwood.net/h2gproxy/shared"
 	"strconv"
 	"strings"
 )
@@ -28,7 +29,7 @@ func HTTPRoutes() []*pb.AddConfigHTTPRequest {
 	res = append(res, stdcfg("none", 0, true))
 	return res
 }
-func stdcfg(suffix string, apitype int, auth bool) *pb.AddConfigHTTPRequest {
+func stdcfg(suffix string, apitype uint32, auth bool) *pb.AddConfigHTTPRequest {
 	bp := strings.Trim(BASE_PATH, "/")
 	as := "noauth"
 	if auth {
@@ -46,11 +47,11 @@ func stdcfg(suffix string, apitype int, auth bool) *pb.AddConfigHTTPRequest {
 		ConfigName:                   "probers",
 		MaxInFlights:                 5,
 		MaxPerSec:                    10,
-		Api:                          uint32(apitype),
+		ApiType:                      shared.ApiTypeByNum(apitype),
 		NeedAuth:                     auth,
 		AllowAuthorizationFromClient: false, // otherwise the backend cannot trigger form login
 	}
-	fmt.Printf("Adding url %s as prober, apitype %d, needauth=%v\n", res.URLPath, res.Api, res.NeedAuth)
+	fmt.Printf("Adding url %s as prober, apitype %s, needauth=%v\n", res.URLPath, res.ApiType, res.NeedAuth)
 	return res
 }
 
@@ -83,8 +84,9 @@ func ServeHTML(ctx context.Context, req *pb.ServeRequest) (*pb.ServeResponse, er
 }
 
 /*
- .../data -> streams some data
- .../checksum -> get checksum over data
+	.../data -> streams some data
+	.../checksum -> get checksum over data
+
 ?seed=foobar slighly changes data
 ?size=100000 different data size
 (checksum will match if seed&size are the same as for data)
