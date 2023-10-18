@@ -607,3 +607,20 @@ func verify_user(f *FProxy) {
 func (f *FProxy) ReportHTTPFailure() {
 
 }
+
+func (f *FProxy) Debugf(format string, args ...interface{}) {
+	if !*debug {
+		return
+	}
+	user := ""
+	if f.unsigneduser != nil {
+		user = "/" + f.unsigneduser.Abbrev
+	}
+
+	cfgname := "nocfg"
+	if f.hf != nil && f.hf.def != nil && f.hf.def.ConfigName != "" {
+		cfgname = f.hf.def.ConfigName
+	}
+	s := fmt.Sprintf("%s %s", user, cfgname)
+	fmt.Printf("[debug "+s+"] "+format, args...)
+}

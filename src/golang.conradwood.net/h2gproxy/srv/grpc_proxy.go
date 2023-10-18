@@ -48,6 +48,7 @@ func (g *GRPCProxy) Proxy() {
 	var err error
 	a := &authResult{}
 	a, err = json_auth(g.f) // always check if we got auth stuff
+	g.f.Debugf("grpcproxy authentication: %#v\n", a.Authenticated())
 	if a.Authenticated() {
 		if a.User().ServiceAccount {
 			g.f.AddCookie(&h2g.Cookie{
@@ -62,6 +63,7 @@ func (g *GRPCProxy) Proxy() {
 		g.f.GoodRequest()
 	}
 	if g.f.hf.def.NeedAuth && !a.Authenticated() {
+		g.f.Debugf("grpcproxy authentication: needs auth, but not authed yet\n")
 		g.f.AntiDOS("needs auth but got none")
 		if err != nil {
 			if *debug_rpc {
@@ -71,12 +73,14 @@ func (g *GRPCProxy) Proxy() {
 		}
 		// if we tried and failed it's forbidden. otherwise send challenge
 		if a.GotCredentials() {
+			g.f.Debugf("grpcproxy authentication: needs auth, but still failed\n")
 			g.f.err = errors.AccessDenied(createBootstrapContext(), "access denied for user %s", a.User())
 			g.f.SetStatus(401) // maybe this should be 401?
 			g.f.Write([]byte("access denied"))
 			g.f.LogResponse()
 			return
 		}
+		g.f.Debugf("grpcproxy authentication: needs auth, and no credentials\n")
 		g.f.SetStatus(401)
 		g.f.SetHeader("WWW-Authenticate", "Basic realm=\"Login\"")
 		g.f.Write([]byte("401 - authentication required"))
