@@ -255,7 +255,7 @@ func (tf *TCPForwarder) Forward() error {
 	// they all register as h2gproxy/tcp ?
 	/*
 		tsd := server.NewTCPServerDef("h2gproxy.H2GProxyService")
-		tsd.Port = tf.Port
+		tsd.SetPort(tf.Port)
 		server.AddRegistry(tsd)
 	*/
 	return nil

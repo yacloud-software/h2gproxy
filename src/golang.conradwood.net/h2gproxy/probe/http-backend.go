@@ -29,7 +29,7 @@ func StartHTTPBackend() error {
 	go func() {
 		fmt.Printf("Starting prober backend on port %d...\n", 9231)
 		sd := server.NewHTMLServerDef("h2gproxy.Prober")
-		sd.Port = *httpport
+		sd.SetPort(*httpport)
 		server.AddRegistry(sd)
 		adr := fmt.Sprintf(":%d", *httpport)
 		http_server = &http.Server{
