@@ -368,6 +368,12 @@ func (f *FProxy) execute_raw() {
 	if *debug_session {
 		fmt.Printf("Session-token: \"%s\"\n", sess)
 	}
+	if *require_session && sess == "" {
+		// redirect to sso to get a session
+		f.RedirectTo("https://sso."+(*ssodomain)+"/weblogin/needsession", false)
+		return
+
+	}
 	if f.hf.IsRedirectMatcher() {
 		RedirectRewrite(f)
 		return
