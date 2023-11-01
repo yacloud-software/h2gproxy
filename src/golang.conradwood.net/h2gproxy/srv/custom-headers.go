@@ -44,7 +44,7 @@ func (f *FProxy) customHeaders(msg *ExtraInfo) {
 	}
 	f.SetHeader("Access-Control-Allow-Credentials", "true")
 	f.SetHeader("X-LB-Platform", "YACLOUD.EU")
-	f.SetHeader("X-LB-REQUESTID", f.requestid)
+	f.SetHeader("X-LB-REQUESTID", f.GetRequestID())
 
 	if f.unsigneduser == nil && f.signeduser == nil {
 		if *debug {

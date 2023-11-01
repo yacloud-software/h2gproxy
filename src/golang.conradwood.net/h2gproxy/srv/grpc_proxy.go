@@ -109,8 +109,6 @@ func (g *GRPCProxy) Proxy() {
 		return
 	}
 
-	reqid := NewRequestID()
-	g.f.requestid = reqid
 	late_auth_attempted := false
 retry:
 	// check for non-verified users

@@ -31,6 +31,7 @@ var (
 )
 
 type FProxy struct {
+	reqidlock                sync.Mutex
 	fproxy_lock              sync.Mutex
 	response_released        bool
 	response_headers_written bool
@@ -58,7 +59,7 @@ type FProxy struct {
 	requested_host       string         // the host as requested by the client
 	md                   *ic.InMetadata // the metadata in the context
 	ctx                  context.Context
-	requestid            string
+	request_id           string
 	redirectedToWeblogin bool
 	authResult           *authResult
 	Timings              []*Timing
@@ -625,4 +626,18 @@ func (f *FProxy) Debugf(format string, args ...interface{}) {
 	}
 	s := fmt.Sprintf("%s %s", user, cfgname)
 	fmt.Printf("[debug "+s+"] "+format, args...)
+}
+
+func (f *FProxy) GetRequestID() string {
+	if f.request_id != "" {
+		return f.request_id
+	}
+	f.reqidlock.Lock()
+	if f.request_id != "" {
+		f.reqidlock.Unlock()
+		return f.request_id
+	}
+	f.request_id = utils.RandomString(12)
+	f.reqidlock.Unlock()
+	return f.request_id
 }

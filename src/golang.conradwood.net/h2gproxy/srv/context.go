@@ -40,7 +40,7 @@ func createContext(f *FProxy, a *authResult) (context.Context, error) {
 		cb.WithTimeout(time.Duration(secs) * time.Second)
 		cb.WithSession(f.session)
 		cb.WithUser(f.signeduser)
-		cb.WithRequestID(f.requestid)
+		cb.WithRequestID(f.GetRequestID())
 		cb.WithCallingService(authremote.GetLocalServiceAccount())
 		return cb.ContextWithAutoCancel(), nil
 	}

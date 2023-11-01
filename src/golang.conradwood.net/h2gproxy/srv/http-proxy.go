@@ -1084,7 +1084,7 @@ func setForwardedHeaders(f *FProxy, req *http.Request) {
 
 	req.Header.Set("REMOTE_HOST", f.remoteHost)
 	req.Header.Set("REMOTE_ADDR", f.PeerIP())
-	req.Header.Set("X-LB-REQUESTID", f.requestid)
+	req.Header.Set("X-LB-REQUESTID", f.GetRequestID())
 	req.Header.Set("X-Forwarded-Proto", f.scheme)
 	//ff := f.req.Host
 	if f.hf.def.ForwardedFor == "" {

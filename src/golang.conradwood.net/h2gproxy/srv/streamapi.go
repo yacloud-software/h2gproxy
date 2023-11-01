@@ -90,7 +90,7 @@ func (g *StreamProxy) Proxy() {
 	}
 	g.f.md = &ic.InMetadata{
 		FooBar:       "h2gproxy-streamproxy",
-		RequestID:    "", // we want a new one
+		RequestID:    g.f.GetRequestID(),
 		UserToken:    "", //do we?
 		ServiceToken: tokens.GetServiceTokenParameter(),
 	}
@@ -110,8 +110,6 @@ func (g *StreamProxy) Proxy() {
 		return
 	}
 
-	reqid := NewRequestID()
-	g.f.requestid = reqid
 	late_auth_attempted := false
 retry:
 	// check for non-verified users
@@ -364,12 +362,10 @@ func (sp *StreamProxy) processStreamResponse(resp *h2g.StreamResponse) {
 		code = int(resp.StatusCode)
 	}
 
-	reqid := sp.f.requestid
-
 	if *debug {
-		fmt.Printf("Setting requestid header to \"%s\" and code to %d\n", reqid, code)
+		fmt.Printf("Setting requestid header to \"%s\" and code to %d\n", sp.f.GetRequestID(), code)
 	}
-	sp.f.SetHeader("X-LB-RequestID", reqid)
+	sp.f.SetHeader("X-LB-RequestID", sp.f.GetRequestID())
 	sp.f.SetStatus(code)
 }
 
