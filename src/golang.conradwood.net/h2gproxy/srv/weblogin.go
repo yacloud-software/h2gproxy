@@ -339,6 +339,12 @@ func weblogin_served(thing string, foo *weblogin.WebloginResponse, err error) {
 	sc := "200"
 	if err != nil {
 		sc = fmt.Sprintf("%d", convertErrorToCode(err))
+	} else {
+		if foo != nil {
+			if foo.HTTPCode != 0 {
+				sc = fmt.Sprintf("%d", foo.HTTPCode)
+			}
+		}
 	}
 	reqCounter.With(prometheus.Labels{
 		"name":          "weblogin",
