@@ -35,11 +35,12 @@ func createContext(f *FProxy, a *authResult) (context.Context, error) {
 			secs = 10
 		}
 	}
-	if cmdline.ContextWithBuilder() {
+	if cmdline.ContextWithBuilder() { // true for any recent (spring '23)  go-easyops version
 		cb := ctx.NewContextBuilder()
 		cb.WithTimeout(time.Duration(secs) * time.Second)
 		cb.WithSession(f.session)
 		cb.WithUser(f.signeduser)
+		cb.WithRequestID(f.requestid)
 		cb.WithCallingService(authremote.GetLocalServiceAccount())
 		return cb.ContextWithAutoCancel(), nil
 	}

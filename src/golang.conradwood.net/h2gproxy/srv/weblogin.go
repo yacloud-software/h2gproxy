@@ -10,6 +10,7 @@ import (
 	"golang.conradwood.net/go-easyops/auth"
 	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/prometheus"
+	"golang.conradwood.net/go-easyops/utils"
 	//	"golang.conradwood.net/go-easyops/tokens"
 	"golang.yacloud.eu/apis/session"
 	"net/http"
@@ -260,6 +261,14 @@ func getUserContext(f *FProxy) context.Context {
 	if a == nil {
 		return nil
 	}
+
+	nctx, err := createContext(f, a)
+	if err == nil {
+		// normally should be no prob to do standard createContext()
+		return nctx
+	}
+	fmt.Printf("WARNING - using fallback context for weblogin because of error %s\n", utils.ErrorString(err))
+	// a fallback
 	if a.User() == nil {
 		return nil
 	}
