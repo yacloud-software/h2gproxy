@@ -86,7 +86,9 @@ func (f *FProxy) GetUser() *apb.User {
 }
 func (f *FProxy) SetUser(a *apb.SignedUser) {
 	if a == nil {
-		fmt.Printf("[fproxy] cleared user\n")
+		if f.signeduser != nil {
+			fmt.Printf("[fproxy] cleared user\n")
+		}
 		if f.md != nil {
 			f.md.UserID = ""
 			f.md.User = nil
