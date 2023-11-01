@@ -9,6 +9,7 @@ import (
 	"golang.conradwood.net/apis/weblogin"
 	"golang.conradwood.net/go-easyops/auth"
 	"golang.conradwood.net/go-easyops/authremote"
+	"golang.conradwood.net/go-easyops/prometheus"
 	//	"golang.conradwood.net/go-easyops/tokens"
 	"golang.yacloud.eu/apis/session"
 	"net/http"
@@ -64,6 +65,7 @@ func (f *FProxy) WebLogin() bool {
 	}
 
 	h, err := wl.GetLoginPage(ctx, wreq)
+	weblogin_served("loginpage", h, err)
 	if f.ProcessError(err, 500, "unable to provide login page") {
 		f.AntiDOS("unable to provide login page: %s", err)
 		return false
@@ -149,6 +151,7 @@ func (f *FProxy) WebVerifyEmail(ctx context.Context) bool {
 	}
 
 	h, err := wl.GetVerifyEmail(ctx, wreq)
+	weblogin_served("verifyemail", nil, err)
 	if err != nil {
 		f.AntiDOS("failed to verify email: %s", err)
 		fmt.Printf("Failed to verify email: %s\n", err)
@@ -200,6 +203,7 @@ func WebLoginProxy(f *FProxy) {
 		ctx = createBootstrapContext()
 	}
 	wr, err := wl.ServeHTML(ctx, wreq) // might return error or might return funny status code in body instead
+	weblogin_served("servehtml", wr, err)
 	if err != nil {
 		f.AntiDOS("failed to serve html: %s", err)
 		if wr != nil && wr.HTTPCode != 0 {
@@ -276,6 +280,7 @@ func WebloginCheck(webloginpara string) (*session.Session, *apb.SignedUser, []*h
 	wlr := &weblogin.WebloginRequest{Submitted: ps}
 	ctx := createBootstrapContext()
 	wr, err := wl.VerifyURL(ctx, wlr)
+	weblogin_served("verifyurl", wr, err)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -328,4 +333,17 @@ func GetSignedUser(ctx context.Context, user *apb.User) (*apb.SignedUser, error)
 		return nil, err
 	}
 	return su, nil
+}
+
+func weblogin_served(thing string, foo *weblogin.WebloginResponse, err error) {
+	sc := "200"
+	if err != nil {
+		sc = fmt.Sprintf("%d", convertErrorToCode(err))
+	}
+	reqCounter.With(prometheus.Labels{
+		"name":          "weblogin",
+		"targetservice": "weblogin.Weblogin",
+		"statuscode":    sc,
+		"targethost":    thing}).Inc()
+
 }
