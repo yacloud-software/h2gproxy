@@ -389,6 +389,7 @@ func (f *FProxy) execute_raw() {
 	}
 	if f.hf.IsWebloginAPI() {
 		// only happens on redirects (e.g. sso.something)
+		// or logout (browser goes to https://domain/weblogin/logout)
 		WebLoginProxy(f)
 		return
 	}

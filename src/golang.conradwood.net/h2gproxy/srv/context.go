@@ -35,6 +35,10 @@ func createContext(f *FProxy, a *authResult) (context.Context, error) {
 			secs = 10
 		}
 	}
+	u := a.SignedUser()
+	if u != nil {
+		f.SetUser(u)
+	}
 	if cmdline.ContextWithBuilder() { // true for any recent (spring '23)  go-easyops version
 		cb := ctx.NewContextBuilder()
 		cb.WithTimeout(time.Duration(secs) * time.Second)
