@@ -58,9 +58,14 @@ func TokenToUser(token string) (*apb.SignedUser, error) {
 		// we do not return an error here, we give the authserver a chance to handle it
 		// long-term, it should not. this code needs to prove its reliability first though
 	}
-	if sv != nil && sv.IsValid {
+	if sv != nil && sv.IsSessionToken {
 		// a valid session token detected
+		if !sv.IsValid {
+			// valid session, but no user with session
+			return nil, nil
+		}
 		user_result = sv.User
+
 		goto got_user
 	}
 	// check the auth-server
