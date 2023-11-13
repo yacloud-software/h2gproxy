@@ -329,7 +329,7 @@ func (g *GRPCProxy) grpcproxy(a *authResult) (context.Context, error) {
 
 	}
 	g.f.SetHeader("content-type", fmt.Sprintf("%s; charset=utf-8", mtype))
-	reqid := "(1)grpcproxyneedsreqid"
+	reqid := g.f.GetRequestID()
 	if *debug {
 		fmt.Printf("Setting requestid header to \"%s\"\n", reqid)
 	}
