@@ -1,10 +1,12 @@
 package ratelimiter
 
 import (
+	"sync"
 	"time"
 )
 
 type Limiter struct {
+	sync.Mutex
 	// maximum amount of time we stall a client in the hope that a slot becomes available
 	MaxStall time.Duration
 	// if we're less than that, we won't limit
@@ -25,6 +27,8 @@ func NewLimiter() *Limiter {
 }
 
 func (l *Limiter) RequestStart() bool {
+	l.Lock()
+	defer l.Unlock()
 	if l.currentClients < l.AllowedClients {
 		l.currentClients++
 		return true
@@ -32,6 +36,8 @@ func (l *Limiter) RequestStart() bool {
 	return false
 }
 func (l *Limiter) RequestFinish() {
+	l.Lock()
+	defer l.Unlock()
 	l.currentClients--
 	if l.currentClients < 0 {
 		l.currentClients = 0
