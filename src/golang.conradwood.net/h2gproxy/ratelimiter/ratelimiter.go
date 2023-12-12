@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	stall_clients = flag.Bool("ratelimiter_stall", false, "if true, stall clients before returning 429")
+	stall_clients = flag.Bool("ratelimiter_stall", true, "if true, stall clients before returning 429")
 )
 
 type Limiter struct {
