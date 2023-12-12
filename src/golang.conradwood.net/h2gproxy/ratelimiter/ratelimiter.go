@@ -1,6 +1,7 @@
 package ratelimiter
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
@@ -42,4 +43,8 @@ func (l *Limiter) RequestFinish() {
 	if l.currentClients < 0 {
 		l.currentClients = 0
 	}
+}
+
+func (l *Limiter) Status() string {
+	return fmt.Sprintf("Allowed: %d, AllowedWaiting: %d, Current: %d", l.AllowedClients, l.AllowedWaitingClients, l.currentClients)
 }

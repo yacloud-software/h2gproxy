@@ -32,9 +32,7 @@ func DownloadProxy(f *FProxy) {
 	// kernel TCP stack, so this isn't 100% accurate, but it feels
 	// better than having no resource limit in place at all
 	if !rlimiter.RequestStart() {
-		if *debug {
-			fmt.Printf("too many clients\n")
-		}
+		fmt.Printf("too many clients (%s)\n", rlimiter.Status())
 		f.SetStatus(429)
 		return
 	}
