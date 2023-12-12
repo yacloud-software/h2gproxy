@@ -27,7 +27,7 @@ type Limiter struct {
 func NewLimiter() *Limiter {
 	res := &Limiter{
 		wait_chan:             make(chan bool, 30),
-		AllowedClients:        50,
+		AllowedClients:        10,
 		AllowedWaitingClients: 100,
 		MaxStall:              time.Duration(3) * time.Second,
 	}
