@@ -33,7 +33,7 @@ func DownloadProxy(f *FProxy) {
 	// better than having no resource limit in place at all
 	if !rlimiter.RequestStart() {
 		fmt.Printf("too many clients (%s)\n", rlimiter.Status())
-		f.SetStatus(429)
+		f.SetAndLogFailure(429, fmt.Errorf("too many clients (%s)", rlimiter.Status()))
 		return
 	}
 	defer rlimiter.RequestFinish()

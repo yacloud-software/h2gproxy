@@ -20,7 +20,7 @@ type Limiter struct {
 
 func NewLimiter() *Limiter {
 	res := &Limiter{
-		AllowedClients:        30,
+		AllowedClients:        50,
 		AllowedWaitingClients: 10,
 		MaxStall:              time.Duration(1) * time.Second,
 	}

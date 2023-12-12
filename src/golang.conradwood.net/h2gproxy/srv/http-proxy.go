@@ -18,7 +18,6 @@ import (
 	pb "golang.conradwood.net/apis/h2gproxy"
 	us "golang.conradwood.net/apis/usagestats"
 	"golang.conradwood.net/go-easyops/auth"
-	"golang.conradwood.net/go-easyops/client"
 	"golang.conradwood.net/go-easyops/prometheus"
 	//	"golang.conradwood.net/go-easyops/tokens"
 	"golang.conradwood.net/go-easyops/utils"
@@ -918,72 +917,6 @@ func normalizeStatusCode(code int) string {
 		return "5xx(Server error)"
 	}
 	return fmt.Sprintf("%d(Invalid)", code)
-}
-
-// request could not be made, we log the fact
-// (e.g. no backend is available)
-func (f *FProxy) SetAndLogFailure(code int32, be_err error) {
-	var err error
-	f.SetStatus(int(code))
-	fmt.Printf("Failed forwarding \"%s\" to \"%s\": code=%d for user %s\n", f.hf.def.TargetService, f.targetHost, code, f.currentUser())
-	reqCounter.With(prometheus.Labels{
-		"name":          f.hf.def.ConfigName,
-		"targetservice": f.hf.def.TargetService,
-		"statuscode":    fmt.Sprintf("%d", f.statusCode),
-		"targethost":    f.targetHost}).Inc()
-	statusCounter.With(prometheus.Labels{
-		"name":          f.hf.def.ConfigName,
-		"targetservice": f.hf.def.TargetService,
-		"statuscode":    normalizeStatusCode(f.statusCode),
-		"targethost":    f.targetHost}).Inc()
-	// also done in LogResponse() - this appears to be duplicate
-	/*
-		reqUserCounter.With(prometheus.Labels{
-			"name":          f.hf.def.ConfigName,
-			"targetservice": f.hf.def.TargetService,
-			"statuscode":    normalizeStatusCode(f.StatusCode),
-			"targethost":    f.targetHost,
-			"userid":        getUserIdentifier(f.user)}).Inc()
-	*/
-
-	/*
-		ph, _, err := net.SplitHostPort(f.remoteHost)
-		if err != nil {
-			ph = f.remoteHost
-		}
-
-			ncr := hpb.NewCallRequest{}
-			ncr.Service = f.hf.def.TargetService
-			ncr.TargetHost = f.targetHost
-			ncr.RemoteHost = ph
-			ncr.RequestURL = f.req.URL.String()
-			ncr.ResponseCode = code
-			ncr.ResponseTimeMS = 0
-			if f.unsigneduser != nil {
-				ncr.UserID = f.unsigneduser.ID
-			}
-	*/
-	f.logreq.RequestFinished(uint32(code), f.hf.def.TargetService, "", be_err)
-
-	f.AddContext()
-
-	if *debug {
-		fmt.Printf("using context %v to log call\n", f.Context())
-	}
-	if *logusage {
-		if usageStatsClient == nil {
-			usageStatsClient = us.NewUsageStatsServiceClient(client.Connect("usagestats.UsageStatsService"))
-		}
-		_, err = usageStatsClient.LogHttpCall(f.Context(), &us.LogHttpCallRequest{
-			Url:       f.req.URL.String(),
-			Success:   false,
-			Timestamp: uint32(f.Started.Unix()),
-		})
-
-		if err != nil {
-			fmt.Printf("failed backend call: failed to update usage stats %s\n", utils.ErrorString(err))
-		}
-	}
 }
 
 // request has been made, we log the response

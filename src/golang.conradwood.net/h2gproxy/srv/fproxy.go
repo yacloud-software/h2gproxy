@@ -9,6 +9,8 @@ import (
 	apb "golang.conradwood.net/apis/auth"
 	"golang.conradwood.net/apis/h2gproxy"
 	ic "golang.conradwood.net/apis/rpcinterceptor"
+	us "golang.conradwood.net/apis/usagestats"
+	"golang.conradwood.net/go-easyops/client"
 	"golang.conradwood.net/go-easyops/common"
 	"golang.conradwood.net/go-easyops/prometheus"
 	//	"golang.conradwood.net/go-easyops/tokens"
@@ -640,4 +642,44 @@ func (f *FProxy) GetRequestID() string {
 	f.request_id = utils.RandomString(12)
 	f.reqidlock.Unlock()
 	return f.request_id
+}
+
+// request could not be made, we log the fact
+// (e.g. no backend is available)
+func (f *FProxy) SetAndLogFailure(code int32, be_err error) {
+	var err error
+	f.SetStatus(int(code))
+	fmt.Printf("Failed forwarding \"%s\" to \"%s\": code=%d for user %s\n", f.hf.def.TargetService, f.targetHost, code, f.currentUser())
+	reqCounter.With(prometheus.Labels{
+		"name":          f.hf.def.ConfigName,
+		"targetservice": f.hf.def.TargetService,
+		"statuscode":    fmt.Sprintf("%d", f.statusCode),
+		"targethost":    f.targetHost}).Inc()
+	statusCounter.With(prometheus.Labels{
+		"name":          f.hf.def.ConfigName,
+		"targetservice": f.hf.def.TargetService,
+		"statuscode":    normalizeStatusCode(f.statusCode),
+		"targethost":    f.targetHost}).Inc()
+
+	f.logreq.RequestFinished(uint32(code), f.hf.def.TargetService, "", be_err)
+
+	f.AddContext()
+
+	if *debug {
+		fmt.Printf("using context %v to log call\n", f.Context())
+	}
+	if *logusage {
+		if usageStatsClient == nil {
+			usageStatsClient = us.NewUsageStatsServiceClient(client.Connect("usagestats.UsageStatsService"))
+		}
+		_, err = usageStatsClient.LogHttpCall(f.Context(), &us.LogHttpCallRequest{
+			Url:       f.req.URL.String(),
+			Success:   false,
+			Timestamp: uint32(f.Started.Unix()),
+		})
+
+		if err != nil {
+			fmt.Printf("failed backend call: failed to update usage stats %s\n", utils.ErrorString(err))
+		}
+	}
 }
