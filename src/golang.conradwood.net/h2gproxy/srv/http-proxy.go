@@ -48,7 +48,7 @@ const (
 )
 
 var (
-	require_session  = flag.Bool("session_require", false, "if true, redirect user-agent to get a session cookie and maintain one across domains")
+	require_session  = flag.Bool("session_require", true, "if true, redirect user-agent to get a session cookie and maintain one across domains")
 	auto_flush       = flag.Bool("auto_flush_response", true, "automatically flush the response to the client (stream http responses)")
 	stdauth          = flag.Bool("use_stdauth", true, "use standard authentication in http instead of weird one")
 	logusage         = flag.Bool("log_usage", false, "if true will log all access to usagestats server")
