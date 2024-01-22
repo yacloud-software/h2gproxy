@@ -104,6 +104,7 @@ func Submit(ctx context.Context, lb lbps, fname string, def Httpdef) (*pb.Config
 			SourcePort:        int32(tcpdef.Port),
 			TargetServicePath: tcpdef.Target,
 			KeepAliveSeconds:  tcpdef.KeepAliveSeconds,
+			AddHeaderToTCP:    tcpdef.AddHeaderToTCP,
 		}
 
 		_, err := lb.AddConfigTCP(ctx, addreq)

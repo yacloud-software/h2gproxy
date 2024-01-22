@@ -4,10 +4,11 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	pb "golang.conradwood.net/apis/h2gproxy"
+	h2g "golang.conradwood.net/apis/h2gproxy"
 	"golang.conradwood.net/go-easyops/client"
 	"golang.conradwood.net/go-easyops/prometheus"
-	//	"golang.conradwood.net/go-easyops/server"
+	"golang.conradwood.net/go-easyops/utils"
+	"golang.conradwood.net/h2gproxy/iphelper"
 	"io"
 	"net"
 	"sync"
@@ -41,7 +42,7 @@ var (
 	)
 )
 
-//https://stackoverflow.com/questions/22421375/how-to-print-the-bytes-while-the-file-is-being-downloaded-golang
+// https://stackoverflow.com/questions/22421375/how-to-print-the-bytes-while-the-file-is-being-downloaded-golang
 // PassThru wraps an existing io.Reader.
 //
 // It simply forwards the Read() call, while displaying
@@ -69,14 +70,16 @@ func (pt *PassThru) Read(p []byte) (int, error) {
 }
 
 type TCPForwarder struct {
-	session         *pb.AddConfigHTTPRequest // this does not appear to be set ever..
-	config          *pb.AddConfigTCPRequest
+	session         *h2g.AddConfigHTTPRequest // this does not appear to be set ever..
+	config          *h2g.AddConfigTCPRequest
 	Port            int
 	Path            string
 	active          bool
 	shutdownRequest bool
 	listener        net.Listener
 	lock            sync.Mutex
+	conlock         sync.Mutex
+	conctr          uint64
 }
 
 func init() {
@@ -187,6 +190,13 @@ func (tf *TCPForwarder) forward(incoming net.Conn) {
 		"target":     tf.Path,
 		"targethost": con.RemoteAddr().String()}).Inc()
 
+	if tf.config.AddHeaderToTCP {
+		err := tf.send_header(con, tcp)
+		if err != nil {
+			fmt.Printf("Failed to send header: %s\n", err)
+			return
+		}
+	}
 	// we have bidrectional streams, so
 	// keep copying from incoming->server
 	// and server->incoming.
@@ -258,6 +268,42 @@ func (tf *TCPForwarder) Forward() error {
 		tsd.SetPort(tf.Port)
 		server.AddRegistry(tsd)
 	*/
+	return nil
+}
+
+func (tf *TCPForwarder) create_connection_id() string {
+	tf.conlock.Lock()
+	defer tf.conlock.Unlock()
+	res := fmt.Sprintf("con_%d", tf.conctr)
+	tf.conctr++
+	return res
+}
+
+// send a header down this tcp connection
+func (tf *TCPForwarder) send_header(nc net.Conn, incoming *net.TCPConn) error {
+	addr := incoming.RemoteAddr().String()
+	ip, rport, _, err := iphelper.ParseEndpoint(addr)
+	if err != nil {
+		return err
+	}
+	header := &h2g.TCPStart{
+		ConnectionID: tf.create_connection_id(),
+		RemoteIP:     ip,
+		RemotePort:   rport,
+	}
+	ms, err := utils.Marshal(header)
+	if err != nil {
+		return err
+	}
+	msb := []byte(ms)
+	msb = append(msb, 0) // stop-byte
+	nb, err := nc.Write(msb)
+	if err != nil {
+		return err
+	}
+	if nb != len(msb) {
+		return fmt.Errorf("odd write, wanted to write %d bytes, but wrote %d", len(msb), nb)
+	}
 	return nil
 }
 
