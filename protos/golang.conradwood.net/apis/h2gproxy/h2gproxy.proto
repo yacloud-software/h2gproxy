@@ -24,8 +24,15 @@ message AddConfigTCPRequest {
   int32 SourcePort = 2;
   string TargetServicePath = 3;
   uint32 KeepAliveSeconds=4; // if >0, set a keepalive, sent this number of seconds
+  bool AddHeaderToTCP=5; // if true, send a TCPStart proto down the connection
 }
-
+message TCPStart {
+  string ConnectionID=1; // these will be re-used eventually, but are unique at any given moment in time
+  string RemoteIP=2;
+  uint32 RemotePort=3;
+  string LocalIP=4;
+  uint32 LocalPort=5;
+}
 /*******************************************************
 gRPC Proxies must serve this
 ********************************************************/
@@ -261,6 +268,7 @@ message TCPProxy {
   uint32 Port=1;
   string Target=2;
   uint32 KeepAliveSeconds=3;
+  bool AddHeaderToTCP=5; // if true, send a TCPStart proto down the connection
 }
 // defines the syntax of the config file
 message ConfigFile {
