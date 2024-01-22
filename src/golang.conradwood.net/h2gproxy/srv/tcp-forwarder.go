@@ -295,7 +295,8 @@ func (tf *TCPForwarder) send_header(nc net.Conn, incoming *net.TCPConn) error {
 	if err != nil {
 		return err
 	}
-	msb := []byte(ms)
+	msb := []byte{1, 1} // start-byte  + version
+	msb = append(msb, ([]byte(ms))...)
 	msb = append(msb, 0) // stop-byte
 	nb, err := nc.Write(msb)
 	if err != nil {
