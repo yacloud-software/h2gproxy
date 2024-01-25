@@ -265,12 +265,12 @@ func StartHTTPSServer() error {
 // silly function to check startup of https
 func startHTTPS(r *HTTPForwarder, adr string, port int) error {
 	go func() {
-		httpsMux := http.NewServeMux()
+		//		httpsMux := http.NewServeMux()
 		f := &https_req_handler{port: port}
-		httpsMux.HandleFunc("/", f.https_handler)
+		//		httpsMux.HandleFunc("/", f.https_handler)
 		r.server = &http.Server{
 			Addr:    adr,
-			Handler: httpsMux,
+			Handler: f,
 		}
 		if *disable_http2 {
 			r.server.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
@@ -310,4 +310,13 @@ type https_req_handler struct {
 
 func (h *https_req_handler) https_handler(w http.ResponseWriter, r *http.Request) {
 	main_handler(w, r, true, h.port)
+}
+func (h *https_req_handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Host == "" {
+		http.Error(w, "no host", 400)
+		fmt.Printf("No host specified\n")
+		return
+	}
+	main_handler(w, r, true, h.port)
+
 }

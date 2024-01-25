@@ -116,16 +116,17 @@ func portsFromString(ports string) []int {
 func startHTTP(r *HTTPForwarder, adr string, port int) error {
 	go func() {
 		for { // it's a loop, h2gproxy is so important, we'll really try to start it
-			httpMux := http.NewServeMux()
+			//	httpMux := http.NewServeMux()
 			f := &foohandler{port: port}
-			httpMux.HandleFunc("/", f.handler)
+			//	httpMux.HandleFunc("/", f.handler)
 			server := &http.Server{
 				ReadTimeout:  time.Duration(*http_read_timeout) * time.Second,
 				WriteTimeout: time.Duration(*http_write_timeout) * time.Second,
 				Addr:         adr,
+				Handler:      f,
 			}
 			//		server.Handler = httpMux
-			server.Handler = f
+
 			err := server.ListenAndServe()
 			fmt.Printf("Failed to start http listener: %s\n", err)
 			time.Sleep(1 * time.Second)
@@ -146,7 +147,7 @@ func (f *foohandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // http-only handler - we upgrade to https if we have a matching certificate
 func (f *foohandler) handler(w http.ResponseWriter, r *http.Request) {
 	if r.Host == "" {
-		http.Error(w, "no host", 500)
+		http.Error(w, "no host", 400)
 		fmt.Printf("No host specified\n")
 		return
 	}
