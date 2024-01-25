@@ -9,6 +9,8 @@ var (
 		"Wget",
 		"git",
 		"ctools",
+		"yacloud-fscache",
+		"autodeployer",
 	}
 )
 
