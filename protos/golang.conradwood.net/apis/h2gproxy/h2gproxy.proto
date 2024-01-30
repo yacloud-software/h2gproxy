@@ -28,10 +28,10 @@ message AddConfigTCPRequest {
 }
 message TCPStart {
   string ConnectionID=1; // these will be re-used eventually, but are unique at any given moment in time
-  string RemoteIP=2;
-  uint32 RemotePort=3;
-  string LocalIP=4;
-  uint32 LocalPort=5;
+  string RemoteIP=2; // the peer's IP address
+  uint32 RemotePort=3; // the peer's Port
+  string LocalIP=4; // the IP it connected to
+  uint32 LocalPort=5; // the  port it connected to 
 }
 /*******************************************************
 gRPC Proxies must serve this
