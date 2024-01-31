@@ -291,6 +291,9 @@ func (tf *TCPForwarder) send_header(nc net.Conn, incoming *net.TCPConn) error {
 		RemoteIP:     ip,
 		RemotePort:   rport,
 	}
+	if *debug_tcp {
+		fmt.Printf("[tcp] Sending header %v\n", header)
+	}
 	ms, err := utils.Marshal(header)
 	if err != nil {
 		return err

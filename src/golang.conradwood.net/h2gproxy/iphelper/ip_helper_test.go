@@ -25,6 +25,7 @@ func check(t *testing.T, s1, s2 string, i1, i2 int) {
 }
 
 func Test1(t *testing.T) {
+	check(t, "172.29.1.5:1420", "172.29.1.5", 1420, 4)
 	check(t, "10.1.1.1:53", "10.1.1.1", 53, 4)
 	check(t, "10.1.1.1", "10.1.1.1", 0, 4)
 	check(t, "fe80::9e6b:ff:fe10:52c5", "fe80::9e6b:ff:fe10:52c5", 0, 6)
