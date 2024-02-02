@@ -368,9 +368,11 @@ func (f *FProxy) execute_raw() {
 		fmt.Printf("Session-token: \"%s\"\n", sess)
 	}
 	if *require_session && sess == "" {
-		// redirect to sso to get a session
-		f.RedirectTo("https://sso."+(*ssodomain)+"/weblogin/needsession", false)
-		return
+		if f.hf.IsWebAPI() || f.hf.IsHTTPProxy() {
+			// redirect to sso to get a session
+			f.RedirectTo("https://sso."+(*ssodomain)+"/weblogin/needsession", false)
+			return
+		}
 
 	}
 	if f.hf.IsRedirectMatcher() {
