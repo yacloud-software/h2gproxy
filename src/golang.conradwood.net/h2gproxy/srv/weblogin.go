@@ -206,6 +206,7 @@ func WebLoginProxy(f *FProxy) {
 	wr, err := wl.ServeHTML(ctx, wreq) // might return error or might return funny status code in body instead
 	weblogin_served("servehtml", wr, err)
 	if err != nil {
+		debugWl("WebLoginProxy() failed: %s\n", err)
 		f.AntiDOS("failed to serve html: %s", err)
 		if wr != nil && wr.HTTPCode != 0 {
 			f.SetStatus(int(wr.HTTPCode))
@@ -222,6 +223,7 @@ func WebLoginProxy(f *FProxy) {
 		f.session = wr.Session
 	}
 	if wr.HTTPCode != 0 {
+		debugWl("WebLoginProxy() returned code %d\n", wr.HTTPCode)
 		f.AntiDOS("failed to serve weblogin (code == %d)", wr.HTTPCode)
 		f.err = fmt.Errorf("Error (weblogin serves http code %d)", wr.HTTPCode)
 		f.SetStatus(int(wr.HTTPCode))
@@ -232,6 +234,7 @@ func WebLoginProxy(f *FProxy) {
 	copyHeaders(wr, f)
 	f.SetCookies(wr.Cookies)
 	if wr.RedirectTo != "" {
+		debugWl("WebLoginProxy() asked  to redirect to %s\n", wr.RedirectTo)
 		f.RedirectTo(wr.RedirectTo, wr.ForceGetAfterRedirect)
 		return
 	}
