@@ -31,8 +31,8 @@ golang.conradwood.net/apis/deploymonkey v1.1.2503 h1:Db6KtUiWSrmKq70Mw0x1De9fhVF
 golang.conradwood.net/apis/deploymonkey v1.1.2503/go.mod h1:tvtRR4cwuJc/TvIf61RrM++Iv6+fgAIeW5VI3tK+3LM=
 golang.conradwood.net/apis/framework v1.1.2503 h1:SpqBi75HmRmj48EYjqCl9AXYCWiubTl7eBRKjAphRtM=
 golang.conradwood.net/apis/framework v1.1.2503/go.mod h1:a8WDJ4qsCA7rqeUx/s9ehMxxloqGzAlz7+aHIaKcz/A=
-golang.conradwood.net/apis/goeasyops v1.1.2643 h1:E61wWdcesDJAje05J+1Eob4IeS2xuOCSFwiEoH44Pt8=
-golang.conradwood.net/apis/goeasyops v1.1.2643/go.mod h1:eCeV3/inBmXzrG6sgkYiqtAg+EkSMXzs4g1YBZsiGQw=
+
+
 golang.conradwood.net/apis/h2gproxy v1.1.2754 h1:jJIlzX+ABLMsrE2tmbeCgdhaUzlhpkAZvhXMAIqL2lU=
 golang.conradwood.net/apis/h2gproxy v1.1.2754/go.mod h1:aLOJ69VQfaJGOnFWJ3uxjz52uP6vxFMLbb5K7ON9kfQ=
 golang.conradwood.net/apis/objectstore v1.1.2503 h1:ylhSoEKjoW5PnNLgLBKmfm19UPbzoNsHAQB8NEGCAgg=
