@@ -368,7 +368,7 @@ func (f *FProxy) execute_raw() {
 	}
 	if sess == "" && f.hf.def.SessionRequired {
 		// redirect to sso to get a session
-		f.RedirectTo("https://sso."+(*ssodomain)+"/weblogin/needsession", false)
+		make_browser_fetch_a_session(f)
 		return
 	}
 

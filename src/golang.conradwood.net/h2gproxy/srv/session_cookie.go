@@ -239,6 +239,7 @@ func make_browser_fetch_a_session(f *FProxy) error {
 		return err
 	}
 	s = url.QueryEscape(s)
-	f.RedirectTo("https://sso."+(*ssodomain)+"/weblogin/needsession?v3state=%s"+s, false)
+	u := "https://sso." + (*ssodomain) + "/weblogin/needsession/" + s
+	f.RedirectTo(u, false)
 	return nil
 }
