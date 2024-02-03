@@ -188,8 +188,8 @@ func apply(cfg *Config) error {
 				URLPath:       "/weblogin/",
 				TargetService: WEBLOGIN,
 				ConfigName:    "weblogin",
-				MaxInFlights:  15,
-				MaxPerSec:     10,
+				MaxInFlights:  25,
+				MaxPerSec:     20,
 				ApiType:       "weblogin",
 			}}
 		cfg.httpforwarders = append(cfg.httpforwarders, hf)
