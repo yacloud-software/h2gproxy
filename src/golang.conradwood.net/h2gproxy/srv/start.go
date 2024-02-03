@@ -140,7 +140,7 @@ func main() {
 	}
 	sd := server.NewServerDef()
 	sd.SetPort(*port)
-	sd.Register = st
+	sd.SetRegister(st)
 	err = server.ServerStartup(sd)
 	if err != nil {
 		fmt.Printf("failed to start server: %s\n", err)

@@ -228,7 +228,7 @@ func print_session_id(id string) string {
 }
 
 func make_browser_fetch_a_session(f *FProxy) error {
-	state := &weblogin.V3State{
+	state := &weblogin.SessionState{
 		TriggerHost:  f.RequestedHost(),
 		TriggerPath:  f.RequestedPath(),
 		TriggerQuery: f.RequestedQuery(),
