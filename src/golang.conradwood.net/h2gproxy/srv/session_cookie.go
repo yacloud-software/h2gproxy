@@ -4,9 +4,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net/url"
 	//au "golang.conradwood.net/apis/auth"
 	//	"golang.conradwood.net/apis/common"
 	"golang.conradwood.net/apis/h2gproxy"
+	"golang.conradwood.net/apis/weblogin"
 	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/common"
 	"golang.conradwood.net/go-easyops/utils"
@@ -223,4 +225,20 @@ func print_session_id(id string) string {
 		return id
 	}
 	return id[:15]
+}
+
+func make_browser_fetch_a_session(f *FProxy) error {
+	state := &weblogin.V3State{
+		TriggerHost:  f.RequestedHost(),
+		TriggerPath:  f.RequestedPath(),
+		TriggerQuery: f.RequestedQuery(),
+	}
+	s, err := utils.Marshal(state)
+	if err != nil {
+		fmt.Printf("Failed to marshal redirect url")
+		return err
+	}
+	s = url.QueryEscape(s)
+	f.RedirectTo("https://sso."+(*ssodomain)+"/weblogin/needsession?v3state=%s"+s, false)
+	return nil
 }

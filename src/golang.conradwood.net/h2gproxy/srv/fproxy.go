@@ -265,6 +265,9 @@ func (f *FProxy) PeerIP() string {
 	h := f.req.RemoteAddr
 	return h
 }
+func (f *FProxy) RequestedQuery() string {
+	return f.req.URL.RawQuery
+}
 func (f *FProxy) RequestedHost() string {
 	return f.req.Host
 }
