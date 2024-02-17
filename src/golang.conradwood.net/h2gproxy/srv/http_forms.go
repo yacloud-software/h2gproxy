@@ -15,7 +15,7 @@ func NewParsedForm(f *FProxy) (*parsed_request, error) {
 		return nil, err
 	}
 
-	res := &parsed_request{}
+	res := &parsed_request{submitted_fields: make(map[string]string)}
 
 	// parse the form stuff
 	for name, value := range f.req.Form {
