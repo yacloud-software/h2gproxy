@@ -16,7 +16,6 @@ func BiStreamProxy(f *FProxy) {
 
 func stream_Handler(srv interface{}, stream grpc.ServerStream) error {
 	panic("stream handler not implemented")
-	return nil
 }
 
 // bit more high-level, give it service, rpc and it'll return a useful stream
