@@ -243,7 +243,9 @@ message AddConfigHTTPRequest {
    */
   repeated RedirectRewrite RedirectRewrites=36;
   // if true, h2gproxy will redirect any requests without a sessioncookie to weblogin to get a session
-  bool SessionRequired=38; 
+  bool SessionRequired=38;
+  // if true, will serve with local certificate only
+  bool LocalTLSCertificateOnly=39;
 }
 // definition on how INBOUND request urls are rewritten and redirected
 message RedirectRewrite {
