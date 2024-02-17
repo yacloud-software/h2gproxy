@@ -67,7 +67,6 @@ type FProxy struct {
 	Timings              []*Timing
 	body                 []byte
 	body_read            bool
-	submitted_fields     map[string]string
 	form_parsed          bool
 	err                  error
 	antidos_notified     bool
@@ -75,6 +74,7 @@ type FProxy struct {
 	added_cookies        map[string]*h2gproxy.Cookie
 	session              *session.Session       //*apb.SignedSession
 	logreq               httplogger.HTTPRequest // to log start/end and updates for this request
+	parsedrequest        *parsed_request
 }
 
 func (f *FProxy) Api() uint32 {
@@ -187,52 +187,27 @@ func (f *FProxy) QueryValues() map[string]string {
 	return res
 }
 
+func (f *FProxy) GetForm() (*parsed_request, error) {
+	if f.parsedrequest != nil {
+		return f.parsedrequest, nil
+	}
+	f.RequestBody() // ParseForm() actually does funny things to the body. we make sure we read it before we parse it
+	pr, err := NewParsedForm(f)
+	if err != nil {
+		return nil, err
+	}
+	f.parsedrequest = pr
+	return pr, nil
+}
+
 // return the values submitted by the client (GET & Post & form)
 // this must not be called if fproxy was Released()...
 func (f *FProxy) RequestValues() map[string]string {
-	if f.form_parsed {
-		return f.submitted_fields
-	}
-	f.RequestBody() // ParseForm() actually does funny things to the body. we make sure we read it before we parse it
-	err := f.req.ParseForm()
-
+	hf, err := f.GetForm()
 	if f.ProcessError(err, 500, "unable to parse browser login request") {
 		return nil
 	}
-
-	res := make(map[string]string)
-	for name, value := range f.req.Form {
-		if len(value) < 1 {
-			fmt.Printf("Skipping value %s (%d submits)\n", name, len(value))
-			continue
-		}
-		res[name] = value[0]
-		if *debug {
-			fmt.Printf("Submitted: %s=%s\n", name, value[0])
-		}
-	}
-	// if it is a post we might have a funny url string (which are also values)
-	// but we might also have other things.
-	if f.req.Method == "POST" {
-		ct := strings.ToLower(f.GetHeader("content-type"))
-		if ct == "text/json" || ct == "application/json" {
-			res["body"] = string(f.RequestBody())
-		} else {
-			values, err := url.ParseQuery(string(f.RequestBody()))
-			if err == nil {
-				for k, v := range values {
-					if len(v) < 1 {
-						continue
-					}
-					res[k] = v[0]
-				}
-			}
-		}
-	}
-
-	f.submitted_fields = res
-	f.form_parsed = true
-	return f.submitted_fields
+	return hf.RequestValues()
 }
 
 // return the request body

@@ -17,13 +17,17 @@ var (
 )
 
 type grpc_conn struct {
-	Name                 string
+	service_name         string
 	Conn                 *grpc.ClientConn
 	stream_counter       int //currently open streams
 	total_stream_counter int // total opened
 	opened               int // how many peeps use this connection (one might have a connection with 0 or 2+ streams)
 	failed               bool
 	lock                 sync.Mutex
+}
+
+func (g *grpc_conn) String() string {
+	return fmt.Sprintf("grpc-con to \"%s\" (%d open)", g.service_name, g.opened)
 }
 
 func (g *grpc_conn) AvailableForNewStreams() bool {
@@ -48,7 +52,7 @@ func GetGRPCConnection(name string) *grpc_conn {
 		fmt.Printf("(2) Got %d connections\n", len(con))
 	}
 	for _, c := range con {
-		if c.Name == name && c.AvailableForNewStreams() {
+		if c.service_name == name && c.AvailableForNewStreams() {
 			grpc_conn_lock.Lock()
 			c.opened++
 			grpc_conn_lock.Unlock()
@@ -57,7 +61,7 @@ func GetGRPCConnection(name string) *grpc_conn {
 	}
 	grpc_conn_lock.Lock()
 	for _, c := range con {
-		if c.Name == name && c.AvailableForNewStreams() {
+		if c.service_name == name && c.AvailableForNewStreams() {
 			c.opened++
 			grpc_conn_lock.Unlock()
 			return c
@@ -65,11 +69,11 @@ func GetGRPCConnection(name string) *grpc_conn {
 	}
 	grpc_conn_lock.Unlock()
 	cc := client.Connect(name)
-	res := &grpc_conn{Name: name, Conn: cc}
+	res := &grpc_conn{service_name: name, Conn: cc}
 
 	grpc_conn_lock.Lock()
 	for _, c := range con {
-		if c.Name == name && c.AvailableForNewStreams() {
+		if c.service_name == name && c.AvailableForNewStreams() {
 			c.opened++
 			grpc_conn_lock.Unlock()
 			return c
@@ -103,6 +107,11 @@ func (g *grpc_conn) streamCounterDec() {
 	g.stream_counter--
 	g.lock.Unlock()
 }
+
+/*
+"name" is the rpc name including service, e.g. "/httpdebug.HTTPDebug/StreamBiHTTP"
+"streamdesc" is ...
+*/
 func (g *grpc_conn) NewStream(ctx context.Context, desc *grpc.StreamDesc, name string) (*client_stream, error) {
 	gs, err := g.Conn.NewStream(ctx, desc, name)
 	if err != nil {
@@ -120,7 +129,7 @@ func (g *grpc_conn) Debugf(format string, args ...interface{}) {
 		return
 	}
 	s := fmt.Sprintf(format, args...)
-	fmt.Printf("[grpccon %s] %s", g.Name, s)
+	fmt.Printf("[grpccon %s] %s", g.service_name, s)
 }
 func (g *grpc_conn) Fail(err error) {
 	g.failed = true
@@ -129,6 +138,10 @@ func (g *grpc_conn) Fail(err error) {
 type client_stream struct {
 	clientstream grpc.ClientStream
 	conn         *grpc_conn
+}
+
+func (c *client_stream) String() string {
+	return fmt.Sprintf("stream for \"%s\"", c.conn.service_name)
 }
 
 func (c *client_stream) Header() (metadata.MD, error) {

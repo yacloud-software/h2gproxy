@@ -53,6 +53,10 @@ type htmlserve struct {
 	cc   *grpc.ClientConn
 }
 
+func (hs *htmlserve) String() string {
+	return fmt.Sprintf("proxy-connection to service \"%s\"", hs.name)
+}
+
 func (h *htmlserve) ServeHTML(ctx context.Context, in *h2gproxy.ServeRequest, opts ...grpc.CallOption) (*h2gproxy.ServeResponse, error) {
 	out := new(h2gproxy.ServeResponse)
 	p := fmt.Sprintf("/%s/ServeHTML", h.name)

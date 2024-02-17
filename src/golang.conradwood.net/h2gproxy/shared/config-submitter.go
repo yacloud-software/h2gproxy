@@ -195,6 +195,8 @@ func ApiType(h *pb.AddConfigHTTPRequest) uint32 {
 		return 4
 	} else if s == "proxy" {
 		return 5
+	} else if s == "bistream" {
+		return 6
 	}
 	return 1000 // error
 }
@@ -211,6 +213,8 @@ func ApiTypeByNum(num uint32) string {
 		return "download"
 	} else if num == 5 {
 		return "proxy"
+	} else if num == 6 {
+		return "bistream"
 	}
 	return fmt.Sprintf("unknown_api_type_%d", num)
 }

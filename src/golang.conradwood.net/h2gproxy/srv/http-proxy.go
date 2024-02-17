@@ -188,6 +188,12 @@ func (hf *HTTPForwarder) IsFancyProxy() bool {
 	}
 	return false
 }
+func (hf *HTTPForwarder) IsBiStreamProxy() bool {
+	if hf.Api() == 6 {
+		return true
+	}
+	return false
+}
 func (hf *HTTPForwarder) IsJsonAPI() bool {
 	if hf.Api() == 1 {
 		return true
@@ -398,6 +404,10 @@ func (f *FProxy) execute_raw() {
 	}
 	if f.hf.IsFancyProxy() {
 		FancyProxy(f)
+		return
+	}
+	if f.hf.IsBiStreamProxy() {
+		BiStreamProxy(f)
 		return
 	}
 	if !f.hf.IsHTTPProxy() {

@@ -1,4 +1,4 @@
-// client create: H2GProxyServiceClient
+// client create: DownloadStreamerClient
 /*
   Created by /home/cnw/devel/go/yatools/src/golang.yacloud.eu/yatools/protoc-gen-cnw/protoc-gen-cnw.go
 */
@@ -7,15 +7,15 @@
    filename  : protos/golang.conradwood.net/apis/h2gproxy/h2gproxy.proto
    gopackage : golang.conradwood.net/apis/h2gproxy
    importname: ai_1
-   clientfunc: GetH2GProxyService
-   serverfunc: NewH2GProxyService
-   lookupfunc: H2GProxyServiceLookupID
-   varname   : client_H2GProxyServiceClient_1
-   clientname: H2GProxyServiceClient
-   servername: H2GProxyServiceServer
-   gsvcname  : h2gproxy.H2GProxyService
-   lockname  : lock_H2GProxyServiceClient_1
-   activename: active_H2GProxyServiceClient_1
+   clientfunc: GetDownloadStreamer
+   serverfunc: NewDownloadStreamer
+   lookupfunc: DownloadStreamerLookupID
+   varname   : client_DownloadStreamerClient_1
+   clientname: DownloadStreamerClient
+   servername: DownloadStreamerServer
+   gsvcname  : h2gproxy.DownloadStreamer
+   lockname  : lock_DownloadStreamerClient_1
+   activename: active_DownloadStreamerClient_1
 */
 
 package h2gproxy
@@ -25,45 +25,29 @@ import (
    "golang.conradwood.net/go-easyops/client"
 )
 var (
-  lock_H2GProxyServiceClient_1 sync.Mutex
-  client_H2GProxyServiceClient_1 H2GProxyServiceClient
+  lock_DownloadStreamerClient_1 sync.Mutex
+  client_DownloadStreamerClient_1 DownloadStreamerClient
 )
 
-func GetH2GProxyClient() H2GProxyServiceClient { 
-    if client_H2GProxyServiceClient_1 != nil {
-        return client_H2GProxyServiceClient_1
+func GetDownloadStreamerClient() DownloadStreamerClient { 
+    if client_DownloadStreamerClient_1 != nil {
+        return client_DownloadStreamerClient_1
     }
 
-    lock_H2GProxyServiceClient_1.Lock() 
-    if client_H2GProxyServiceClient_1 != nil {
-       lock_H2GProxyServiceClient_1.Unlock()
-       return client_H2GProxyServiceClient_1
+    lock_DownloadStreamerClient_1.Lock() 
+    if client_DownloadStreamerClient_1 != nil {
+       lock_DownloadStreamerClient_1.Unlock()
+       return client_DownloadStreamerClient_1
     }
 
-    client_H2GProxyServiceClient_1 = NewH2GProxyServiceClient(client.Connect(H2GProxyServiceLookupID()))
-    lock_H2GProxyServiceClient_1.Unlock()
-    return client_H2GProxyServiceClient_1
+    client_DownloadStreamerClient_1 = NewDownloadStreamerClient(client.Connect(DownloadStreamerLookupID()))
+    lock_DownloadStreamerClient_1.Unlock()
+    return client_DownloadStreamerClient_1
 }
 
-func GetH2GProxyServiceClient() H2GProxyServiceClient { 
-    if client_H2GProxyServiceClient_1 != nil {
-        return client_H2GProxyServiceClient_1
-    }
-
-    lock_H2GProxyServiceClient_1.Lock() 
-    if client_H2GProxyServiceClient_1 != nil {
-       lock_H2GProxyServiceClient_1.Unlock()
-       return client_H2GProxyServiceClient_1
-    }
-
-    client_H2GProxyServiceClient_1 = NewH2GProxyServiceClient(client.Connect(H2GProxyServiceLookupID()))
-    lock_H2GProxyServiceClient_1.Unlock()
-    return client_H2GProxyServiceClient_1
-}
-
-func H2GProxyServiceLookupID() string { return "h2gproxy.H2GProxyService" } // returns the ID suitable for lookup in the registry. treat as opaque, subject to change.
+func DownloadStreamerLookupID() string { return "h2gproxy.DownloadStreamer" } // returns the ID suitable for lookup in the registry. treat as opaque, subject to change.
 
 func init() {
-   client.RegisterDependency("h2gproxy.H2GProxyService")
-   AddService("h2gproxy.H2GProxyService")
+   client.RegisterDependency("h2gproxy.DownloadStreamer")
+   AddService("h2gproxy.DownloadStreamer")
 }
