@@ -45,7 +45,21 @@ message Parameter {
   string Name = 1;
   string Value = 2;
 }
-
+/*******************************************************
+gRPC Bidirectional Streaming Proxies must serve this
+********************************************************/
+service BiDirectionalStreamer {
+  rpc StreamBiHTTP(stream BiStreamRequest) returns (stream BiStreamResponse);
+}
+message BiStreamRequest {
+  StreamRequest HTTPRequest=1;
+  bytes Body=2;
+}
+message BiStreamResponse {
+  StreamResponse HTTPResponse=1;
+  bytes Body=2;
+    
+}
 /*******************************************************
 gRPC Streaming Proxies must serve this
 ********************************************************/
