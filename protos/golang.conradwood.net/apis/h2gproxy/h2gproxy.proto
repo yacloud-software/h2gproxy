@@ -226,11 +226,18 @@ message AddConfigHTTPRequest {
   int32 MaxInFlights = 23;
   /*
     if "none" (0) h2gproxy will forward http requests to http-only backends (no grpc)<br/>
+    
     if "json" (1) h2gproxy will parse the form and forward via grpc to json-api-multiplexer backend<br/>
+    
     if "html" (2) h2gproxy will parse the form and forward via grpc to htmlserver backend<br/>
+    
     if "weblogin" (3) h2gproxy will parse the form and forward via grpc to weblogin backend<br/>
+    
     if "download" (4) h2gproxy will forward to (any specified) streaming grpc api backend<br/>
+    
     if "proxy" (5) h2gproxy will forward to (any specified) streaming grpc proxying api backend with raw http information. An entry of this type will match if URLHostname matches partially. Security risk (see readme!)<br/>
+
+    if "bistream" (6) (EXPERIMENTAL) h2gproxy will use a bidirectional grpc stream to forward the client's request to a grpc server and stream the response back to the client. This is useful for file uploads or image converters or other large file exchanges. For files, it requires the client's request to be encoded with "multipart/form-data".
   */
   string ApiType = 24;
   // if true h2gproxy will intercept Redirect (301) from backends and rewrite them
