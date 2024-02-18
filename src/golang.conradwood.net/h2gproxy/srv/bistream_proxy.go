@@ -66,7 +66,7 @@ func bistream_proxy_exe(f *FProxy) error {
 	svc.Debugf("bistream proxy allocated new stream (%s)\n", stream)
 
 	// stream the request to backend
-	start := &pb.BiStreamRequest{HTTPRequest: &pb.StreamRequest{Path: "set-by-h2gproxy-request.path"}}
+	start := &pb.BiStreamRequest{HTTPRequest: &pb.StreamRequest{Path: f.RequestedPath()}}
 
 	for k, v := range form.RequestValues() {
 		p := &pb.Parameter{Name: k, Value: v}
