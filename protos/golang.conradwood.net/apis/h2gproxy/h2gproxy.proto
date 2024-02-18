@@ -52,12 +52,18 @@ service BiDirectionalStreamer {
   rpc StreamBiHTTP(stream BiStreamRequest) returns (stream BiStreamResponse);
 }
 message BiStreamRequest {
-  StreamRequest HTTPRequest=1;
-  bytes Body=2;
+  StreamRequest HTTPRequest=1; // only set in first request
+  StreamData Data=2;
 }
+message StreamData {
+  string Key=1; // e.g. "formfield_file_upload"
+  string Filename=2; // e.g. "scan.pdf"
+  bytes Data=3; // repeated until all done
+}
+
 message BiStreamResponse {
   StreamResponse HTTPResponse=1;
-  bytes Body=2;
+  bytes Data=2;
     
 }
 /*******************************************************
