@@ -258,7 +258,8 @@ func (f *FProxy) ReleaseResponse() {
 // internal function
 func (f *FProxy) write_headers() {
 	if !f.body_read {
-		panic("writing headers before body was read")
+		fmt.Printf("ERROR - writing headers before body was read\n")
+		utils.PrintStack("Callstack:")
 	}
 	if f.response_released || f.response_headers_written {
 		return
