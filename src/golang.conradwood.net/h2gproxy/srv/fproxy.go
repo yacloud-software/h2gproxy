@@ -257,6 +257,9 @@ func (f *FProxy) ReleaseResponse() {
 
 // internal function
 func (f *FProxy) write_headers() {
+	if !f.body_read {
+		panic("writing headers before body was read")
+	}
 	if f.response_released || f.response_headers_written {
 		return
 	}
@@ -352,9 +355,15 @@ func (f *FProxy) Flush() {
 	}
 
 }
+func (f *FProxy) GetContentType() string {
+	return f.GetHeader("content-type")
+}
 
 // writes headers too
 func (f *FProxy) Write(buf []byte) error {
+	if !f.body_read {
+		panic("writing before body was read")
+	}
 	if *debug {
 		fmt.Printf("[fproxy] Writing %d bytes\n", len(buf))
 	}

@@ -45,6 +45,9 @@ func cert_refresher() {
 		certManager = cm.GetCertManagerClient()
 	}
 	t := time.Duration(3) * time.Second
+	if *single_cert != "" {
+		t = time.Duration(100) * time.Millisecond
+	}
 	for {
 		time.Sleep(t)
 		err := cert_refresh()

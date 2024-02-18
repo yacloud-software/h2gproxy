@@ -45,11 +45,11 @@ func (g *grpc_conn) AvailableForNewStreams() bool {
 
 func GetGRPCConnection(name string) *grpc_conn {
 	if *debug {
-		fmt.Printf("(1) Got %d connections\n", len(con))
+		fmt.Printf("[grpc-con] (1) Got %d connections\n", len(con))
 	}
 	grpc_closer()
 	if *debug {
-		fmt.Printf("(2) Got %d connections\n", len(con))
+		fmt.Printf("[grpc-con] (2) Got %d connections\n", len(con))
 	}
 	for _, c := range con {
 		if c.service_name == name && c.AvailableForNewStreams() {
