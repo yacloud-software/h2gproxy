@@ -258,8 +258,7 @@ func (f *FProxy) ReleaseResponse() {
 // internal function
 func (f *FProxy) write_headers() {
 	if !f.body_read {
-		fmt.Printf("ERROR - writing headers before body was read\n")
-		utils.PrintStack("Callstack:")
+		fmt.Printf("writing headers before body was read\n")
 	}
 	if f.response_released || f.response_headers_written {
 		return
@@ -363,7 +362,7 @@ func (f *FProxy) GetContentType() string {
 // writes headers too
 func (f *FProxy) Write(buf []byte) error {
 	if !f.body_read {
-		panic("writing before body was read")
+		fmt.Printf("writing before body was read")
 	}
 	if *debug {
 		fmt.Printf("[fproxy] Writing %d bytes\n", len(buf))
