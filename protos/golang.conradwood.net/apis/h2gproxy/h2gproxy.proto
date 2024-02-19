@@ -25,6 +25,9 @@ message AddConfigTCPRequest {
   string TargetServicePath = 3;
   uint32 KeepAliveSeconds=4; // if >0, set a keepalive, sent this number of seconds
   bool AddHeaderToTCP=5; // if true, send a TCPStart proto down the connection. Byte Sequence: START_BYTE(1), VERSION(n), BASE64PROTO, STOP_BYTE(0)
+  bool EnableTLS=6; // expect and accept TLS negotiation
+  string TLSSubject=7; // name of the tls certificate to use
+  bool NeedAuth=8; // h2gproxy tcp authentication. implies tls. see here: https://docs.google.com/document/d/1ZfoMTpHCbzsqOdHZFFNlRVWK7hgzoFYirrjwl22toc0/edit#heading=h.gpf7irewzeas
 }
 message TCPStart {
   string ConnectionID=1; // these will be re-used eventually, but are unique at any given moment in time
