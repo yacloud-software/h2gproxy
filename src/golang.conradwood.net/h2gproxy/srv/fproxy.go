@@ -362,7 +362,7 @@ func (f *FProxy) GetContentType() string {
 // writes headers too
 func (f *FProxy) Write(buf []byte) error {
 	if !f.body_read {
-		fmt.Printf("writing before body was read")
+		fmt.Printf("writing before body was read\n")
 	}
 	if *debug {
 		fmt.Printf("[fproxy] Writing %d bytes\n", len(buf))
