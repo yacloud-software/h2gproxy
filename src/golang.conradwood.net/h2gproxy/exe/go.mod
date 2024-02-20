@@ -46,4 +46,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace golang.conradwood.net/apis/h2gproxy => ../../golang.conradwood.net/apis/h2gproxy
+replace golang.conradwood.net/apis/h2gproxy => ../../../golang.conradwood.net/apis/h2gproxy
