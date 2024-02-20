@@ -170,6 +170,12 @@ func (hf *HTTPForwarder) IsWebAPI() bool {
 	}
 	return false
 }
+func (hf *HTTPForwarder) IsWebSocketAPI() bool {
+	if hf.Api() == 7 {
+		return true
+	}
+	return false
+}
 func (hf *HTTPForwarder) IsWebloginAPI() bool {
 	if hf.Api() == 3 {
 		return true
@@ -352,8 +358,11 @@ func (f *FProxy) execute_raw() {
 	f.clientReqHost = f.req.Host
 
 	NoteHost(f.clientReqHost, (f.scheme == "https"))
-	f.req.Close = true
-	f.req.Header["Connection"] = []string{"close"}
+	if !f.hf.IsWebSocketAPI() {
+		// a websocket connection _must not_ be closed
+		f.req.Close = true
+		f.req.Header["Connection"] = []string{"close"}
+	}
 	if *debug {
 		fmt.Printf("%s: %s -> APIType %s\n", f.FullURL(), f.hf.def.ConfigName, f.hf.ApiTypeName())
 	}
@@ -389,6 +398,10 @@ func (f *FProxy) execute_raw() {
 	}
 	if f.hf.IsWebAPI() {
 		WebProxy(f)
+		return
+	}
+	if f.hf.IsWebSocketAPI() {
+		WebSocketProxy(f)
 		return
 	}
 	if f.hf.IsWebloginAPI() {

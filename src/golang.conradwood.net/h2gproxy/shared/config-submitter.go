@@ -12,6 +12,19 @@ import (
 	"strings"
 )
 
+var (
+	api_types = map[string]uint32{
+		"none":      0,
+		"json":      1,
+		"html":      2,
+		"weblogin":  3,
+		"download":  4,
+		"proxy":     5,
+		"bistream":  6,
+		"websocket": 7,
+	}
+)
+
 type lbps interface {
 	CreateConfig(c context.Context, cr *pb.CreateConfigRequest) (*pb.CreateConfigResponse, error)
 	ApplyConfig(c context.Context, cr *pb.ApplyConfigRequest) (*pb.ApplyConfigResponse, error)
@@ -183,38 +196,20 @@ func Submit(ctx context.Context, lb lbps, fname string, def Httpdef) (*pb.Config
 
 func ApiType(h *pb.AddConfigHTTPRequest) uint32 {
 	s := strings.ToLower(h.ApiType)
-	if s == "none" || s == "" {
-		return 0
-	} else if s == "json" {
-		return 1
-	} else if s == "html" {
-		return 2
-	} else if s == "weblogin" {
-		return 3
-	} else if s == "download" {
-		return 4
-	} else if s == "proxy" {
-		return 5
-	} else if s == "bistream" {
-		return 6
+	if s == "" {
+		s = "none"
 	}
-	return 1000 // error
+	at, fd := api_types[s]
+	if fd {
+		return at
+	}
+	return uint32(1000) // error
 }
 func ApiTypeByNum(num uint32) string {
-	if num == 0 {
-		return "none"
-	} else if num == 1 {
-		return "json"
-	} else if num == 2 {
-		return "html"
-	} else if num == 3 {
-		return "weblogin"
-	} else if num == 4 {
-		return "download"
-	} else if num == 5 {
-		return "proxy"
-	} else if num == 6 {
-		return "bistream"
+	for k, v := range api_types {
+		if v == num {
+			return k
+		}
 	}
 	return fmt.Sprintf("unknown_api_type_%d", num)
 }

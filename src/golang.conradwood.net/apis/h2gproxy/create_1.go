@@ -1,4 +1,4 @@
-// client create: BiDirectionalStreamerClient
+// client create: WebsocketProxyClient
 /*
   Created by /home/cnw/devel/go/yatools/src/golang.yacloud.eu/yatools/protoc-gen-cnw/protoc-gen-cnw.go
 */
@@ -7,15 +7,15 @@
    filename  : protos/golang.conradwood.net/apis/h2gproxy/h2gproxy.proto
    gopackage : golang.conradwood.net/apis/h2gproxy
    importname: ai_0
-   clientfunc: GetBiDirectionalStreamer
-   serverfunc: NewBiDirectionalStreamer
-   lookupfunc: BiDirectionalStreamerLookupID
-   varname   : client_BiDirectionalStreamerClient_0
-   clientname: BiDirectionalStreamerClient
-   servername: BiDirectionalStreamerServer
-   gsvcname  : h2gproxy.BiDirectionalStreamer
-   lockname  : lock_BiDirectionalStreamerClient_0
-   activename: active_BiDirectionalStreamerClient_0
+   clientfunc: GetWebsocketProxy
+   serverfunc: NewWebsocketProxy
+   lookupfunc: WebsocketProxyLookupID
+   varname   : client_WebsocketProxyClient_0
+   clientname: WebsocketProxyClient
+   servername: WebsocketProxyServer
+   gsvcname  : h2gproxy.WebsocketProxy
+   lockname  : lock_WebsocketProxyClient_0
+   activename: active_WebsocketProxyClient_0
 */
 
 package h2gproxy
@@ -25,29 +25,29 @@ import (
    "golang.conradwood.net/go-easyops/client"
 )
 var (
-  lock_BiDirectionalStreamerClient_0 sync.Mutex
-  client_BiDirectionalStreamerClient_0 BiDirectionalStreamerClient
+  lock_WebsocketProxyClient_0 sync.Mutex
+  client_WebsocketProxyClient_0 WebsocketProxyClient
 )
 
-func GetBiDirectionalStreamerClient() BiDirectionalStreamerClient { 
-    if client_BiDirectionalStreamerClient_0 != nil {
-        return client_BiDirectionalStreamerClient_0
+func GetWebsocketProxyClient() WebsocketProxyClient { 
+    if client_WebsocketProxyClient_0 != nil {
+        return client_WebsocketProxyClient_0
     }
 
-    lock_BiDirectionalStreamerClient_0.Lock() 
-    if client_BiDirectionalStreamerClient_0 != nil {
-       lock_BiDirectionalStreamerClient_0.Unlock()
-       return client_BiDirectionalStreamerClient_0
+    lock_WebsocketProxyClient_0.Lock() 
+    if client_WebsocketProxyClient_0 != nil {
+       lock_WebsocketProxyClient_0.Unlock()
+       return client_WebsocketProxyClient_0
     }
 
-    client_BiDirectionalStreamerClient_0 = NewBiDirectionalStreamerClient(client.Connect(BiDirectionalStreamerLookupID()))
-    lock_BiDirectionalStreamerClient_0.Unlock()
-    return client_BiDirectionalStreamerClient_0
+    client_WebsocketProxyClient_0 = NewWebsocketProxyClient(client.Connect(WebsocketProxyLookupID()))
+    lock_WebsocketProxyClient_0.Unlock()
+    return client_WebsocketProxyClient_0
 }
 
-func BiDirectionalStreamerLookupID() string { return "h2gproxy.BiDirectionalStreamer" } // returns the ID suitable for lookup in the registry. treat as opaque, subject to change.
+func WebsocketProxyLookupID() string { return "h2gproxy.WebsocketProxy" } // returns the ID suitable for lookup in the registry. treat as opaque, subject to change.
 
 func init() {
-   client.RegisterDependency("h2gproxy.BiDirectionalStreamer")
-   AddService("h2gproxy.BiDirectionalStreamer")
+   client.RegisterDependency("h2gproxy.WebsocketProxy")
+   AddService("h2gproxy.WebsocketProxy")
 }
