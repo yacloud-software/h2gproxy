@@ -49,6 +49,18 @@ message Parameter {
   string Value = 2;
 }
 /*******************************************************
+gRPC Websocket Proxies must serve this
+********************************************************/
+service WebsocketProxy {
+  rpc WebSocketHTTP(stream WebSocketRequest) returns (stream WebSocketResponse);
+}
+message WebSocketRequest {
+  bytes Frame=1; // javascript oddly calls it "frame".
+}
+message WebSocketResponse {
+  bytes Frame=1; // javascript oddly calls it "frame".
+}
+/*******************************************************
 gRPC Bidirectional Streaming Proxies must serve this
 ********************************************************/
 service BiDirectionalStreamer {
