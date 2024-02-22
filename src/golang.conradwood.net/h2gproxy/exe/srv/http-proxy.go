@@ -77,6 +77,13 @@ var (
 		},
 		[]string{"proto", "targetservice", "targethost", "name"},
 	)
+	reqHostCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "h2gproxy_incoming_http_byhost",
+			Help: "V=1 UNIT=ops http requests received by hostname",
+		},
+		[]string{"name", "host"},
+	)
 	reqCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "h2gproxy_http_requests",
@@ -306,7 +313,7 @@ func (hf *HTTPForwarder) TooBusy() bool {
 }
 
 func init() {
-	prometheus.MustRegister(timsummary, reqCounter, reqCounterIn, statusCounter, inFlightGauge, reqUserCounter, maxReqCounter, limitGauge)
+	prometheus.MustRegister(reqHostCounter, timsummary, reqCounter, reqCounterIn, statusCounter, inFlightGauge, reqUserCounter, maxReqCounter, limitGauge)
 }
 
 func getUserIdentifier(user *apb.User) string {
@@ -356,7 +363,7 @@ func (f *FProxy) execute_raw() {
 		"targethost":    f.targetHost}).Inc()
 
 	f.clientReqHost = f.req.Host
-
+	reqHostCounter.With(prometheus.Labels{"host": f.req.Host, "name": f.hf.def.ConfigName}).Inc()
 	NoteHost(f.clientReqHost, (f.scheme == "https"))
 	if !f.hf.IsWebSocketAPI() {
 		// a websocket connection _must not_ be closed
