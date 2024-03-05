@@ -363,7 +363,14 @@ func (f *FProxy) execute_raw() {
 		"targethost":    f.targetHost}).Inc()
 
 	f.clientReqHost = f.req.Host
-	reqHostCounter.With(prometheus.Labels{"host": f.req.Host, "name": f.hf.def.ConfigName}).Inc()
+	label_hostname := f.clientReqHost
+	if !HaveCert(label_hostname) {
+		// since all sorts of spammers contact us with dodgy hostnames, we limit it to onces we know
+		// we actually don't keep a list of "onces we know", we use the list of https certificatese instead
+		label_hostname = "unknown_host"
+	}
+	reqHostCounter.With(prometheus.Labels{"host": label_hostname, "name": f.hf.def.ConfigName}).Inc()
+
 	NoteHost(f.clientReqHost, (f.scheme == "https"))
 	if !f.hf.IsWebSocketAPI() {
 		// a websocket connection _must not_ be closed
