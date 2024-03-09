@@ -11,7 +11,7 @@ import (
 )
 
 type parsed_request struct {
-	submitted_fields map[string]string
+	submitted_fields map[string][]string
 	f                *FProxy
 	is_multi_part    bool
 	parts            []*part
@@ -24,7 +24,7 @@ type part struct {
 
 func NewParsedForm(f *FProxy) (*parsed_request, error) {
 	res := &parsed_request{
-		submitted_fields: make(map[string]string),
+		submitted_fields: make(map[string][]string),
 		f:                f,
 	}
 	var err error
@@ -46,7 +46,7 @@ func NewParsedForm(f *FProxy) (*parsed_request, error) {
 		if len(value) < 1 {
 			continue
 		}
-		res.submitted_fields[name] = value[0]
+		res.submitted_fields[name] = value
 	}
 
 	// special case - if we do post with content-type json, then submit the json as "body"
@@ -55,7 +55,7 @@ func NewParsedForm(f *FProxy) (*parsed_request, error) {
 	if f.req.Method == "POST" {
 		ct := strings.ToLower(f.GetHeader("content-type"))
 		if ct == "text/json" || ct == "application/json" {
-			res.submitted_fields["body"] = string(f.RequestBody())
+			res.submitted_fields["body"] = append(res.submitted_fields["body"], string(f.RequestBody()))
 		} else {
 			values, err := url.ParseQuery(string(f.RequestBody()))
 			if err == nil {
@@ -63,7 +63,7 @@ func NewParsedForm(f *FProxy) (*parsed_request, error) {
 					if len(v) < 1 {
 						continue
 					}
-					res.submitted_fields[k] = v[0]
+					res.submitted_fields[k] = v
 				}
 			}
 		}
@@ -131,7 +131,20 @@ func (pr *parsed_request) FilenameFieldNames() []string {
 	return res
 }
 
+// key-values only (that is at most one value per key!)
 func (pr *parsed_request) RequestValues() map[string]string {
+	res := make(map[string]string)
+	for k, v := range pr.submitted_fields {
+		if len(v) == 0 {
+			continue
+		}
+		res[k] = v[0]
+	}
+	return res
+}
+
+// key-values only (that is at most one value per key!)
+func (pr *parsed_request) RequestValuesMulti() map[string][]string {
 	return pr.submitted_fields
 }
 

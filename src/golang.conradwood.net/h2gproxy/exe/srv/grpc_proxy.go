@@ -234,10 +234,13 @@ func (g *GRPCProxy) grpcproxy(a *authResult) (context.Context, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	// careful here - we do *not* accept multiple values for a given field.
-	for name, value := range g.f.RequestValues() {
-		p := &h2g.Parameter{Name: name, Value: value}
-		sv.Parameters = append(sv.Parameters, p)
+	for name, values := range g.f.RequestValuesMulti() {
+		for _, value := range values {
+			p := &h2g.Parameter{Name: name, Value: value}
+			sv.Parameters = append(sv.Parameters, p)
+		}
 	}
 	/***************************************************************
 	// build a useful context from authresult & intercept response

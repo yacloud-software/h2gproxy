@@ -209,6 +209,13 @@ func (f *FProxy) RequestValues() map[string]string {
 	}
 	return hf.RequestValues()
 }
+func (f *FProxy) RequestValuesMulti() map[string][]string {
+	hf, err := f.GetForm()
+	if f.ProcessError(err, 500, "unable to parse browser login request") {
+		return nil
+	}
+	return hf.RequestValuesMulti()
+}
 
 // return the request body
 func (f *FProxy) RequestBody() []byte {
