@@ -57,8 +57,8 @@ golang.conradwood.net/apis/usagestats v1.1.2704 h1:rjPR19s2PnAEPnhd4hk/KSXENTqZe
 golang.conradwood.net/apis/usagestats v1.1.2704/go.mod h1:RVQ5+Dmo7KvOnXROsPDmBQmVAQNumksMAfRKjDe3UPw=
 golang.conradwood.net/apis/weblogin v1.1.2778 h1:tUaYuh7+iaUWhKrK1YVfuxxgoZUWSV8ZyR6tmG7Mi0g=
 golang.conradwood.net/apis/weblogin v1.1.2778/go.mod h1:NJqqtTiEaNpWCcjgKIts5Lg1tuXsFkowS2eJOpGryh4=
-golang.conradwood.net/go-easyops v0.1.25710 h1:rVz4tgTFHTnrFhG97fjxFynDnwwlCSaeZkwRVQbQ42U=
-golang.conradwood.net/go-easyops v0.1.25710/go.mod h1:DR0Yd9eyusrfO/qOXirQH5oiHQ0gpo97iTMN06qXQ1E=
+golang.conradwood.net/go-easyops v0.1.25823 h1:oQCxllyx1Hi7k1uIS6mhHrepdLUob33EAya0cG1suxA=
+golang.conradwood.net/go-easyops v0.1.25823/go.mod h1:DR0Yd9eyusrfO/qOXirQH5oiHQ0gpo97iTMN06qXQ1E=
 golang.org/x/net v0.22.0 h1:9sGLhx7iRIHEiX0oAJ3MRZMUCElJgy7Br1nO+AMN3Tc=
 golang.org/x/net v0.22.0/go.mod h1:JKghWKKOSdJwpW2GEx0Ja7fmaKnMsbu+MWVZTokSYmg=
 golang.org/x/sys v0.18.0 h1:DBdB3niSjOA/O0blCZBqDefyWNYveAYMNF1Wum0DYQ4=
