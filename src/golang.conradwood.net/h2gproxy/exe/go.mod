@@ -5,18 +5,18 @@ go 1.21.1
 require (
 	github.com/dustin/go-humanize v1.0.1
 	golang.conradwood.net/apis/antidos v1.1.2704
-	golang.conradwood.net/apis/auth v1.1.2881
+	golang.conradwood.net/apis/auth v1.1.2882
 	golang.conradwood.net/apis/certmanager v1.1.2704
-	golang.conradwood.net/apis/common v1.1.2881
+	golang.conradwood.net/apis/common v1.1.2882
 	golang.conradwood.net/apis/framework v1.1.2878
 	golang.conradwood.net/apis/h2gproxy v1.1.1746
 	golang.conradwood.net/apis/registry v1.1.2878
 	golang.conradwood.net/apis/rpcinterceptor v1.1.2704
 	golang.conradwood.net/apis/usagestats v1.1.2704
 	golang.conradwood.net/apis/weblogin v1.1.2778
-	golang.conradwood.net/go-easyops v0.1.26323
+	golang.conradwood.net/go-easyops v0.1.26458
 	golang.org/x/net v0.22.0
-	golang.yacloud.eu/apis/session v1.1.2881
+	golang.yacloud.eu/apis/session v1.1.2882
 	golang.yacloud.eu/apis/sessionmanager v1.1.2704
 	google.golang.org/grpc v1.62.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -37,7 +37,7 @@ require (
 	golang.conradwood.net/apis/deploymonkey v1.1.2878 // indirect
 	golang.conradwood.net/apis/echoservice v1.1.2878 // indirect
 	golang.conradwood.net/apis/errorlogger v1.1.2878 // indirect
-	golang.conradwood.net/apis/goeasyops v1.1.2881 // indirect
+	golang.conradwood.net/apis/goeasyops v1.1.2882 // indirect
 	golang.conradwood.net/apis/grafanadata v1.1.2878 // indirect
 	golang.conradwood.net/apis/objectstore v1.1.2878 // indirect
 	golang.org/x/sys v0.18.0 // indirect
