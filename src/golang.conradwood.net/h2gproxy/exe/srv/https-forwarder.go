@@ -25,6 +25,7 @@ import (
 )
 
 var (
+	https_is_ready    = false
 	disable_http2     = flag.Bool("disable_http2", true, "http2 implementation seems to randomly throw GOAWAY errors with go get")
 	last_cert_refresh time.Time
 	single_cert       = flag.String("cert_host", "", "if set, only retrieve and service this certificate")
@@ -139,6 +140,10 @@ func cert_refresh() error {
 	}
 	certmap = newcerts
 	fmt.Printf("[certs] %d Certs loaded\n", len(certs))
+	if !https_is_ready {
+		https_is_ready = true
+		start_group.Done()
+	}
 	return nil
 }
 

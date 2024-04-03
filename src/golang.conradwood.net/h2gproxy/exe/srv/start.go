@@ -23,11 +23,13 @@ import (
 	"golang.conradwood.net/h2gproxy/shared"
 	"google.golang.org/grpc"
 	"os"
+	"sync"
 	"time"
 )
 
 // static variables for flag parser
 var (
+	config_applied    = false
 	config_file_names = []string{
 		"h2gproxy.yaml",
 		"/etc/h2gproxy/h2gproxy.yaml",
@@ -49,6 +51,7 @@ var (
 	DefaultHost             = flag.String("default_host", "www.conradwood.net", "default host where to get icons from and where to go in cases of bad errors")
 	AuthServer              apb.AuthenticationServiceClient
 	usageStatsClient        us.UsageStatsServiceClient
+	start_group             = &sync.WaitGroup{}
 )
 
 type Config struct {
@@ -69,6 +72,9 @@ func Start() {
 }
 func main() {
 	flag.Parse()
+	server.SetHealth(server.STARTING)
+	start_group.Add(2) // waiting for certificates and config
+	go wait_for_start()
 	var err error
 	if !*testcfg {
 		authconn := client.Connect("auth.AuthenticationService")
@@ -148,6 +154,12 @@ func main() {
 	fmt.Printf("Done\n")
 	return
 }
+func wait_for_start() {
+	start_group.Wait()
+	fmt.Printf("Setting server to healthy...\n")
+	server.SetHealth(server.READY)
+
+}
 
 /**********************************
 * apply a new config here:
@@ -220,6 +232,10 @@ func apply(cfg *Config) error {
 		fmt.Printf("Failed to apply Config: %s\n", err)
 	} else {
 		fmt.Printf("Config applied.\n")
+		if !config_applied {
+			config_applied = true
+			start_group.Done()
+		}
 	}
 	return nil
 }
