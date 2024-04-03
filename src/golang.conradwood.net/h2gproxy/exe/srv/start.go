@@ -72,7 +72,9 @@ func Start() {
 }
 func main() {
 	flag.Parse()
-	server.SetHealth(server.STARTING)
+	// oddly does not apply actions if doing so
+	//	server.SetHealth(server.STARTING)
+
 	start_group.Add(2) // waiting for certificates and config
 	go wait_for_start()
 	var err error
