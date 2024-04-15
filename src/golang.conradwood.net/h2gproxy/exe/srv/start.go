@@ -73,7 +73,7 @@ func Start() {
 func main() {
 	flag.Parse()
 	// oddly does not apply actions if doing so
-	server.SetHealth(server.STARTING)
+	server.SetHealth(common.Health_STARTING)
 
 	start_group.Add(2) // waiting for certificates and config
 	go wait_for_start()
@@ -159,7 +159,7 @@ func main() {
 func wait_for_start() {
 	start_group.Wait()
 	fmt.Printf("Setting server to healthy...\n")
-	server.SetHealth(server.READY)
+	server.SetHealth(common.Health_READY)
 
 }
 
