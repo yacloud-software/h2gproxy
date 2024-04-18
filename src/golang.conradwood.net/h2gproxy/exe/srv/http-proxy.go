@@ -570,7 +570,11 @@ func (f *FProxy) director2(req *http.Request) {
 		}
 		if err != nil || f.unsigneduser == nil {
 			if *debug {
-				fmt.Printf("No auth cookie - redirecting to login (err=%s)\n", err)
+				if err != nil {
+					fmt.Printf("No auth cookie - redirecting to login (err=%s)\n", err)
+				} else {
+					fmt.Printf("No auth cookie - redirecting to login\n")
+				}
 			}
 			err := f.reverse_proxy_lookup(loginTarget) // sets 'lasthost'
 			if err != nil {
@@ -771,7 +775,7 @@ func (f *FProxy) responseHandler(resp *http.Response) error {
 	xerr := f.responseHandler2(resp)
 	tx.Done()
 	if xerr != nil {
-		fmt.Printf("err: %s ", xerr)
+		fmt.Printf("proxy directory part #2 error: %s ", xerr)
 		for _, t := range f.Timings {
 			dur := t.start.Sub(t.end) / time.Millisecond
 			fmt.Printf("%s=%d ", t.name, dur)
