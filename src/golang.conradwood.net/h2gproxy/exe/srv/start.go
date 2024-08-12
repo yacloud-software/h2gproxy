@@ -74,7 +74,7 @@ func main() {
 	flag.Parse()
 	// oddly does not apply actions if doing so
 	server.SetHealth(common.Health_STARTING)
-
+	fmt.Printf("Starting h2gproxy server...\n")
 	start_group.Add(2) // waiting for certificates and config
 	go wait_for_start()
 	var err error
@@ -147,6 +147,7 @@ func main() {
 		}()
 	}
 	sd := server.NewServerDef()
+	sd.SetOnStartupCallback(startup)
 	sd.SetPort(*port)
 	sd.SetRegister(st)
 	err = server.ServerStartup(sd)
@@ -156,7 +157,12 @@ func main() {
 	fmt.Printf("Done\n")
 	return
 }
+func startup() {
+	server.SetHealth(common.Health_STARTING)
+	fmt.Printf("h2gproxy gRPC started...\n")
+}
 func wait_for_start() {
+	fmt.Printf("Waiting for h2gproxy server completion...\n")
 	start_group.Wait()
 	fmt.Printf("Setting server to healthy...\n")
 	server.SetHealth(common.Health_READY)
