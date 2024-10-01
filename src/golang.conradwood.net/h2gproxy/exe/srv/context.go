@@ -7,9 +7,12 @@ import (
 	//	"fmt"
 	//	"github.com/golang/protobuf/proto"
 	"golang.conradwood.net/go-easyops/authremote"
+	"golang.conradwood.net/go-easyops/ctx/shared"
+
 	//	"golang.conradwood.net/go-easyops/client"
 	"golang.conradwood.net/go-easyops/cmdline"
 	"golang.conradwood.net/go-easyops/ctx"
+
 	//	"golang.conradwood.net/go-easyops/rpc"
 	//	"golang.conradwood.net/go-easyops/tokens"
 	//	"google.golang.org/grpc/metadata"
@@ -98,6 +101,7 @@ func createContextWith(octx context.Context, f *FProxy, a *authResult) (context.
 		cb.WithCallingService(authremote.GetLocalServiceAccount())
 		cb.WithCreatorService(authremote.GetLocalServiceAccount())
 		cb.WithSession(f.session)
+		f.addContextFlags(cb)
 		ctx := cb.ContextWithAutoCancel()
 		return ctx, nil
 	}
@@ -187,4 +191,20 @@ func (f *FProxy) rebuildContextFromScratch(a *authResult) error {
 		}
 		return nil
 	*/
+}
+
+func (f *FProxy) addContextFlags(cb shared.ContextBuilder) {
+	if f.GetUser() == nil {
+		return
+	}
+	vals := f.RequestValues()
+	if vals["ge_debug"] == "true" {
+		cb.WithDebug()
+	}
+	if vals["ge_trace"] == "true" {
+		cb.WithTrace()
+	}
+	if vals["ge_experiment"] != "" {
+		cb.EnableExperiment(vals["ge_experiment"])
+	}
 }
