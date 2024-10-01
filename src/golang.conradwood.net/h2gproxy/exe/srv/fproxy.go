@@ -424,6 +424,11 @@ func (f *FProxy) AddCookie(cookie *h2gproxy.Cookie) {
 func (f *FProxy) setCookie(cookie *http.Cookie) {
 	http.SetCookie(f.writer, cookie)
 }
+
+// if true, one can no longer access body or form values
+func (f *FProxy) IsReleased() bool {
+	return f.response_released
+}
 func (f *FProxy) Close() {
 	if f.response_released {
 		return

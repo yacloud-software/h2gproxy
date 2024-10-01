@@ -198,6 +198,10 @@ func (f *FProxy) rebuildContextFromScratch(a *authResult) error {
 }
 
 func (f *FProxy) addContextFlags(cb shared.ContextBuilder) {
+	if f.IsReleased() {
+		// body/form no longer available
+		return
+	}
 	if f.GetUser() == nil {
 		return
 	}
