@@ -2,6 +2,8 @@ package srv
 
 import (
 	"context"
+	"fmt"
+
 	//	"encoding/base64"
 	"flag"
 	//	"fmt"
@@ -49,6 +51,7 @@ func createContext(f *FProxy, a *authResult) (context.Context, error) {
 		cb.WithUser(f.signeduser)
 		cb.WithRequestID(f.GetRequestID())
 		cb.WithCallingService(authremote.GetLocalServiceAccount())
+		f.addContextFlags(cb)
 		return cb.ContextWithAutoCancel(), nil
 	}
 	//	octx := tokens.ContextWithTokenAndTimeout(uint64(secs))
@@ -157,6 +160,7 @@ func (f *FProxy) rebuildContextFromScratch(a *authResult) error {
 		cb.WithCallingService(svc)
 		cb.WithCreatorService(svc)
 		cb.WithSession(f.session)
+		f.addContextFlags(cb)
 		f.ctx = cb.ContextWithAutoCancel()
 		return nil
 	}
@@ -199,12 +203,22 @@ func (f *FProxy) addContextFlags(cb shared.ContextBuilder) {
 	}
 	vals := f.RequestValues()
 	if vals["ge_debug"] == "true" {
+		if *debugctx {
+			fmt.Printf("[context] setting debug to true\n")
+		}
 		cb.WithDebug()
 	}
 	if vals["ge_trace"] == "true" {
+		if *debugctx {
+			fmt.Printf("[context] setting trace to true\n")
+		}
 		cb.WithTrace()
 	}
-	if vals["ge_experiment"] != "" {
-		cb.EnableExperiment(vals["ge_experiment"])
+	ex := vals["ge_experiment"]
+	if ex != "" {
+		if *debugctx {
+			fmt.Printf("[context] enabling experiment \"%s\"\n", ex)
+		}
+		cb.EnableExperiment(ex)
 	}
 }
