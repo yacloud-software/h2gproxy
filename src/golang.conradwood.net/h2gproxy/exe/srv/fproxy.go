@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"flag"
 	"fmt"
+
 	"golang.conradwood.net/apis/antidos"
 	apb "golang.conradwood.net/apis/auth"
 	"golang.conradwood.net/apis/h2gproxy"
@@ -13,18 +14,20 @@ import (
 	"golang.conradwood.net/go-easyops/client"
 	"golang.conradwood.net/go-easyops/common"
 	"golang.conradwood.net/go-easyops/prometheus"
+
 	//	"golang.conradwood.net/go-easyops/tokens"
-	"golang.conradwood.net/go-easyops/authremote"
-	"golang.conradwood.net/go-easyops/utils"
-	"golang.conradwood.net/h2gproxy/httplogger"
-	"golang.conradwood.net/h2gproxy/shared"
-	"golang.yacloud.eu/apis/session"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
+
+	"golang.conradwood.net/go-easyops/authremote"
+	"golang.conradwood.net/go-easyops/utils"
+	"golang.conradwood.net/h2gproxy/httplogger"
+	"golang.conradwood.net/h2gproxy/shared"
+	"golang.yacloud.eu/apis/session"
 )
 
 var (
@@ -36,6 +39,7 @@ type FProxy struct {
 	reqidlock                sync.Mutex
 	fproxy_lock              sync.Mutex
 	response_released        bool
+	response_stack           string // string describing where response was released
 	response_headers_written bool
 	response_headers         map[string]string
 	hf                       *HTTPForwarder
@@ -220,6 +224,7 @@ func (f *FProxy) RequestValuesMulti() map[string][]string {
 // return the request body
 func (f *FProxy) RequestBody() []byte {
 	if f.response_released {
+		fmt.Printf("Response was released here:\n%s\n----------------\n-----------\n", f.response_stack)
 		panic("requestbody() cannot be called after release")
 	}
 	if f.body_read {
@@ -260,6 +265,7 @@ func (f *FProxy) RequestedPath() string {
 // this means fproxy won't be responsible for the response. It's an error to send data through fproxy thereafter
 func (f *FProxy) ReleaseResponse() {
 	f.response_released = true
+	f.response_stack = utils.GetStack("RESPONSE_STACK ")
 }
 
 // internal function
