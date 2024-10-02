@@ -5,19 +5,22 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+
 	fw "golang.conradwood.net/apis/framework"
 	h2g "golang.conradwood.net/apis/h2gproxy"
 	ic "golang.conradwood.net/apis/rpcinterceptor"
 	"golang.conradwood.net/go-easyops/auth"
+
 	//	"golang.conradwood.net/go-easyops/client"
+	"strings"
+	"time"
+
 	"golang.conradwood.net/go-easyops/errors"
 	"golang.conradwood.net/go-easyops/tokens"
 	"golang.conradwood.net/go-easyops/utils"
 	"google.golang.org/grpc/codes"
 	_ "google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"strings"
-	"time"
 )
 
 var (
@@ -118,6 +121,7 @@ retry:
 	}
 
 	g.f.Started = time.Now()
+
 	/************ now call the backend ****************************/
 	_, err = g.grpcproxy(a)
 	//	elapsed := time.Now().Sub(g.f.Started)

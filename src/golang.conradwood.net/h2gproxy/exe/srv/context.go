@@ -12,7 +12,7 @@ import (
 	"golang.conradwood.net/go-easyops/ctx/shared"
 
 	//	"golang.conradwood.net/go-easyops/client"
-	"golang.conradwood.net/go-easyops/cmdline"
+
 	"golang.conradwood.net/go-easyops/ctx"
 
 	//	"golang.conradwood.net/go-easyops/rpc"
@@ -31,6 +31,7 @@ func createBootstrapContext() context.Context {
 	return authremote.Context()
 }
 
+// used e.g. by grpcproxy
 func createContext(f *FProxy, a *authResult) (context.Context, error) {
 	secs := f.hf.def.MaxDuration
 	if secs == 0 {
@@ -44,19 +45,15 @@ func createContext(f *FProxy, a *authResult) (context.Context, error) {
 	if u != nil {
 		f.SetUser(u)
 	}
-	if cmdline.ContextWithBuilder() { // true for any recent (spring '23)  go-easyops version
-		cb := ctx.NewContextBuilder()
-		cb.WithTimeout(time.Duration(secs) * time.Second)
-		cb.WithSession(f.session)
-		cb.WithUser(f.signeduser)
-		cb.WithRequestID(f.GetRequestID())
-		cb.WithCallingService(authremote.GetLocalServiceAccount())
-		f.addContextFlags(cb)
-		return cb.ContextWithAutoCancel(), nil
-	}
-	//	octx := tokens.ContextWithTokenAndTimeout(uint64(secs))
-	octx := authremote.ContextWithTimeout(time.Duration(secs) * time.Second)
-	return createContextWith(octx, f, a)
+	cb := ctx.NewContextBuilder()
+	cb.WithTimeout(time.Duration(secs) * time.Second)
+	cb.WithSession(f.session)
+	cb.WithUser(f.signeduser)
+	cb.WithRequestID(f.GetRequestID())
+	cb.WithCallingService(authremote.GetLocalServiceAccount())
+	f.addContextFlags(cb)
+	return cb.ContextWithAutoCancel(), nil
+
 }
 
 func createCancellableContext(f *FProxy, a *authResult) (context.Context, context.CancelFunc, error) {
@@ -93,57 +90,21 @@ func createContextWith(octx context.Context, f *FProxy, a *authResult) (context.
 		// no point calling out with a failed context
 		return nil, octx.Err()
 	}
-	if cmdline.ContextWithBuilder() {
-		cb := ctx.NewContextBuilder()
-		cb.WithParentContext(octx)
-		if a.signedUser != nil {
-			cb.WithUser(a.signedUser)
-		} else {
-			cb.WithUser(f.signeduser)
-		}
-		cb.WithCallingService(authremote.GetLocalServiceAccount())
-		cb.WithCreatorService(authremote.GetLocalServiceAccount())
-		cb.WithSession(f.session)
-		f.addContextFlags(cb)
-		ctx := cb.ContextWithAutoCancel()
-		return ctx, nil
+
+	cb := ctx.NewContextBuilder()
+	cb.WithParentContext(octx)
+	if a.signedUser != nil {
+		cb.WithUser(a.signedUser)
+	} else {
+		cb.WithUser(f.signeduser)
 	}
-	panic("only with contextbuilder")
-	/*
-		ctx, cs := rpc.ContextWithCallState(octx)
-
-		ix := f.md
-		if ix == nil {
-			ix = &ic.InMetadata{}
-			f.md = ix
-		}
-
-		if rp != nil {
-			ix.RequestID = rp.RequestID
-		}
-		if f.unsigneduser != nil {
-			ix.UserID = f.unsigneduser.ID
-		}
-		ix.SignedSession = f.session
-		ix.ServiceToken = tokens.GetServiceTokenParameter()
-		if *debugctx {
-			fmt.Printf("New IX Metadata: %#v\n", ix)
-		}
-		// build a new context
-		data, err := proto.Marshal(ix)
-		if err != nil {
-			return nil, err
-		}
-		b64 := base64.StdEncoding.EncodeToString(data)
-		md := metadata.Pairs(tokens.METANAME, b64)
-
-		cs.Metadata = ix
-		// add our local extension
-		nctx := metadata.NewOutgoingContext(ctx, md)
-		return nctx, nil
-	*/
+	cb.WithCallingService(authremote.GetLocalServiceAccount())
+	cb.WithCreatorService(authremote.GetLocalServiceAccount())
+	cb.WithSession(f.session)
+	f.addContextFlags(cb)
+	ctx := cb.ContextWithAutoCancel()
+	return ctx, nil
 }
-
 func (f *FProxy) rebuildContextFromScratch(a *authResult) error {
 	if a == nil {
 		return nil
@@ -153,50 +114,17 @@ func (f *FProxy) rebuildContextFromScratch(a *authResult) error {
 		f.SetUser(a.signedUser)
 	}
 
-	if cmdline.ContextWithBuilder() {
-		_, svc := authremote.GetLocalUsers()
-		cb := ctx.NewContextBuilder()
-		cb.WithUser(a.signedUser)
-		cb.WithCallingService(svc)
-		cb.WithCreatorService(svc)
-		cb.WithSession(f.session)
-		f.addContextFlags(cb)
-		f.ctx = cb.ContextWithAutoCancel()
-		return nil
-	}
-	panic("context builder only")
-	/*
-		if rc == nil {
-			rc = ic.NewRPCInterceptorServiceClient(client.Connect("rpcinterceptor.RPCInterceptorService"))
-		}
-		f.md = &ic.InMetadata{
-			RequestID:    "", // we want a new one
-			UserToken:    "", //do we?
-			ServiceToken: tokens.GetServiceTokenParameter(),
-		}
+	_, svc := authremote.GetLocalUsers()
+	cb := ctx.NewContextBuilder()
+	cb.WithUser(a.signedUser)
+	cb.WithCallingService(svc)
+	cb.WithCreatorService(svc)
+	cb.WithSession(f.session)
+	f.addContextFlags(cb)
+	f.ctx = cb.ContextWithAutoCancel()
+	return nil
 
-		ireq := &ic.InterceptRPCRequest{Service: "h2gproxy",
-			Method:     "createcontext",
-			InMetadata: f.md,
-		}
-		// we need a 'default' context to actually call intercept rpc
-		ctx := authremote.Context()
-		rp, err := rc.InterceptRPC(ctx, ireq)
-		if err != nil {
-			return err
-		}
-		nctx, err := createContextWith(ctx, f, a, rp)
-		if err != nil {
-			return err
-		}
-		f.ctx = nctx
-		if rp != nil {
-			f.requestid = rp.RequestID
-		}
-		return nil
-	*/
 }
-
 func (f *FProxy) addContextFlags(cb shared.ContextBuilder) {
 	if f.IsReleased() {
 		// body/form no longer available
