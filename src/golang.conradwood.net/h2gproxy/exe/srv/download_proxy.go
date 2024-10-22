@@ -3,11 +3,13 @@ package srv
 import (
 	"context"
 	"fmt"
+	"io"
+	"time"
+
 	lb "golang.conradwood.net/apis/h2gproxy"
 	"golang.conradwood.net/go-easyops/utils"
 	rl "golang.conradwood.net/h2gproxy/ratelimiter"
 	"google.golang.org/grpc"
-	"io"
 )
 
 var (
@@ -83,8 +85,8 @@ func (j *download_proxy) BackendStream(ctx context.Context, fcr *lb.StreamReques
 	t.Done()
 	t = j.f.AddTiming("backend")
 	sent := 0
-
-	for {
+	keep_running := true
+	for keep_running {
 		resp := &lb.StreamDataResponse{}
 		// TODO: handle streamresponse here instead of only data
 		err = stream.RecvMsg(resp)
@@ -104,7 +106,24 @@ func (j *download_proxy) BackendStream(ctx context.Context, fcr *lb.StreamReques
 			}
 		}
 		sent++
-		out_stream <- &lb.BodyData{Response: resp}
+		try_send_start := time.Now()
+		repeat_send := true
+		for keep_running && repeat_send {
+			select {
+			case out_stream <- &lb.BodyData{Response: resp}:
+				repeat_send = false
+				//
+			case <-time.After(time.Duration(1) * time.Second):
+				//
+				if ctx.Err() != nil {
+					keep_running = false
+				}
+				if time.Since(try_send_start) > time.Duration(60)*time.Second {
+					// not a single packet got through for a long time: abort
+					keep_running = false
+				}
+			}
+		}
 
 	}
 	if *debug {

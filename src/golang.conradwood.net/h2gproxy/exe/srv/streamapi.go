@@ -5,6 +5,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/dustin/go-humanize"
 	h2g "golang.conradwood.net/apis/h2gproxy"
 	ic "golang.conradwood.net/apis/rpcinterceptor"
@@ -13,9 +17,6 @@ import (
 	"golang.conradwood.net/go-easyops/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"strings"
-	"sync"
-	"time"
 )
 
 var (
@@ -296,6 +297,8 @@ func (g *StreamProxy) streamproxy(a *authResult) (context.Context, error) {
 	if *debug {
 		fmt.Printf("[streamproxy] backend completed\n")
 	}
+
+	chan_out = nil // hint to GC perhaps?
 	if g.write_err != nil {
 		fmt.Printf("[streamproxy] failed to copy all data to browser: %s\n", g.write_err)
 		return ctx, g.write_err
