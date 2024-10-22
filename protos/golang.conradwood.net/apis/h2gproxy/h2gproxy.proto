@@ -4,7 +4,16 @@ package h2gproxy;
 option go_package = "golang.conradwood.net/apis/h2gproxy";
 option java_package = "net.conradwood.golang.apis.h2gproxy";
 import "golang.conradwood.net/apis/common/common.proto";
-
+enum Anchor {
+  ABSOLUTE=0; // from byte a to b
+  FROM_END=1; // from [filesize]-start to [filesize]
+  TO_END=2; // from start to [filesize]
+}
+message ByteRange {
+  uint64 Start=1;
+  uint64 End=2;
+  Anchor Anchor=3; // seen from there?, e.g. end may be n bytes from end of files or n bytes from start of file
+}
 message CreateConfigRequest {
 }
 message CreateConfigResponse {
@@ -110,6 +119,7 @@ message StreamRequest {
   string SourceIP = 8;  // source ip where request comes from (for logging)
   string Query=9; //foo=bar
   uint32 Port=10; // port this request came in on
+  repeated ByteRange ByteRanges=11; // client requested one or more partial contents. streaming clients may return answers to multi-byte ranges
 }
 // stream backends send this to H2GProxy
 message StreamResponse {
@@ -122,6 +132,7 @@ message StreamResponse {
 message StreamDataRequest {
   StreamRequest Request=1; // only set in the first request
   bytes Data=2; // the body
+  ByteRange ByteRange=3; // normally nil. If a backend returns partial content, it indicates with the presence of this field, that a) it supports it and b) the data that follows is data at the offset of the byterange specified. note that if a backend does return partial data, it must send the first ByteRange before any data is sent.
 }
 
 /*******************************************************
@@ -139,6 +150,7 @@ message ServeRequest {
   string UserAgent = 7; // useragent for logging
   string SourceIP = 8;  // source ip where request comes from (for logging)
   string SessionToken=9; // a session id, should that be context?
+  repeated ByteRange ByteRanges=10; // if the client makes a partial request. Note GRPC unary clients may only responsd with a single byte range at a time. they can pick with which one though ;)
 }
 message Cookie {
   string Name = 1;
@@ -153,6 +165,7 @@ message ServeResponse {
   repeated Cookie Cookies = 5; // cookies to set
   bytes Body = 6;              // the response to be served to the client
   bool RedirectToSlash = 7;// if true (in response from backend, h2gproxy will issue a redirect to the browser to the url+"/"
+  ByteRange ByteRange=8; // if the backend supports partial content, it must provide the range of the content it returns here
 }
 
 // also check config-submitter.go !!!
