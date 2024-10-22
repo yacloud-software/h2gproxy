@@ -208,10 +208,17 @@ retry:
 */
 func (g *StreamProxy) streamproxy(a *authResult) (context.Context, error) {
 	// build up the grpc proto
-	sv := &h2g.StreamRequest{Port: uint32(g.f.port)}
+	sv := &h2g.StreamRequest{
+		Port: uint32(g.f.port),
+	}
 	sv.Host = strings.ToLower(g.f.req.Host)
 	sv.Path = g.f.req.URL.Path
 	sv.Method = g.f.req.Method
+	brs, err := parseByteRange(g.f.GetHeader("range"))
+	if err != nil {
+		return nil, err
+	}
+	sv.ByteRanges = brs
 	if g.f.req.URL != nil {
 		sv.Query = g.f.req.URL.RawQuery
 	}
@@ -225,7 +232,7 @@ func (g *StreamProxy) streamproxy(a *authResult) (context.Context, error) {
 		sv.Headers = append(sv.Headers, h)
 		h.Values = values
 	}
-	err := AddUserHeaders2(g.f, sv)
+	err = AddUserHeaders2(g.f, sv)
 	if err != nil {
 		return nil, err
 	}

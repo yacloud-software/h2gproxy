@@ -221,6 +221,11 @@ func (g *GRPCProxy) grpcproxy(a *authResult) (context.Context, error) {
 
 	// build up the grpc proto
 	sv := &h2g.ServeRequest{Body: string(body)}
+	brs, err := parseByteRange(g.f.GetHeader("range"))
+	if err != nil {
+		return nil, err
+	}
+	sv.ByteRanges = brs
 	sv.Host = strings.ToLower(g.f.req.Host)
 	sv.Path = g.f.RequestedPath()
 	sv.Method = g.f.req.Method
@@ -234,7 +239,7 @@ func (g *GRPCProxy) grpcproxy(a *authResult) (context.Context, error) {
 		sv.Headers = append(sv.Headers, h)
 		h.Values = values
 	}
-	err := AddUserHeaders1(g.f, sv)
+	err = AddUserHeaders1(g.f, sv)
 	if err != nil {
 		return nil, err
 	}
@@ -303,6 +308,12 @@ func (g *GRPCProxy) grpcproxy(a *authResult) (context.Context, error) {
 		} else {
 			return ctx, err
 		}
+	}
+	if resp.ByteRange != nil {
+		fmt.Printf("*****************************************************************")
+		fmt.Printf("[grpcproxy] got a byterange back - cannot handle it yet\n")
+		fmt.Printf("*****************************************************************")
+		return ctx, errors.InvalidArgs(ctx, "invalid byte-range request", "invalid byte-range request (see logs)")
 	}
 	if *debug {
 		fmt.Printf("[grpcproxy] returned httpresponsecode=%d and grpccode=%d\n", resp.HTTPResponseCode, resp.GRPCCode)
