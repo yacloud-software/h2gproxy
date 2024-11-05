@@ -14,6 +14,12 @@ message ByteRange {
   uint64 End=2;
   Anchor Anchor=3; // seen from there?, e.g. end may be n bytes from end of files or n bytes from start of file
 }
+
+// set as cookie in browser
+message BrowserConfig {
+  bool UseNewStreamer=1;
+}
+
 message CreateConfigRequest {
 }
 message CreateConfigResponse {
