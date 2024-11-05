@@ -81,6 +81,7 @@ type FProxy struct {
 	session              *session.Session       //*apb.SignedSession
 	logreq               httplogger.HTTPRequest // to log start/end and updates for this request
 	parsedrequest        *parsed_request
+	browserconfig        *h2gproxy.BrowserConfig
 }
 
 func (f *FProxy) Api() uint32 {
@@ -398,9 +399,11 @@ func (f *FProxy) Write(buf []byte) error {
 	if !f.body_read {
 		fmt.Printf("writing before body was read\n")
 	}
-	if *debug {
-		fmt.Printf("[fproxy] Writing %d bytes\n", len(buf))
-	}
+	/*
+		if *debug {
+			fmt.Printf("[fproxy] Writing %d bytes\n", len(buf))
+		}
+	*/
 	if f.response_released {
 		panic("write after response was released")
 	}
@@ -792,4 +795,13 @@ func (f *FProxy) ProcessError(err error, code int, msg string) bool {
 	}
 	fmt.Printf("Error %s on %s (reported \"%s\" to user)\n", err, f.req.URL.Path, msg)
 	return true
+}
+
+func (f *FProxy) BrowserConfig() *h2gproxy.BrowserConfig {
+	res := f.browserconfig
+	if res != nil {
+		return res
+	}
+	return browserconfig_default()
+
 }

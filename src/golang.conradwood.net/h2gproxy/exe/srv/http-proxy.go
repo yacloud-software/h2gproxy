@@ -58,7 +58,6 @@ var (
 	enable_raw_paths = flag.Bool("enable_raw_paths", true, "experimental feature to allow slashes in paths")
 	add_hist         = flag.Bool("enable_histogram", true, "set to true to enable histograms")
 	enBasicAuth      = flag.Bool("enable_basic_auth", true, "set to true to enable new feature basic auth")
-	use_new_streamer = flag.Bool("use_new_streamer", false, "if true use new streamping code")
 	basicAuth        = flag.Bool("force_basic", false, "set to true to trigger basic authentication in the browser instead of form")
 	debugRewrite     = flag.Bool("debug_rewrite", false, "set to true to print rewrite debug information")
 	logrequests      = flag.Bool("log_each_request", false, "if you want every single request logged to stdout, enable this")
@@ -374,7 +373,7 @@ func (f *FProxy) execute_raw() {
 		label_hostname = "unknown_host"
 	}
 	reqHostCounter.With(prometheus.Labels{"host": label_hostname, "name": f.hf.def.ConfigName}).Inc()
-
+	config_h2gproxy_for_browser(f)
 	NoteHost(f.clientReqHost, (f.scheme == "https"))
 	if !f.hf.IsWebSocketAPI() {
 		// a websocket connection _must not_ be closed
@@ -428,8 +427,9 @@ func (f *FProxy) execute_raw() {
 		WebLoginProxy(f)
 		return
 	}
+
 	if f.hf.IsDownloadProxy() {
-		if *use_new_streamer {
+		if f.BrowserConfig().UseNewStreamer {
 			unistream.Stream(f)
 		} else {
 			DownloadProxy(f)
