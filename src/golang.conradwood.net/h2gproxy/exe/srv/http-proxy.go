@@ -19,6 +19,7 @@ import (
 	us "golang.conradwood.net/apis/usagestats"
 	"golang.conradwood.net/go-easyops/auth"
 	"golang.conradwood.net/go-easyops/prometheus"
+	"golang.conradwood.net/h2gproxy/stream/unistream"
 	//	"golang.conradwood.net/go-easyops/tokens"
 	"golang.conradwood.net/go-easyops/utils"
 	"golang.conradwood.net/h2gproxy/httplogger"
@@ -55,6 +56,7 @@ var (
 	enable_raw_paths = flag.Bool("enable_raw_paths", true, "experimental feature to allow slashes in paths")
 	add_hist         = flag.Bool("enable_histogram", true, "set to true to enable histograms")
 	enBasicAuth      = flag.Bool("enable_basic_auth", true, "set to true to enable new feature basic auth")
+	use_new_streamer = flag.Bool("use_new_streamer", false, "if true use new streamping code")
 	basicAuth        = flag.Bool("force_basic", false, "set to true to trigger basic authentication in the browser instead of form")
 	debugRewrite     = flag.Bool("debug_rewrite", false, "set to true to print rewrite debug information")
 	logrequests      = flag.Bool("log_each_request", false, "if you want every single request logged to stdout, enable this")
@@ -425,7 +427,11 @@ func (f *FProxy) execute_raw() {
 		return
 	}
 	if f.hf.IsDownloadProxy() {
-		DownloadProxy(f)
+		if *use_new_streamer {
+			unistream.Stream(f)
+		} else {
+			DownloadProxy(f)
+		}
 		processTimings(f)
 		return
 	}
