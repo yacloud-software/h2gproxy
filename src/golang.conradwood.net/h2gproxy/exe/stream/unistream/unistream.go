@@ -24,15 +24,23 @@ type Streamer struct {
 
 func Stream(reqdetails stream.RequestDetails) {
 	streamer := &Streamer{reqdetails: reqdetails}
-	err := streamer.Stream()
+	streamer.Stream()
+}
+
+func (s *Streamer) Stream() {
+	err := s.streamWithErr()
 	if err != nil {
 		fmt.Printf("stream failed: %s\n", err)
+		st := shared.ConvertErrorToCode(err)
+		if st == 401 {
+			// trigger authentication
+			s.reqdetails.TriggerAuthentication()
+		}
 	} else {
 		fmt.Printf("stream complete\n")
 	}
 }
-
-func (s *Streamer) Stream() error {
+func (s *Streamer) streamWithErr() error {
 	var err error
 	ctx := s.reqdetails.UserContext()
 	s.con = grpchelpers.GetGRPCConnection(s.reqdetails.TargetService())

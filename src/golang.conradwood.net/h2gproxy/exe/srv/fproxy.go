@@ -14,6 +14,7 @@ import (
 	us "golang.conradwood.net/apis/usagestats"
 	"golang.conradwood.net/go-easyops/client"
 	"golang.conradwood.net/go-easyops/common"
+	"golang.conradwood.net/go-easyops/errors"
 	"golang.conradwood.net/go-easyops/prometheus"
 
 	//	"golang.conradwood.net/go-easyops/tokens"
@@ -719,7 +720,21 @@ func (f *FProxy) UserContext() context.Context {
 	if f.ctx != nil {
 		return f.ctx
 	}
-	return createBootstrapContext()
+
+	a, err := json_auth(f) // always check if we got auth stuff
+	if err != nil {
+		fmt.Printf("failed to jsonauth for usercontext: %s\n", err)
+		return createBootstrapContext()
+	}
+
+	nctx, err := createContext(f, a)
+	if err != nil {
+		fmt.Printf("failed to create user context: %s\n", errors.ErrorString(err))
+		return createBootstrapContext()
+	}
+
+	f.ctx = nctx
+	return f.ctx
 }
 
 // returns a context suitable for calling things like "auth"
