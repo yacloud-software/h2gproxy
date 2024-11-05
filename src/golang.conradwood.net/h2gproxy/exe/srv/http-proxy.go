@@ -14,16 +14,15 @@ import (
 	b64 "encoding/base64"
 	"flag"
 	"fmt"
+
 	apb "golang.conradwood.net/apis/auth"
 	pb "golang.conradwood.net/apis/h2gproxy"
 	us "golang.conradwood.net/apis/usagestats"
 	"golang.conradwood.net/go-easyops/auth"
 	"golang.conradwood.net/go-easyops/prometheus"
 	"golang.conradwood.net/h2gproxy/stream/unistream"
+
 	//	"golang.conradwood.net/go-easyops/tokens"
-	"golang.conradwood.net/go-easyops/utils"
-	"golang.conradwood.net/h2gproxy/httplogger"
-	"golang.org/x/net/context"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -33,6 +32,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"golang.conradwood.net/go-easyops/utils"
+	"golang.conradwood.net/h2gproxy/httplogger"
 )
 
 const (
@@ -1017,7 +1019,7 @@ func (f *FProxy) LogResponse() {
 	f.AddContext()
 
 	if *logusage {
-		_, err = usageStatsClient.LogHttpCall(f.Context(), &us.LogHttpCallRequest{
+		_, err = usageStatsClient.LogHttpCall(f.BootstrapContext(), &us.LogHttpCallRequest{
 			Url:       f.req.URL.String(),
 			Success:   true,
 			Timestamp: uint32(f.Started.Unix()),
@@ -1140,7 +1142,6 @@ func (f *FProxy) doBasicAuth() bool {
 }
 
 func (f *FProxy) needsBasicAuth() bool {
-	r := f.req
 	if !*enBasicAuth {
 		return false
 	}
@@ -1150,16 +1151,8 @@ func (f *FProxy) needsBasicAuth() bool {
 	if f.hf.def.DisableFormBasedAuth {
 		return true
 	}
-	s := r.Header.Get("User-Agent")
-	/*
-		if strings.Contains(s, "Go-http-client") {
-			return true
-		}
-	*/
-	for _, k := range known_cli_download_tools {
-		if strings.HasPrefix(s, k) {
-			return true
-		}
+	if f.IsKnownCLITool() {
+		return true
 	}
 	return *basicAuth
 }
@@ -1342,12 +1335,6 @@ func (f *FProxy) AddContext() {
 		fmt.Printf("no context available for user %s (%s)\n", f.unsigneduser, err)
 	}
 
-}
-func (f *FProxy) Context() context.Context {
-	if f.ctx != nil {
-		return f.ctx
-	}
-	return createBootstrapContext()
 }
 
 func AddUserIDHeaders(f *FProxy, req *http.Request) {

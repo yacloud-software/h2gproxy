@@ -1,8 +1,8 @@
-package srv
+package shared
 
 import (
 	"fmt"
-	"golang.conradwood.net/go-easyops/utils"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -34,40 +34,14 @@ var grpcToHTTPMap = map[codes.Code]*HTTPError{
 	codes.Unauthenticated:    {401, "missing, invalid, or expired authentication", "", ""},
 }
 
-func grpcToHTTP(code codes.Code) *HTTPError {
+func GrpcToHTTP(code codes.Code) *HTTPError {
 	he := grpcToHTTPMap[code]
 	if he != nil {
 		return he
 	}
 	return &HTTPError{500, "unknown error", fmt.Sprintf("GRPCCode:%d", code), ""}
 }
-func (f *FProxy) SetError(err error) {
-	if err == nil {
-		return
-	}
-	//	st := status.Convert(err)
-	f.err = err
-	f.SetStatus(convertErrorToCode(err))
-	s := fmt.Sprintf("error: %s", f.err)
-	f.WriteString(s)
-}
-
-// return true if it found an error (err != nil)
-func (f *FProxy) ProcessError(err error, code int, msg string) bool {
-	if err == nil {
-		return false
-	}
-	f.err = err
-	f.SetStatus(code)
-	f.WriteString(msg)
-	if IsDebugHeaderGroup(f.GetUser()) {
-		f.WriteString("-- full errormessage:<br/>")
-		f.WriteString(utils.ErrorString(err))
-	}
-	fmt.Printf("Error %s on %s (reported \"%s\" to user)\n", err, f.req.URL.Path, msg)
-	return true
-}
-func convertErrorToCode(err error) int {
+func ConvertErrorToCode(err error) int {
 	cd := status.Convert(err).Code()
 	hr := grpcToHTTPMap[cd]
 	if hr == nil {

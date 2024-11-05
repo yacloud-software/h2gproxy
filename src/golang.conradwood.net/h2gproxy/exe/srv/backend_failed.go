@@ -3,9 +3,11 @@ package srv
 import (
 	"flag"
 	"fmt"
+
 	"golang.conradwood.net/apis/antidos"
 	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/utils"
+	"golang.conradwood.net/h2gproxy/shared"
 )
 
 var (
@@ -23,7 +25,7 @@ func backend_failure(f *FProxy, err error) {
 	if f.GetUser() != nil {
 		return
 	}
-	h_code := uint32(convertErrorToCode(err))
+	h_code := uint32(shared.ConvertErrorToCode(err))
 	req := &antidos.HTTPReport{
 		Host:          f.RequestedHost(),
 		Path:          f.RequestedPath(),

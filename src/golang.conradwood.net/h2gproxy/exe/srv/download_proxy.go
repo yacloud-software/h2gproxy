@@ -8,6 +8,7 @@ import (
 
 	lb "golang.conradwood.net/apis/h2gproxy"
 	"golang.conradwood.net/go-easyops/utils"
+	"golang.conradwood.net/h2gproxy/grpchelpers"
 	rl "golang.conradwood.net/h2gproxy/ratelimiter"
 	"google.golang.org/grpc"
 )
@@ -52,7 +53,7 @@ func (j *download_proxy) BackendStream(ctx context.Context, fcr *lb.StreamReques
 	}
 	// connect to your backend and start streaming from it
 	t := j.f.AddTiming("open_grpc_connection")
-	cc := GetGRPCConnection(j.targetservice)
+	cc := grpchelpers.GetGRPCConnection(j.targetservice)
 	t.Done()
 	defer cc.Close()
 	t = j.f.AddTiming("open_grpc_stream")
