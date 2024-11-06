@@ -11,6 +11,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"os"
+	"sync"
+	"time"
+
 	apb "golang.conradwood.net/apis/auth"
 	"golang.conradwood.net/apis/common"
 	pb "golang.conradwood.net/apis/h2gproxy"
@@ -22,9 +26,6 @@ import (
 	proxynone "golang.conradwood.net/h2gproxy/proxies/none"
 	"golang.conradwood.net/h2gproxy/shared"
 	"google.golang.org/grpc"
-	"os"
-	"sync"
-	"time"
 )
 
 // static variables for flag parser
@@ -75,7 +76,7 @@ func main() {
 	// oddly does not apply actions if doing so
 	server.SetHealth(common.Health_STARTING)
 	fmt.Printf("Starting h2gproxy server...\n")
-	start_group.Add(2) // waiting for certificates and config
+	start_group.Add(3) // waiting for certificates and config and serverstartup callback
 	go wait_for_start()
 	var err error
 	if !*testcfg {
@@ -160,6 +161,7 @@ func main() {
 func startup() {
 	server.SetHealth(common.Health_STARTING)
 	fmt.Printf("h2gproxy gRPC started...\n")
+	start_group.Done()
 }
 func wait_for_start() {
 	fmt.Printf("Waiting for h2gproxy server completion...\n")

@@ -360,7 +360,6 @@ func (f *FProxy) execute_raw() {
 	}
 
 	// browser might have a cookie for special config
-	//config_h2gproxy_for_browser(f)
 	NoteHost(f.clientReqHost, (f.scheme == "https"))
 	if !f.hf.IsWebSocketAPI() {
 		// a websocket connection _must not_ be closed
@@ -394,15 +393,7 @@ func (f *FProxy) execute_raw() {
 		RedirectRewrite(f)
 		return
 	}
-	if f.hf.IsJsonAPI() {
-		WebProxy(f)
-		//JSONProxy(f)
-		return
-	}
-	if f.hf.IsWebAPI() {
-		WebProxy(f)
-		return
-	}
+
 	if f.hf.IsWebSocketAPI() {
 		WebSocketProxy(f)
 		return
@@ -413,6 +404,24 @@ func (f *FProxy) execute_raw() {
 		WebLoginProxy(f)
 		return
 	}
+
+	if f.hf.IsHTTPProxy() {
+		f.Debugf("invoking http proxy\n")
+		HTTPProxy(f)
+		return
+	}
+
+	config_h2gproxy_for_browser(f) // this reads the form and thus mucks up the request.
+
+	if f.hf.IsJsonAPI() {
+		WebProxy(f)
+		return
+	}
+	if f.hf.IsWebAPI() {
+		WebProxy(f)
+		return
+	}
+
 	if *use_new_auth_handler && f.unsigneduser == nil && f.NeedsAuth() {
 		panic("not auth, but needs auth")
 	}
@@ -435,11 +444,6 @@ func (f *FProxy) execute_raw() {
 	if f.hf.IsBiStreamProxy() {
 		f.Debugf("invoking bistream proxy\n")
 		BiStreamProxy(f)
-		return
-	}
-	if f.hf.IsHTTPProxy() {
-		f.Debugf("invoking http proxy\n")
-		HTTPProxy(f)
 		return
 	}
 	f.Printf("this (%s) is an unknown API type (%d)\n", f.String(), f.hf.Api())
