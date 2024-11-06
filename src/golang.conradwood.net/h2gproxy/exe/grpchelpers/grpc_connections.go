@@ -1,20 +1,36 @@
-package srv
+package grpchelpers
 
 import (
 	"context"
 	"flag"
 	"fmt"
+	"sync"
+
 	"golang.conradwood.net/go-easyops/client"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"sync"
 )
 
 var (
+	debug          = flag.Bool("debug_grpcconnections", false, "debug grpc connection cache")
 	reuse_after    = flag.Int("max_streams_for_con", 0, "if non zero, reconnect to target after a stream has served this many streams")
 	con            []*grpc_conn
 	grpc_conn_lock sync.Mutex
 )
+
+type ClientStream interface {
+	Fail(error)
+	Finish()
+	CloseSend() error
+	RecvMsg(m interface{}) error
+	SendMsg(m interface{}) error
+}
+type GRPCConnection interface {
+	OpenStream(ctx context.Context, rpc string, with_client, with_server bool) (ClientStream, error)
+	NewStream(ctx context.Context, desc *grpc.StreamDesc, name string) (ClientStream, error)
+	String() string
+	Close()
+}
 
 type grpc_conn struct {
 	service_name         string
@@ -43,7 +59,8 @@ func (g *grpc_conn) AvailableForNewStreams() bool {
 	return true
 }
 
-func GetGRPCConnection(name string) *grpc_conn {
+// given a servicename will return a grpc connection (which must be closed after use!)
+func GetGRPCConnection(name string) GRPCConnection {
 	if *debug {
 		fmt.Printf("[grpc-con] (1) Got %d connections\n", len(con))
 	}
@@ -108,11 +125,26 @@ func (g *grpc_conn) streamCounterDec() {
 	g.lock.Unlock()
 }
 
+// bit more high-level, give it service, rpc and it'll return a useful stream
+func (g *grpc_conn) OpenStream(ctx context.Context, rpc string, with_client, with_server bool) (ClientStream, error) {
+	service := g.service_name
+	sd := &grpc.StreamDesc{
+		StreamName:    rpc,
+		Handler:       stream_Handler,
+		ServerStreams: with_server,
+		ClientStreams: with_client,
+	}
+	rpc_name := "/" + service + "/" + rpc
+	cs, err := g.NewStream(ctx, sd, rpc_name)
+	return cs, err
+}
+
 /*
+You probably want OpenStream() instead!
 "name" is the rpc name including service, e.g. "/httpdebug.HTTPDebug/StreamBiHTTP"
 "streamdesc" is ...
 */
-func (g *grpc_conn) NewStream(ctx context.Context, desc *grpc.StreamDesc, name string) (*client_stream, error) {
+func (g *grpc_conn) NewStream(ctx context.Context, desc *grpc.StreamDesc, name string) (ClientStream, error) {
 	gs, err := g.Conn.NewStream(ctx, desc, name)
 	if err != nil {
 		g.Debugf("could not open stream (%s)\n", err)
@@ -204,4 +236,8 @@ func grpc_closer() {
 		c.failed = true
 	}
 
+}
+
+func stream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	panic("stream handler not implemented")
 }

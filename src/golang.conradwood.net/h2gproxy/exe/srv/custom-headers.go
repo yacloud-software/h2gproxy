@@ -3,11 +3,12 @@ package srv
 import (
 	//	"google.golang.org/grpc/codes"
 	"fmt"
+	"strings"
+
 	au "golang.conradwood.net/apis/auth"
 	"golang.conradwood.net/go-easyops/auth"
 	"golang.conradwood.net/go-easyops/utils"
 	"google.golang.org/grpc/status"
-	"strings"
 )
 
 // given a context and a reply, this will insert headers
@@ -121,7 +122,7 @@ func (f *FProxy) addHeader(name string, value string) {
 	x := ""
 	sp := false
 	max_header_len := 80
-	if strings.Contains(strings.ToLower(f.GetUserAgent()), "wget") {
+	if strings.Contains(strings.ToLower(f.UserAgent()), "wget") {
 		max_header_len = 1024
 	}
 	for i, s := range value {

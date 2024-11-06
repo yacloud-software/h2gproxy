@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+
 	apb "golang.conradwood.net/apis/auth"
 	"golang.conradwood.net/apis/h2gproxy"
 	"golang.conradwood.net/apis/weblogin"
@@ -11,10 +12,13 @@ import (
 	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/prometheus"
 	"golang.conradwood.net/go-easyops/utils"
+	"golang.conradwood.net/h2gproxy/shared"
+
 	//	"golang.conradwood.net/go-easyops/tokens"
-	"golang.yacloud.eu/apis/session"
 	"net/http"
 	"time"
+
+	"golang.yacloud.eu/apis/session"
 )
 
 var (
@@ -212,7 +216,7 @@ func WebLoginProxy(f *FProxy) {
 			f.SetStatus(int(wr.HTTPCode))
 		} else {
 			f.err = err
-			f.SetStatus(convertErrorToCode(err))
+			f.SetStatus(shared.ConvertErrorToCode(err))
 		}
 		if wr != nil && len(wr.Body) != 0 {
 			f.Write(wr.Body)
@@ -350,7 +354,7 @@ func GetSignedUser(ctx context.Context, user *apb.User) (*apb.SignedUser, error)
 func weblogin_served(thing string, foo *weblogin.WebloginResponse, err error) {
 	sc := "200"
 	if err != nil {
-		sc = fmt.Sprintf("%d", convertErrorToCode(err))
+		sc = fmt.Sprintf("%d", shared.ConvertErrorToCode(err))
 	} else {
 		if foo != nil {
 			if foo.HTTPCode != 0 {

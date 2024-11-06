@@ -14,16 +14,15 @@ import (
 	b64 "encoding/base64"
 	"flag"
 	"fmt"
+
 	apb "golang.conradwood.net/apis/auth"
 	pb "golang.conradwood.net/apis/h2gproxy"
 	us "golang.conradwood.net/apis/usagestats"
 	"golang.conradwood.net/go-easyops/auth"
 	"golang.conradwood.net/go-easyops/prometheus"
 	"golang.conradwood.net/h2gproxy/stream/unistream"
+
 	//	"golang.conradwood.net/go-easyops/tokens"
-	"golang.conradwood.net/go-easyops/utils"
-	"golang.conradwood.net/h2gproxy/httplogger"
-	"golang.org/x/net/context"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -33,6 +32,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"golang.conradwood.net/go-easyops/utils"
+	"golang.conradwood.net/h2gproxy/httplogger"
 )
 
 const (
@@ -56,7 +58,6 @@ var (
 	enable_raw_paths = flag.Bool("enable_raw_paths", true, "experimental feature to allow slashes in paths")
 	add_hist         = flag.Bool("enable_histogram", true, "set to true to enable histograms")
 	enBasicAuth      = flag.Bool("enable_basic_auth", true, "set to true to enable new feature basic auth")
-	use_new_streamer = flag.Bool("use_new_streamer", false, "if true use new streamping code")
 	basicAuth        = flag.Bool("force_basic", false, "set to true to trigger basic authentication in the browser instead of form")
 	debugRewrite     = flag.Bool("debug_rewrite", false, "set to true to print rewrite debug information")
 	logrequests      = flag.Bool("log_each_request", false, "if you want every single request logged to stdout, enable this")
@@ -372,7 +373,7 @@ func (f *FProxy) execute_raw() {
 		label_hostname = "unknown_host"
 	}
 	reqHostCounter.With(prometheus.Labels{"host": label_hostname, "name": f.hf.def.ConfigName}).Inc()
-
+	config_h2gproxy_for_browser(f)
 	NoteHost(f.clientReqHost, (f.scheme == "https"))
 	if !f.hf.IsWebSocketAPI() {
 		// a websocket connection _must not_ be closed
@@ -426,8 +427,9 @@ func (f *FProxy) execute_raw() {
 		WebLoginProxy(f)
 		return
 	}
+
 	if f.hf.IsDownloadProxy() {
-		if *use_new_streamer {
+		if f.BrowserConfig().UseNewStreamer {
 			unistream.Stream(f)
 		} else {
 			DownloadProxy(f)
@@ -1017,7 +1019,7 @@ func (f *FProxy) LogResponse() {
 	f.AddContext()
 
 	if *logusage {
-		_, err = usageStatsClient.LogHttpCall(f.Context(), &us.LogHttpCallRequest{
+		_, err = usageStatsClient.LogHttpCall(f.BootstrapContext(), &us.LogHttpCallRequest{
 			Url:       f.req.URL.String(),
 			Success:   true,
 			Timestamp: uint32(f.Started.Unix()),
@@ -1140,7 +1142,6 @@ func (f *FProxy) doBasicAuth() bool {
 }
 
 func (f *FProxy) needsBasicAuth() bool {
-	r := f.req
 	if !*enBasicAuth {
 		return false
 	}
@@ -1150,16 +1151,8 @@ func (f *FProxy) needsBasicAuth() bool {
 	if f.hf.def.DisableFormBasedAuth {
 		return true
 	}
-	s := r.Header.Get("User-Agent")
-	/*
-		if strings.Contains(s, "Go-http-client") {
-			return true
-		}
-	*/
-	for _, k := range known_cli_download_tools {
-		if strings.HasPrefix(s, k) {
-			return true
-		}
+	if f.IsKnownCLITool() {
+		return true
 	}
 	return *basicAuth
 }
@@ -1342,12 +1335,6 @@ func (f *FProxy) AddContext() {
 		fmt.Printf("no context available for user %s (%s)\n", f.unsigneduser, err)
 	}
 
-}
-func (f *FProxy) Context() context.Context {
-	if f.ctx != nil {
-		return f.ctx
-	}
-	return createBootstrapContext()
 }
 
 func AddUserIDHeaders(f *FProxy, req *http.Request) {
