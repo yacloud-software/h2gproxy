@@ -43,8 +43,18 @@ var (
 	loginTarget        *HTTPForwarder
 	rcl                rpb.RegistryClient
 	gotRegistryClient  = false
+	ipversioncounter   = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "h2gproxy_http_requests_by_ipversion",
+			Help: "V=1 UNIT=none DESC=http requests received (by ip version pre-proxy)",
+		},
+		[]string{"version"},
+	)
 )
 
+func init() {
+	prometheus.MustRegister(ipversioncounter)
+}
 func (r *HTTPForwarder) Api() uint32 {
 	return shared.ApiType(r.def)
 }
@@ -231,7 +241,12 @@ func main_handler(w http.ResponseWriter, r *http.Request, isTLS bool, port int) 
 		return
 	}
 	StartRequest(f)
-
+	_, _, v, err := utils.ParseIP(f.PeerIP())
+	if err != nil {
+		f.Printf("weird peerip: %s\n", errors.ErrorString(err))
+	} else {
+		ipversioncounter.With(prometheus.Labels{"version": fmt.Sprintf("%d", v)}).Inc()
+	}
 	f.Errorurl = errorurl
 	f.execute()
 	f.Close()

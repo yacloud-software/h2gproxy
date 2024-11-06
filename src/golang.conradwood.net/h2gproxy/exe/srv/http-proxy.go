@@ -75,7 +75,7 @@ var (
 	reqCounterIn = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "h2gproxy_incoming_http_requests",
-			Help: "http requests received (pre-proxy)",
+			Help: "V=1 UNIT=none DESC=http requests received (pre-proxy)",
 		},
 		[]string{"proto", "targetservice", "targethost", "name"},
 	)
