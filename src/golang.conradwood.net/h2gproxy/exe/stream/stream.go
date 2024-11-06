@@ -9,7 +9,7 @@ import (
 
 type RequestDetails interface {
 	TargetService() string
-	UserContext() context.Context
+	UserContext() (context.Context, context.CancelFunc)
 	BootstrapContext() context.Context
 	SetContentLength(size uint64)
 	SetFilename(name string)

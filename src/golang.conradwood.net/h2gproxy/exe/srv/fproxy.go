@@ -763,18 +763,21 @@ func (f *FProxy) SetAndLogFailure(code int32, be_err error) {
 	}
 }
 
+func default_canceller() {
+}
+
 // returns a context suitable for calling backends
-func (f *FProxy) UserContext() context.Context {
+func (f *FProxy) UserContext() (context.Context, context.CancelFunc) {
 	if f.authResult == nil {
-		return createBootstrapContext()
+		return createBootstrapContext(), default_canceller
 	}
 
-	nctx, err := createContext(f, f.authResult)
+	nctx, cf, err := createCancellableContext(f, f.authResult)
 	if err != nil {
 		f.Printf("failed to create user context: %s\n", errors.ErrorString(err))
-		return createBootstrapContext()
+		return createBootstrapContext(), default_canceller
 	}
-	return nctx
+	return nctx, cf
 }
 
 // returns a context suitable for calling things like "auth"

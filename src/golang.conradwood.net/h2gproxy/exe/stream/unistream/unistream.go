@@ -12,9 +12,11 @@ grpc backend receives a unary request and responds with a stream
 package unistream
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"path/filepath"
+	"time"
 
 	"golang.conradwood.net/apis/h2gproxy"
 	"golang.conradwood.net/go-easyops/auth"
@@ -24,23 +26,39 @@ import (
 	"golang.conradwood.net/h2gproxy/stream"
 )
 
+const (
+	MAX_IDLE_TIME = time.Duration(120) * time.Second // if no packet processed for this time, abort connection
+)
+
 /*
 one streamer is responsible for exactly one http request
 */
 type Streamer struct {
-	con        grpchelpers.GRPCConnection
-	stream     grpchelpers.ClientStream
-	reqdetails stream.RequestDetails
-	size       uint64
+	chan_watchdog       chan bool
+	run_watchdog        bool
+	abort               bool
+	con                 grpchelpers.GRPCConnection
+	stream              grpchelpers.ClientStream
+	reqdetails          stream.RequestDetails
+	size                uint64
+	last_packet_handled time.Time
 }
 
 func Stream(reqdetails stream.RequestDetails) {
-	streamer := &Streamer{reqdetails: reqdetails}
+	streamer := &Streamer{
+		reqdetails:    reqdetails,
+		chan_watchdog: make(chan bool),
+	}
 	streamer.Stream()
 }
 
 func (s *Streamer) Stream() {
-	err := s.streamWithErr()
+	ctx, cf := s.reqdetails.UserContext()
+	s.run_watchdog = true
+	go s.stream_watchdog(cf)
+	err := s.streamWithErr(ctx)
+	s.run_watchdog = false
+	close(s.chan_watchdog)
 	if err != nil {
 		fmt.Printf("stream failed: %s\n", err)
 		st := shared.ConvertErrorToCode(err)
@@ -51,10 +69,11 @@ func (s *Streamer) Stream() {
 	} else {
 		fmt.Printf("stream complete\n")
 	}
+	ctx.Done()
+	cf()
 }
-func (s *Streamer) streamWithErr() error {
+func (s *Streamer) streamWithErr(ctx context.Context) error {
 	var err error
-	ctx := s.reqdetails.UserContext()
 	s.con = grpchelpers.GetGRPCConnection(s.reqdetails.TargetService())
 	s.stream, err = s.con.OpenStream(ctx, "StreamHTTP", false, true)
 	if err != nil {
@@ -97,7 +116,8 @@ func (s *Streamer) streamWithErr() error {
 	p := utils.ProgressReporter{
 		Prefix: fmt.Sprintf("download for %s@%s of %s", auth.UserIDString(rd.GetUser()), rd.PeerIP(), filepath.Base(s.reqdetails.RequestedPath())),
 	}
-	for {
+	for !s.abort {
+		s.last_packet_handled = time.Now()
 		err := s.stream.RecvMsg(backend_message)
 		if err != nil {
 			if err == io.EOF {
@@ -108,6 +128,10 @@ func (s *Streamer) streamWithErr() error {
 				s.stream.Fail(err)
 				return err
 			}
+		}
+		if s.abort {
+			// don't send stuff to browser if we are aborting
+			break
 		}
 		// check for meta data and set appropriate headers
 		s.parse_response_for_headers(backend_message.Response)
@@ -123,7 +147,7 @@ func (s *Streamer) streamWithErr() error {
 		p.SetTotal(s.size)
 		p.Print()
 	}
-	fmt.Printf("Received %d bytes from backend\n", bytes_from_backend)
+	fmt.Printf("in total, received %d bytes from backend\n", bytes_from_backend)
 	return nil
 }
 
@@ -154,5 +178,29 @@ func (s *Streamer) parse_response_for_headers(msg *h2gproxy.StreamResponse) {
 			s.reqdetails.SetHeader(k, v)
 		}
 	}
+
+}
+
+func (s *Streamer) stream_watchdog(cf context.CancelFunc) {
+	for s.run_watchdog {
+		suc := true
+		select {
+		case <-time.After(time.Duration(5) * time.Second):
+			//
+		case _, suc = <-s.chan_watchdog:
+			//
+		}
+		if !suc {
+			fmt.Printf("Watchdog requested to stop\n")
+		}
+
+		if time.Since(s.last_packet_handled) > MAX_IDLE_TIME {
+			s.abort = true
+			fmt.Printf("Watchdog: cancelling\n")
+			cf()
+			break
+		}
+	}
+	fmt.Printf("Watchdog finished\n")
 
 }

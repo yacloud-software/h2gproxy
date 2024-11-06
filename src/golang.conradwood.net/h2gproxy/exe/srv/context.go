@@ -51,31 +51,36 @@ func createContext(f *FProxy, a *authResult) (context.Context, error) {
 	cb.WithUser(f.signeduser)
 	cb.WithRequestID(f.GetRequestID())
 	cb.WithCallingService(authremote.GetLocalServiceAccount())
+	cb.WithCreatorService(authremote.GetLocalServiceAccount())
 	f.addContextFlags(cb)
 	return cb.ContextWithAutoCancel(), nil
 
 }
 
 func createCancellableContext(f *FProxy, a *authResult) (context.Context, context.CancelFunc, error) {
-	secs := f.hf.def.MaxDuration
+	secs := time.Duration(f.hf.def.MaxDuration) * time.Second
 	if secs == 0 {
 		if f.Api() == 4 {
-			secs = 600 // streaming is longer by default
+			secs = time.Duration(120) * time.Minute // streaming is much, much, longer by default
 		} else {
-			secs = 10
+			secs = time.Duration(10) * time.Second
 		}
 	}
 	cb := ctx.NewContextBuilder()
-	cb.WithTimeout(time.Duration(secs) * time.Second)
 	if a.signedUser != nil {
 		cb.WithUser(a.signedUser)
 	} else {
 		cb.WithUser(f.signeduser)
 	}
 
+	cb.WithTimeout(secs)
+	cb.WithSession(f.session)
+	cb.WithUser(f.signeduser)
+	cb.WithRequestID(f.GetRequestID())
 	cb.WithCallingService(authremote.GetLocalServiceAccount())
 	cb.WithCreatorService(authremote.GetLocalServiceAccount())
-	cb.WithSession(f.session)
+	f.addContextFlags(cb)
+
 	octx, cnc := cb.Context()
 	//	octx, cnc := tokens.Context2WithTokenAndTimeout(uint64(secs))
 	ctx, err := createContextWith(octx, f, a)
