@@ -34,13 +34,14 @@ func (f *FProxy) handle_auth_if_required() bool {
 	}
 
 	// we need auth per config
-	f.Debugf("needs authentication per config\n")
 
 	if !a.Authenticated() {
+		f.Debugf("need to trigger authentication for config \"%s\"\n", f.ConfigName())
 		// no auth found in request
 		f.TriggerAuthentication()
 		return false
 	}
+	f.Debugf("got authentication for config \"%s\"\n", f.ConfigName())
 	// do we need to parse headers and stuff here?
 	su := a.SignedUser()
 	if su == nil {

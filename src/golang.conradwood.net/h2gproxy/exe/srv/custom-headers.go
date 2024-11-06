@@ -64,7 +64,7 @@ func (f *FProxy) customHeaders(msg *ExtraInfo) {
 		}
 	}
 	f.addHeader("Userid", user.ID)
-	if !auth.IsRootUser(user) && (!IsDebugHeaderGroup(user)) {
+	if !auth.IsRootUser(user) && (!f.IsDebugHeaderGroup(user)) {
 		if *debug {
 			fmt.Printf("Custom-Headers: not inserted, user \"%s\" not rootuser.\n", user.ID)
 		}
@@ -142,16 +142,14 @@ func (f *FProxy) addHeader(name string, value string) {
 
 	}
 	if x != value && *debug {
-		fmt.Printf("Custom-Headers: New header value: \"%s\"\n", x)
+		f.Printf("Custom-Headers: New header value: \"%s\"\n", x)
 	}
 	f.SetHeader(fmt.Sprintf("X-LB-%s", name), x)
 }
 
-func IsDebugHeaderGroup(user *au.User) bool {
+func (f *FProxy) IsDebugHeaderGroup(user *au.User) bool {
 	if user == nil {
-		if *debug {
-			fmt.Printf("[debugheadergroup] no user\n")
-		}
+		f.Debugf("[debugheadergroup] no user\n")
 		return false
 	}
 	gc := getGlobalConfigSection()
@@ -161,19 +159,14 @@ func IsDebugHeaderGroup(user *au.User) bool {
 	for _, ug := range user.Groups {
 		for _, dhg := range gc.DebugHeaderGroups {
 			if dhg == ug.ID {
-				if *debug {
-					fmt.Printf("[debugheadergroup] user group \"%s\" matched\n", ug.ID)
-				}
+				f.Debugf("[debugheadergroup] user group \"%s\" matched\n", ug.ID)
 				return true
 			}
-			if *debug {
-				fmt.Printf("[debugheadergroup] user group \"%s\" does not match \"%s\"\n", ug.ID, dhg)
-			}
+			f.Debugf("[debugheadergroup] user group \"%s\" does not match \"%s\"\n", ug.ID, dhg)
 
 		}
 	}
-	if *debug {
-		fmt.Printf("[debugheadergroup] user does not deserve special headers\n")
-	}
+	f.Debugf("[debugheadergroup] user does not deserve special headers\n")
+
 	return false
 }

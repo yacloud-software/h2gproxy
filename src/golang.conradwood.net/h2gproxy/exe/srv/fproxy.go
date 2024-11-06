@@ -826,7 +826,7 @@ func (f *FProxy) ProcessError(err error, code int, msg string) bool {
 	f.err = err
 	f.SetStatus(code)
 	f.WriteString(msg)
-	if IsDebugHeaderGroup(f.GetUser()) {
+	if f.IsDebugHeaderGroup(f.GetUser()) {
 		f.WriteString("-- full errormessage:<br/>")
 		f.WriteString(utils.ErrorString(err))
 	}
@@ -841,4 +841,7 @@ func (f *FProxy) BrowserConfig() *h2gproxy.BrowserConfig {
 	}
 	return browserconfig_default()
 
+}
+func (f *FProxy) ConfigName() string {
+	return f.hf.def.ConfigName
 }

@@ -19,6 +19,7 @@ import (
 	pb "golang.conradwood.net/apis/h2gproxy"
 	us "golang.conradwood.net/apis/usagestats"
 	"golang.conradwood.net/go-easyops/auth"
+	"golang.conradwood.net/go-easyops/errors"
 	"golang.conradwood.net/go-easyops/prometheus"
 	"golang.conradwood.net/h2gproxy/stream/unistream"
 
@@ -163,7 +164,13 @@ type HTTPForwarder struct {
 }
 
 func (h *HTTPForwarder) ApiTypeName() string {
-	return h.def.ApiType
+	if h.def.ApiType != "" {
+		return h.def.ApiType
+	}
+	if h.IsHTTPProxy() {
+		return "httpproxy"
+	}
+	return "[noapitype]"
 }
 
 func (hf *HTTPForwarder) IsHTTPProxy() bool {
@@ -353,7 +360,7 @@ func (f *FProxy) execute_raw() {
 	}
 
 	// browser might have a cookie for special config
-	config_h2gproxy_for_browser(f)
+	//config_h2gproxy_for_browser(f)
 	NoteHost(f.clientReqHost, (f.scheme == "https"))
 	if !f.hf.IsWebSocketAPI() {
 		// a websocket connection _must not_ be closed
@@ -406,7 +413,7 @@ func (f *FProxy) execute_raw() {
 		WebLoginProxy(f)
 		return
 	}
-	if f.unsigneduser == nil && f.NeedsAuth() {
+	if *use_new_auth_handler && f.unsigneduser == nil && f.NeedsAuth() {
 		panic("not auth, but needs auth")
 	}
 	if f.hf.IsDownloadProxy() {
@@ -524,7 +531,7 @@ func (f *FProxy) director2(req *http.Request) {
 			f.Printf("access to %s from %s denied (only allowed from RFC1918 addresses)\n", path, f.remoteHost)
 			req.URL = f.Errorurl
 			req.Host = *DefaultHost
-			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_EXTERNAL, fmt.Errorf("need RFC1918 address"))
+			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_EXTERNAL, errors.Errorf("need RFC1918 address"))
 			return
 		}
 	}
@@ -597,7 +604,7 @@ func (f *FProxy) director2(req *http.Request) {
 			f.Printf("User %v email is not (yet) verified (path=%s)\n", f.unsigneduser, path)
 			req.URL = f.Errorurl
 			req.Host = *DefaultHost
-			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_EMAILVERIFY, fmt.Errorf("user email not verified"))
+			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_EMAILVERIFY, errors.Errorf("user email not verified"))
 			return
 		}
 	}
@@ -610,7 +617,7 @@ func (f *FProxy) director2(req *http.Request) {
 			f.Printf("User %v is not in any of the groups for path %s\n", f.unsigneduser, path)
 			req.URL = f.Errorurl
 			req.Host = *DefaultHost
-			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_GROUP, fmt.Errorf("internal_access_denied_group"))
+			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_GROUP, errors.Errorf("internal_access_denied_group"))
 			return
 		}
 	}
@@ -630,7 +637,7 @@ func (f *FProxy) director2(req *http.Request) {
 		f.Printf("Should not happen (path=%s,urlpath=%s)!!\n", path, f.hf.def.URLPath)
 		req.URL = f.Errorurl
 		req.Host = *DefaultHost
-		f.SetAndLogFailure(INTERNAL_ERROR_BUG, fmt.Errorf("internal error: urlpath is off"))
+		f.SetAndLogFailure(INTERNAL_ERROR_BUG, errors.Errorf("internal error: urlpath is off"))
 		return
 	}
 	// strip out the urlpath (the stuff we matched on)
@@ -831,7 +838,7 @@ func (f *FProxy) responseHandler2(resp *http.Response) (err error) {
 			return nil
 		}
 	}
-	f.Debugf("Response from \"%s:%d\": %03d\n", host, port, resp.StatusCode)
+	f.Debugf("Response from http backend \"%s:%d\": %03d\n", host, port, resp.StatusCode)
 	// this is a bit unexpected:
 	// if our proxy is configured to authenticate, this shouldn't really happen.
 	// it's here in case legacy applications insist on doing their own authentication.

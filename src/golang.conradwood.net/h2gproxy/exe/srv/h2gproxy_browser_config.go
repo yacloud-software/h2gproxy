@@ -13,11 +13,18 @@ const (
 )
 
 var (
-	use_new_streamer = flag.Bool("use_new_streamer", false, "if true use new streamping code")
+	use_new_streamer      = flag.Bool("use_new_streamer", false, "if true use new streamping code")
+	enable_browser_config = flag.Bool("enable_browser_config", false, "if true, allow client to configure some stuff in h2gproxy")
 )
 
 func config_h2gproxy_for_browser(f *FProxy) {
 	br := browserconfig_default()
+
+	if !*enable_browser_config {
+		f.browserconfig = br
+		return
+	}
+
 	for _, c := range f.SubmittedCookies() {
 		if c.Name == CONFIG_COOKIE {
 			err := utils.Unmarshal(c.Value, br)

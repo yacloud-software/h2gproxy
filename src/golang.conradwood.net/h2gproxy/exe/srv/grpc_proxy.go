@@ -196,7 +196,7 @@ retry:
 
 	httpError = shared.GrpcToHTTP(code)
 	httpError.ErrorMessage = public_error_message
-	if IsDebugHeaderGroup(g.f.GetUser()) {
+	if g.f.IsDebugHeaderGroup(g.f.GetUser()) {
 		httpError.ExtendedErrorString = privileged_error_message
 	}
 
