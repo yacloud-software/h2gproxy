@@ -106,6 +106,7 @@ func (s *Streamer) streamWithErr() error {
 		s.parse_response_for_headers(backend_message.Response)
 		bytes_from_backend = bytes_from_backend + uint64(len(backend_message.Data))
 		if len(backend_message.Data) != 0 {
+			//fmt.Printf("Received %d bytes\n", len(backend_message.Data))
 			err := s.reqdetails.Write(backend_message.Data)
 			if err != nil {
 				return err

@@ -54,6 +54,11 @@ func (a *authResult) Authenticated() bool {
 // always returns an authresult. to determine if it IS authenticated call authResult.Authenticated()
 func json_auth(f *FProxy) (*authResult, error) {
 	res := &authResult{f: f}
+	if f.signeduser != nil {
+		res.signedUser = f.signeduser
+		return res, nil
+	}
+
 	res.UserFromBearer()
 	res.UserFromCookie()
 	res.UserFromWeblogin()
