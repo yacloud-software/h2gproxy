@@ -13,8 +13,8 @@ const (
 )
 
 var (
-	use_new_streamer      = flag.Bool("use_new_streamer", false, "if true use new streamping code")
-	enable_browser_config = flag.Bool("enable_browser_config", false, "if true, allow client to configure some stuff in h2gproxy")
+	use_new_streamer      = flag.Bool("use_new_streamer", true, "if true use new streamping code")
+	enable_browser_config = flag.Bool("enable_browser_config", true, "if true, allow client to configure some stuff in h2gproxy")
 )
 
 func config_h2gproxy_for_browser(f *FProxy) {
