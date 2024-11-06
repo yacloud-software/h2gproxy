@@ -3,16 +3,12 @@ package srv
 import (
 	//	"context"
 	"fmt"
-
 	pb "golang.conradwood.net/apis/h2gproxy"
-
 	//"golang.conradwood.net/go-easyops/utils"
 	//	"google.golang.org/grpc"
+	"golang.org/x/net/websocket"
 	"io"
 	"sync"
-
-	"golang.conradwood.net/h2gproxy/grpchelpers"
-	"golang.org/x/net/websocket"
 )
 
 func WebSocketProxy(f *FProxy) {
@@ -25,7 +21,7 @@ func WebSocketProxy(f *FProxy) {
 
 type websock_instance struct {
 	f                         *FProxy
-	stream                    grpchelpers.ClientStream
+	stream                    *client_stream
 	stop_backend_frame_reader bool
 	ws_handler                websocket.Handler
 	wg                        *sync.WaitGroup
@@ -37,7 +33,7 @@ func (wsi *websock_instance) websocket_proxy_exe(f *FProxy) error {
 		return err
 	}
 
-	svc := grpchelpers.GetGRPCConnection(f.hf.def.TargetService)
+	svc := GetGRPCConnection(f.hf.def.TargetService)
 	f.Debugf("service: %s\n", svc)
 	ctx, cancel, err := createCancellableContext(f, auth_result)
 	if err != nil {
@@ -50,7 +46,7 @@ func (wsi *websock_instance) websocket_proxy_exe(f *FProxy) error {
 		return err
 	}
 	defer wsi.stream.Finish()
-	f.Debugf("websocket proxy allocated new stream (%s)\n", wsi.stream)
+	svc.Debugf("websocket proxy allocated new stream (%s)\n", wsi.stream)
 
 	wsi.ws_handler = websocket.Handler(wsi.websocket_handler)
 	wsi.wg.Add(1)

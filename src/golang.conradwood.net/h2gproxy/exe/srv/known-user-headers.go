@@ -1,4 +1,4 @@
-package shared
+package srv
 
 import (
 	"strings"
@@ -14,8 +14,8 @@ var (
 	}
 )
 
-func IsKnownCLITool(useragent string) bool {
-	ua := strings.ToLower(useragent)
+func (f *FProxy) IsKnownCLITool() bool {
+	ua := strings.ToLower(f.GetUserAgent())
 	for _, kc := range known_cli_download_tools {
 		if strings.Contains(ua, strings.ToLower(kc)) {
 			return true

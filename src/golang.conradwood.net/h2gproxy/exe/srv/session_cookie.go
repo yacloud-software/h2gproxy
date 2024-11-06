@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"net/url"
-
 	//au "golang.conradwood.net/apis/auth"
 	//	"golang.conradwood.net/apis/common"
 	"golang.conradwood.net/apis/h2gproxy"
@@ -15,7 +14,6 @@ import (
 	"golang.conradwood.net/go-easyops/utils"
 	"golang.yacloud.eu/apis/session"
 	"golang.yacloud.eu/apis/sessionmanager"
-
 	//	"net/http"
 	"time"
 )
@@ -213,7 +211,7 @@ func (f *FProxy) GetNewSessionRequest() *sessionmanager.NewSessionRequest {
 	host := f.req.Host
 	nsr := &sessionmanager.NewSessionRequest{
 		IPAddress:   f.PeerIP(),
-		UserAgent:   f.UserAgent(),
+		UserAgent:   f.GetUserAgent(),
 		BrowserID:   "",
 		UserID:      us,
 		Username:    un,

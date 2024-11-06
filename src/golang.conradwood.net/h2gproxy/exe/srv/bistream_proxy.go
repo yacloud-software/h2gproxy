@@ -1,12 +1,11 @@
 package srv
 
 import (
+	"context"
 	"fmt"
-
 	pb "golang.conradwood.net/apis/h2gproxy"
-	"golang.conradwood.net/h2gproxy/grpchelpers"
-
 	//"golang.conradwood.net/go-easyops/utils"
+	"google.golang.org/grpc"
 	"io"
 )
 
@@ -15,6 +14,24 @@ func BiStreamProxy(f *FProxy) {
 	if err != nil {
 		f.Debugf("bistream proxy failed: %s\n", err)
 	}
+}
+
+func stream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	panic("stream handler not implemented")
+}
+
+// bit more high-level, give it service, rpc and it'll return a useful stream
+func (g *grpc_conn) OpenStream(ctx context.Context, rpc string, with_client, with_server bool) (*client_stream, error) {
+	service := g.service_name
+	sd := &grpc.StreamDesc{
+		StreamName:    rpc,
+		Handler:       stream_Handler,
+		ServerStreams: with_server,
+		ClientStreams: with_client,
+	}
+	rpc_name := "/" + service + "/" + rpc
+	cs, err := g.NewStream(ctx, sd, rpc_name)
+	return cs, err
 }
 
 func bistream_proxy_exe(f *FProxy) error {
@@ -33,7 +50,7 @@ func bistream_proxy_exe(f *FProxy) error {
 		return err
 	}
 
-	svc := grpchelpers.GetGRPCConnection(f.hf.def.TargetService)
+	svc := GetGRPCConnection(f.hf.def.TargetService)
 	f.Debugf("service: %s\n", svc)
 	ctx, err := createContext(f, auth_result)
 	if err != nil {
@@ -46,7 +63,7 @@ func bistream_proxy_exe(f *FProxy) error {
 		return err
 	}
 	defer stream.Finish()
-	f.Debugf("bistream proxy allocated new stream (%s)\n", stream)
+	svc.Debugf("bistream proxy allocated new stream (%s)\n", stream)
 
 	// stream the request to backend
 	start := &pb.BiStreamRequest{HTTPRequest: &pb.StreamRequest{Path: f.RequestedPath()}}
@@ -74,9 +91,9 @@ func bistream_proxy_exe(f *FProxy) error {
 
 	// stream the uploaded files to backend
 	files := form.GetFiles()
-	f.Debugf("Sending %d files to backend\n", len(files))
+	svc.Debugf("Sending %d files to backend\n", len(files))
 	for _, file := range files {
-		f.Debugf("sending file from field %s\n", file.Key())
+		svc.Debugf("sending file from field %s\n", file.Key())
 		fss.SendBytes(file.Filename(), file.Key(), file.Data())
 	}
 
@@ -100,7 +117,7 @@ func bistream_proxy_exe(f *FProxy) error {
 		}
 		if msg.HTTPResponse != nil {
 			resp := msg.HTTPResponse
-			f.Debugf("receiving filename \"%s\"\n", resp.Filename)
+			svc.Debugf("receiving filename \"%s\"\n", resp.Filename)
 			f.SetHeader("content-type", fmt.Sprintf("%s; charset=utf-8", resp.MimeType))
 			f.SetHeader("content-length", fmt.Sprintf("%d", resp.Size))
 			for k, v := range resp.ExtraHeaders {
@@ -115,7 +132,7 @@ func bistream_proxy_exe(f *FProxy) error {
 			f.SetStatus(code)
 
 		} else {
-			//f.Debugf("message received: %s\n", msg)
+			//svc.Debugf("message received: %s\n", msg)
 			total_received = total_received + len(msg.Data)
 			err := f.Write(msg.Data)
 			if err != nil {
@@ -124,7 +141,7 @@ func bistream_proxy_exe(f *FProxy) error {
 			}
 		}
 	}
-	f.Debugf("total bytes received: %d\n", total_received)
+	svc.Debugf("total bytes received: %d\n", total_received)
 
 	return nil
 }

@@ -15,7 +15,6 @@ import (
 	"golang.conradwood.net/go-easyops/auth"
 	"golang.conradwood.net/go-easyops/tokens"
 	"golang.conradwood.net/go-easyops/utils"
-	"golang.conradwood.net/h2gproxy/shared"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -125,7 +124,7 @@ retry:
 	nctx, err := g.streamproxy(a)
 	g.f.ResponseTime = time.Since(g.f.Started)
 
-	var httpError *shared.HTTPError
+	var httpError *HTTPError
 	public_error_message := ""
 	privileged_error_message := ""
 
@@ -181,7 +180,7 @@ retry:
 	backend_failure(g.f, err)
 
 	g.f.customHeaders(&ExtraInfo{Error: err, Message: msg})
-	httpError = shared.GrpcToHTTP(code)
+	httpError = grpcToHTTP(code)
 	httpError.ErrorMessage = public_error_message
 	if auth.IsRoot(nctx) {
 		httpError.ExtendedErrorString = privileged_error_message
@@ -348,7 +347,7 @@ func (sp *StreamProxy) processStreamResponse(resp *h2g.StreamResponse) {
 	if resp.MimeType != "" {
 		mtype = resp.MimeType
 	}
-	sp.f.SetContentType(mtype)
+	sp.f.SetHeader("content-type", mtype)
 	//	sp.f.w.Header().Set("content-type", fmt.Sprintf("%s; charset=utf-8", mtype))
 
 	if resp.Filename != "" {
@@ -363,7 +362,7 @@ func (sp *StreamProxy) processStreamResponse(resp *h2g.StreamResponse) {
 	}
 
 	if resp.Size != 0 {
-		sp.f.SetContentLength(resp.Size)
+		sp.f.SetHeader("Content-Length", fmt.Sprintf("%d", resp.Size))
 	}
 	for k, v := range resp.ExtraHeaders {
 		sp.f.SetHeader(k, v)

@@ -9,12 +9,10 @@ import (
 	"golang.conradwood.net/apis/antidos"
 	apb "golang.conradwood.net/apis/auth"
 	"golang.conradwood.net/apis/h2gproxy"
-	h2g "golang.conradwood.net/apis/h2gproxy"
 	ic "golang.conradwood.net/apis/rpcinterceptor"
 	us "golang.conradwood.net/apis/usagestats"
 	"golang.conradwood.net/go-easyops/client"
 	"golang.conradwood.net/go-easyops/common"
-	"golang.conradwood.net/go-easyops/errors"
 	"golang.conradwood.net/go-easyops/prometheus"
 
 	//	"golang.conradwood.net/go-easyops/tokens"
@@ -81,7 +79,6 @@ type FProxy struct {
 	session              *session.Session       //*apb.SignedSession
 	logreq               httplogger.HTTPRequest // to log start/end and updates for this request
 	parsedrequest        *parsed_request
-	browserconfig        *h2gproxy.BrowserConfig
 }
 
 func (f *FProxy) Api() uint32 {
@@ -169,6 +166,18 @@ func (f *FProxy) AntiDOS(format string, args ...interface{}) {
 	fmt.Printf("ANTIDOS: could not report ip \"%s\" to anti-dos system (as bad): %s\n", ip, utils.ErrorString(err))
 }
 
+// all lowercased
+func (f *FProxy) RequestHeaders() map[string]string {
+	res := make(map[string]string)
+	for k, v := range f.req.Header {
+		if len(v) < 1 {
+			continue
+		}
+		res[strings.ToLower(k)] = v[0]
+	}
+	return res
+}
+
 // similiar to RequestValues(), but only query parameters, thus can be used if released
 func (f *FProxy) QueryValues() map[string]string {
 	values := f.req.URL.Query()
@@ -210,15 +219,6 @@ func (f *FProxy) RequestValuesMulti() map[string][]string {
 		return nil
 	}
 	return hf.RequestValuesMulti()
-}
-
-// silimar to requestvalues, but in proto format
-func (f *FProxy) H2GParameters() []*h2gproxy.Parameter {
-	var res []*h2gproxy.Parameter
-	for k, v := range f.RequestValues() {
-		res = append(res, &h2gproxy.Parameter{Name: k, Value: v})
-	}
-	return res
 }
 
 // return the request body
@@ -330,28 +330,6 @@ func (f *FProxy) RedirectTo(url string, forceget bool) {
 	}
 	f.write_headers()
 }
-
-// all lowercased
-func (f *FProxy) RequestHeaders() map[string]string {
-	res := make(map[string]string)
-	for k, v := range f.req.Header {
-		if len(v) < 1 {
-			continue
-		}
-		res[strings.ToLower(k)] = v[0]
-	}
-	return res
-}
-
-// all lowercased
-func (f *FProxy) H2GHeaders() []*h2gproxy.Header {
-	var res []*h2gproxy.Header
-	for k, v := range f.req.Header {
-		h := &h2gproxy.Header{Name: k, Values: v}
-		res = append(res, h)
-	}
-	return res
-}
 func (f *FProxy) GetHeader(key string) string {
 	if f.req == nil {
 		return ""
@@ -399,11 +377,9 @@ func (f *FProxy) Write(buf []byte) error {
 	if !f.body_read {
 		fmt.Printf("writing before body was read\n")
 	}
-	/*
-		if *debug {
-			fmt.Printf("[fproxy] Writing %d bytes\n", len(buf))
-		}
-	*/
+	if *debug {
+		fmt.Printf("[fproxy] Writing %d bytes\n", len(buf))
+	}
 	if f.response_released {
 		panic("write after response was released")
 	}
@@ -560,13 +536,8 @@ func (f *FProxy) FullURL() string {
 	return fmt.Sprintf("%s://%s/%s", f.scheme, h, p)
 }
 
-// dependening on the useragent, figures out if CLI or browser
-func (f *FProxy) IsKnownCLITool() bool {
-	return shared.IsKnownCLITool(f.UserAgent())
-}
-
 // return the useragent header
-func (f *FProxy) UserAgent() string {
+func (f *FProxy) GetUserAgent() string {
 	s := f.GetHeader("user-agent")
 	return s
 }
@@ -700,13 +671,13 @@ func (f *FProxy) SetAndLogFailure(code int32, be_err error) {
 	f.AddContext()
 
 	if *debug {
-		fmt.Printf("using context %v to log call\n", f.BootstrapContext())
+		fmt.Printf("using context %v to log call\n", f.Context())
 	}
 	if *logusage {
 		if usageStatsClient == nil {
 			usageStatsClient = us.NewUsageStatsServiceClient(client.Connect("usagestats.UsageStatsService"))
 		}
-		_, err = usageStatsClient.LogHttpCall(f.BootstrapContext(), &us.LogHttpCallRequest{
+		_, err = usageStatsClient.LogHttpCall(f.Context(), &us.LogHttpCallRequest{
 			Url:       f.req.URL.String(),
 			Success:   false,
 			Timestamp: uint32(f.Started.Unix()),
@@ -716,92 +687,4 @@ func (f *FProxy) SetAndLogFailure(code int32, be_err error) {
 			fmt.Printf("failed backend call: failed to update usage stats %s\n", utils.ErrorString(err))
 		}
 	}
-}
-
-// returns a context suitable for calling backends
-func (f *FProxy) UserContext() context.Context {
-	if f.ctx != nil {
-		return f.ctx
-	}
-
-	a, err := json_auth(f) // always check if we got auth stuff
-	if err != nil {
-		fmt.Printf("failed to jsonauth for usercontext: %s\n", err)
-		return createBootstrapContext()
-	}
-
-	nctx, err := createContext(f, a)
-	if err != nil {
-		fmt.Printf("failed to create user context: %s\n", errors.ErrorString(err))
-		return createBootstrapContext()
-	}
-
-	f.ctx = nctx
-	return f.ctx
-}
-
-// returns a context suitable for calling things like "auth"
-func (f *FProxy) BootstrapContext() context.Context {
-	if f.ctx != nil {
-		return f.ctx
-	}
-	return createBootstrapContext()
-}
-
-func (f *FProxy) TargetService() string {
-	return f.hf.def.TargetService
-}
-
-func (f *FProxy) ByteRanges() []*h2g.ByteRange {
-	bs, err := parseByteRange(f.GetHeader("range"))
-	if err != nil {
-		fmt.Printf("WARNING - invaliad byte range: \"%s\"\n", err)
-		return nil
-	}
-	return bs
-}
-
-// noop???
-func (f *FProxy) SetFilename(name string) {
-}
-func (f *FProxy) SetContentType(mimetype string) {
-	f.SetHeader("content-type", mimetype)
-}
-func (f *FProxy) SetContentLength(size uint64) {
-	f.SetHeader("Content-Length", fmt.Sprintf("%d", size))
-}
-func (f *FProxy) SetError(err error) {
-	if err == nil {
-		return
-	}
-	//	st := status.Convert(err)
-	f.err = err
-	f.SetStatus(shared.ConvertErrorToCode(err))
-	s := fmt.Sprintf("error: %s", f.err)
-	f.WriteString(s)
-}
-
-// return true if it found an error (err != nil)
-func (f *FProxy) ProcessError(err error, code int, msg string) bool {
-	if err == nil {
-		return false
-	}
-	f.err = err
-	f.SetStatus(code)
-	f.WriteString(msg)
-	if IsDebugHeaderGroup(f.GetUser()) {
-		f.WriteString("-- full errormessage:<br/>")
-		f.WriteString(utils.ErrorString(err))
-	}
-	fmt.Printf("Error %s on %s (reported \"%s\" to user)\n", err, f.req.URL.Path, msg)
-	return true
-}
-
-func (f *FProxy) BrowserConfig() *h2gproxy.BrowserConfig {
-	res := f.browserconfig
-	if res != nil {
-		return res
-	}
-	return browserconfig_default()
-
 }

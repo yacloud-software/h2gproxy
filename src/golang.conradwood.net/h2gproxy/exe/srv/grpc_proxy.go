@@ -10,7 +10,6 @@ import (
 	h2g "golang.conradwood.net/apis/h2gproxy"
 	ic "golang.conradwood.net/apis/rpcinterceptor"
 	"golang.conradwood.net/go-easyops/auth"
-	"golang.conradwood.net/h2gproxy/shared"
 
 	//	"golang.conradwood.net/go-easyops/client"
 	"strings"
@@ -129,7 +128,7 @@ retry:
 	//	ms := elapsed.Nanoseconds() / 1000 / 1000
 	g.f.ResponseTime = time.Since(g.f.Started)
 
-	var httpError *shared.HTTPError
+	var httpError *HTTPError
 	public_error_message := ""
 	privileged_error_message := ""
 	if err == nil {
@@ -194,7 +193,7 @@ retry:
 
 	g.f.customHeaders(&ExtraInfo{Error: err, Message: msg})
 
-	httpError = shared.GrpcToHTTP(code)
+	httpError = grpcToHTTP(code)
 	httpError.ErrorMessage = public_error_message
 	if IsDebugHeaderGroup(g.f.GetUser()) {
 		httpError.ExtendedErrorString = privileged_error_message
