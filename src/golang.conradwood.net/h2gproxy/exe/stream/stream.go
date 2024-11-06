@@ -3,6 +3,7 @@ package stream
 import (
 	"context"
 
+	"golang.conradwood.net/apis/auth"
 	"golang.conradwood.net/apis/h2gproxy"
 )
 
@@ -18,6 +19,7 @@ type RequestDetails interface {
 	Write(buf []byte) error
 	RequestedPath() string
 	PeerIP() string
+	GetUser() *auth.User // might be nil
 	UserAgent() string
 	RequestedQuery() string
 	RequestedHost() string

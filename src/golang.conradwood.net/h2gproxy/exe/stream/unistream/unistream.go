@@ -14,8 +14,11 @@ package unistream
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 
 	"golang.conradwood.net/apis/h2gproxy"
+	"golang.conradwood.net/go-easyops/auth"
+	"golang.conradwood.net/go-easyops/utils"
 	"golang.conradwood.net/h2gproxy/grpchelpers"
 	"golang.conradwood.net/h2gproxy/shared"
 	"golang.conradwood.net/h2gproxy/stream"
@@ -28,6 +31,7 @@ type Streamer struct {
 	con        grpchelpers.GRPCConnection
 	stream     grpchelpers.ClientStream
 	reqdetails stream.RequestDetails
+	size       uint64
 }
 
 func Stream(reqdetails stream.RequestDetails) {
@@ -90,6 +94,9 @@ func (s *Streamer) streamWithErr() error {
 	// now read stream from backend and copy to browser
 	backend_message := &h2gproxy.StreamDataResponse{}
 	bytes_from_backend := uint64(0)
+	p := utils.ProgressReporter{
+		Prefix: fmt.Sprintf("download for %s@%s of %s", auth.UserIDString(rd.GetUser()), rd.PeerIP(), filepath.Base(s.reqdetails.RequestedPath())),
+	}
 	for {
 		err := s.stream.RecvMsg(backend_message)
 		if err != nil {
@@ -106,12 +113,15 @@ func (s *Streamer) streamWithErr() error {
 		s.parse_response_for_headers(backend_message.Response)
 		bytes_from_backend = bytes_from_backend + uint64(len(backend_message.Data))
 		if len(backend_message.Data) != 0 {
+			p.Add(uint64(len(backend_message.Data)))
 			//fmt.Printf("Received %d bytes\n", len(backend_message.Data))
 			err := s.reqdetails.Write(backend_message.Data)
 			if err != nil {
 				return err
 			}
 		}
+		p.SetTotal(s.size)
+		p.Print()
 	}
 	fmt.Printf("Received %d bytes from backend\n", bytes_from_backend)
 	return nil
@@ -131,6 +141,7 @@ func (s *Streamer) parse_response_for_headers(msg *h2gproxy.StreamResponse) {
 	}
 	if msg.Size != 0 {
 		s.reqdetails.SetContentLength(msg.Size)
+		s.size = msg.Size
 	}
 	if msg.Filename != "" {
 		s.reqdetails.SetFilename(msg.Filename)
