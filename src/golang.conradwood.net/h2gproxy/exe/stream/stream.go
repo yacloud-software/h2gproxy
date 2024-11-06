@@ -28,4 +28,5 @@ type RequestDetails interface {
 	H2GParameters() []*h2gproxy.Parameter
 	ByteRanges() []*h2gproxy.ByteRange
 	TriggerAuthentication() // send response that after a 401 the request needs to be retried with authentication
+	NeedsAuth() bool        // true if request must be authenticated prior to calling a backend
 }

@@ -36,6 +36,10 @@ func Stream(reqdetails stream.RequestDetails) {
 }
 
 func (s *Streamer) Stream() {
+	// needs auth?
+	rd := s.reqdetails
+	if rd.NeedsAuth() {
+	}
 	err := s.streamWithErr()
 	if err != nil {
 		fmt.Printf("stream failed: %s\n", err)
