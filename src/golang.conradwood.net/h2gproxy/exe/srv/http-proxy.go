@@ -34,7 +34,6 @@ import (
 	"time"
 
 	"golang.conradwood.net/go-easyops/utils"
-	"golang.conradwood.net/h2gproxy/httplogger"
 )
 
 const (
@@ -326,37 +325,11 @@ func getUserIdentifier(user *apb.User) string {
 	return user.Abbrev
 }
 
-// create a new proxy and store the request and responsewrite in it
-func NewProxy(w http.ResponseWriter, r *http.Request, h *HTTPForwarder, tls bool, port int) *FProxy {
-
-	// create new fproxy
-	res := &FProxy{
-		port:       port,
-		statusCode: 200,
-	}
-	// we do this as soon as we can to get accurate reading
-	res.Started = time.Now()
-	res.hf = h
-	res.writer = w
-	res.req = r
-	res.scheme = r.URL.Scheme
-	if res.scheme == "" {
-		if tls {
-			res.scheme = "https"
-		} else {
-			res.scheme = "http"
-		}
-	}
-	res.loginProxy = false
-	res.logreq = httplogger.DefaultHTTPLogger().RequestStarted(res.FullURL(), res.PeerIP())
-	StartRequest(res)
-	return res
-}
-
 // execute the request (called by the http handler)
 func (f *FProxy) execute() {
 	f.execute_raw()
 	EndRequest(f)
+	//	f.Close()
 }
 func (f *FProxy) execute_raw() {
 	reqCounterIn.With(prometheus.Labels{
@@ -369,10 +342,17 @@ func (f *FProxy) execute_raw() {
 	label_hostname := f.clientReqHost
 	if !HaveCert(label_hostname) {
 		// since all sorts of spammers contact us with dodgy hostnames, we limit it to onces we know
-		// we actually don't keep a list of "onces we know", we use the list of https certificatese instead
+		// we actually don't keep a list of "onces we know", we use the list of https certificates instead
 		label_hostname = "unknown_host"
 	}
 	reqHostCounter.With(prometheus.Labels{"host": label_hostname, "name": f.hf.def.ConfigName}).Inc()
+
+	// check if we need to authenticate per config, if so do that instead of calling a backend
+	if !f.handle_auth_if_required() {
+		return
+	}
+
+	// browser might have a cookie for special config
 	config_h2gproxy_for_browser(f)
 	NoteHost(f.clientReqHost, (f.scheme == "https"))
 	if !f.hf.IsWebSocketAPI() {
@@ -380,9 +360,8 @@ func (f *FProxy) execute_raw() {
 		f.req.Close = true
 		f.req.Header["Connection"] = []string{"close"}
 	}
-	if *debug {
-		fmt.Printf("%s: %s -> APIType %s\n", f.FullURL(), f.hf.def.ConfigName, f.hf.ApiTypeName())
-	}
+
+	f.Debugf("%s: %s -> APIType %s\n", f.FullURL(), f.hf.def.ConfigName, f.hf.ApiTypeName())
 
 	// OPTIONS must be handled differently - they are not authenticated, but need to be replied to
 	//	fmt.Printf("Method: \"%s\"\n", f.req.Method)
@@ -393,10 +372,10 @@ func (f *FProxy) execute_raw() {
 
 	sess, serr := f.GetSessionToken()
 	if serr != nil {
-		fmt.Printf("Session token cannot be retrieved: %s\n", utils.ErrorString(serr))
+		f.Printf("Session token cannot be retrieved: %s\n", utils.ErrorString(serr))
 	}
 	if *debug_session {
-		fmt.Printf("Session-token: \"%s\"\n", sess)
+		f.Printf("Session-token: \"%s\"\n", sess)
 	}
 	if sess == "" && f.hf.def.SessionRequired {
 		// redirect to sso to get a session
@@ -427,28 +406,39 @@ func (f *FProxy) execute_raw() {
 		WebLoginProxy(f)
 		return
 	}
-
+	if f.unsigneduser == nil && f.NeedsAuth() {
+		panic("not auth, but needs auth")
+	}
 	if f.hf.IsDownloadProxy() {
 		if f.BrowserConfig().UseNewStreamer {
+			f.Debugf("invoking new download stream proxy\n")
 			unistream.Stream(f)
 		} else {
+			f.Debugf("invoking download stream proxy\n")
 			DownloadProxy(f)
 		}
 		processTimings(f)
 		return
 	}
 	if f.hf.IsFancyProxy() {
+		f.Debugf("invoking fancy proxy\n")
 		FancyProxy(f)
 		return
 	}
 	if f.hf.IsBiStreamProxy() {
+		f.Debugf("invoking bistream proxy\n")
 		BiStreamProxy(f)
 		return
 	}
-	if !f.hf.IsHTTPProxy() {
-		fmt.Printf("this (%s) is an unknown API type (%d)\n", f.String(), f.hf.Api())
+	if f.hf.IsHTTPProxy() {
+		f.Debugf("invoking http proxy\n")
+		HTTPProxy(f)
 		return
 	}
+	f.Printf("this (%s) is an unknown API type (%d)\n", f.String(), f.hf.Api())
+	return
+}
+func HTTPProxy(f *FProxy) {
 	// it is an http -> http proxy thing
 
 	// if we have a bearer token we add the useraccount
@@ -472,9 +462,7 @@ func (f *FProxy) execute_raw() {
 					// we're replying with please authenticate
 					return
 				}
-				if *debug {
-					fmt.Printf("We ARE basic-authenticated as %v\n", f.userString())
-				}
+				f.Debugf("We ARE basic-authenticated as %v\n", f.userString())
 			}
 		}
 	}
@@ -533,7 +521,7 @@ func (f *FProxy) director2(req *http.Request) {
 	// if feature is enabled - check internal paths
 	if *enable_acl_paths {
 		if isInternalPath(path) && (!f.isFromRFC1918()) {
-			fmt.Printf("access to %s from %s denied (only allowed from RFC1918 addresses)\n", path, f.remoteHost)
+			f.Printf("access to %s from %s denied (only allowed from RFC1918 addresses)\n", path, f.remoteHost)
 			req.URL = f.Errorurl
 			req.Host = *DefaultHost
 			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_EXTERNAL, fmt.Errorf("need RFC1918 address"))
@@ -542,15 +530,13 @@ func (f *FProxy) director2(req *http.Request) {
 	}
 	dest_host := f.hf.def.TargetHost
 	dest_port := int(f.hf.def.TargetPort)
-	if *debug {
-		fmt.Printf("Request matching %s\n", f.hf.GetID())
-	}
+	f.Debugf("Request matching %s\n", f.hf.GetID())
 
 	// work out where to send it to
 	if f.hf.def.TargetService != "" {
 		err := f.reverse_proxy_lookup(f.hf)
 		if err != nil {
-			fmt.Printf("Failed to lookup targetservice %s for path %s: %s\n", f.hf.def.TargetService, path, err)
+			f.Printf("Failed to lookup targetservice %s for path %s: %s\n", f.hf.def.TargetService, path, err)
 			req.URL = f.Errorurl
 			req.Host = *DefaultHost
 			f.SetAndLogFailure(INTERNAL_ERROR_NO_TARGET, err)
@@ -563,9 +549,7 @@ func (f *FProxy) director2(req *http.Request) {
 	// check if our target needs authentication
 	// if so -> redirect it to weblogin (the logintarget)
 	if (f.hf.def.NeedAuth) && (f.unsigneduser == nil) {
-		if *debug {
-			fmt.Printf("need user, authenticating in http-proxy")
-		}
+		f.Debugf("need user, authenticating in http-proxy")
 		if *stdauth {
 			f.authResult, err = json_auth(f)
 			f.SetUser(f.authResult.SignedUser())
@@ -579,14 +563,14 @@ func (f *FProxy) director2(req *http.Request) {
 		if err != nil || f.unsigneduser == nil {
 			if *debug {
 				if err != nil {
-					fmt.Printf("No auth cookie - redirecting to login (err=%s)\n", err)
+					f.Debugf("No auth cookie - redirecting to login (err=%s)\n", err)
 				} else {
-					fmt.Printf("No auth cookie - redirecting to login\n")
+					f.Debugf("No auth cookie - redirecting to login\n")
 				}
 			}
 			err := f.reverse_proxy_lookup(loginTarget) // sets 'lasthost'
 			if err != nil {
-				fmt.Printf("Failed to lookup loginservice %s for path %s: %s\n", f.hf.def.TargetService, path, err)
+				f.Printf("Failed to lookup loginservice %s for path %s: %s\n", f.hf.def.TargetService, path, err)
 				req.URL = f.Errorurl
 				req.Host = *DefaultHost
 				f.SetAndLogFailure(INTERNAL_ERROR_NO_LOGIN_BACKEND, err)
@@ -610,7 +594,7 @@ func (f *FProxy) director2(req *http.Request) {
 	if (f.hf.def.NeedAuth) && (f.unsigneduser != nil) {
 		if !f.unsigneduser.EmailVerified {
 			// user email not verified
-			fmt.Printf("User %v email is not (yet) verified (path=%s)\n", f.unsigneduser, path)
+			f.Printf("User %v email is not (yet) verified (path=%s)\n", f.unsigneduser, path)
 			req.URL = f.Errorurl
 			req.Host = *DefaultHost
 			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_EMAILVERIFY, fmt.Errorf("user email not verified"))
@@ -623,7 +607,7 @@ func (f *FProxy) director2(req *http.Request) {
 	if (f.hf.def.NeedAuth) && (f.unsigneduser != nil) && len(f.hf.def.Groups) > 0 {
 		if !isUserInGroup(f.unsigneduser, f.hf.def.Groups) {
 			// oooh is not.
-			fmt.Printf("User %v is not in any of the groups for path %s\n", f.unsigneduser, path)
+			f.Printf("User %v is not in any of the groups for path %s\n", f.unsigneduser, path)
 			req.URL = f.Errorurl
 			req.Host = *DefaultHost
 			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_GROUP, fmt.Errorf("internal_access_denied_group"))
@@ -643,7 +627,7 @@ func (f *FProxy) director2(req *http.Request) {
 
 	// build the new URL: (add parameters, except the urlsnippet)
 	if len(path) < len(f.hf.def.URLPath) {
-		fmt.Printf("Should not happen (path=%s,urlpath=%s)!!\n", path, f.hf.def.URLPath)
+		f.Printf("Should not happen (path=%s,urlpath=%s)!!\n", path, f.hf.def.URLPath)
 		req.URL = f.Errorurl
 		req.Host = *DefaultHost
 		f.SetAndLogFailure(INTERNAL_ERROR_BUG, fmt.Errorf("internal error: urlpath is off"))
@@ -672,7 +656,7 @@ func (f *FProxy) director2(req *http.Request) {
 		npath = npath[:len(npath)-1]
 	}
 	if *debugRewrite {
-		fmt.Printf("URL: %s\n", req.URL.String())
+		f.Printf("URL: %s\n", req.URL.String())
 	}
 	us := fmt.Sprintf("http://%s%s%s", hs, npath, q)
 	if f.hf.def.TargetPort == 443 || f.hf.def.ProxyForHTTPS {
@@ -680,12 +664,12 @@ func (f *FProxy) director2(req *http.Request) {
 	}
 
 	if *debugRewrite {
-		fmt.Printf("hs=\"%s\", npath=\"%s\", q=\"%s\", us=%s, pathprefix=%s\n", hs, npath, q, us, f.hf.def.PathPrefix)
+		f.Printf("hs=\"%s\", npath=\"%s\", q=\"%s\", us=%s, pathprefix=%s\n", hs, npath, q, us, f.hf.def.PathPrefix)
 	}
 
 	u, err := url.Parse(us)
 	if err != nil {
-		fmt.Printf("WTF?? %s encountered url parse error: %s\n", us, err)
+		f.Printf("WTF?? %s encountered url parse error: %s\n", us, err)
 		req.Host = *DefaultHost
 		req.URL = f.Errorurl
 		f.SetAndLogFailure(INTERNAL_ERROR_CONFIG_ERROR, err)
@@ -699,9 +683,7 @@ func (f *FProxy) director2(req *http.Request) {
 
 	// add extra headers here
 	if f.hf.def.TargetHostname != "" {
-		if *debug {
-			fmt.Printf("Setting hostname to custom targethostname: %s\n", f.hf.def.TargetHostname)
-		}
+		f.Debugf("Setting hostname to custom targethostname: %s\n", f.hf.def.TargetHostname)
 		s := f.hf.def.TargetHostname
 		if s == "donttouch" {
 			_, b, c := splitHostStuff(f.requested_host)
@@ -724,7 +706,7 @@ func (f *FProxy) director2(req *http.Request) {
 	f.AddContext()
 
 	if *logrequests {
-		fmt.Printf("%s: Forwarding \"%s\",path=\"%s\" to url=\"%s\" on %s (Host-Header:%s) (Forwarded-Host: %s) for user %s\n", req.RemoteAddr, f.clientReqHost, path, req.URL.Path, req.Host, req.Header["Host"], f.hf.def.ForwardedHost, f.currentUser())
+		f.Printf("%s: Forwarding \"%s\",path=\"%s\" to url=\"%s\" on %s (Host-Header:%s) (Forwarded-Host: %s) for user %s\n", req.RemoteAddr, f.clientReqHost, path, req.URL.Path, req.Host, req.Header["Host"], f.hf.def.ForwardedHost, f.currentUser())
 	}
 	// if we have a user we set headers telling the backend about it
 	if f.unsigneduser != nil {
@@ -744,9 +726,7 @@ func (f *FProxy) director2(req *http.Request) {
 		}
 	} else {
 		if f.hf.def.SendFakeAuthorization {
-			if *debug {
-				fmt.Printf("Warning - we're supposed to send fake auth but user is not authenticated\n")
-			}
+			f.Debugf("Warning - we're supposed to send fake auth but user is not authenticated\n")
 		}
 
 		// clear any user headers submitted previously by the user
@@ -766,10 +746,10 @@ func (f *FProxy) director2(req *http.Request) {
 	addHeaders(f, req)
 	f.headers_to_backend = headersToString(req.Header)
 	if *logrequests && *debug {
-		fmt.Printf("%s: req.Host=\"%s\", req.Header[Host]=\"%s\" (clientrequest: %s) method:%s\n", req.RemoteAddr, req.Host, req.Header["Host"], f.requested_host, req.Method)
+		f.Printf("%s: req.Host=\"%s\", req.Header[Host]=\"%s\" (clientrequest: %s) method:%s\n", req.RemoteAddr, req.Host, req.Header["Host"], f.requested_host, req.Method)
 	}
 	if *debugRewrite {
-		fmt.Printf("asking backend for %s %s\n", req.Method, req.URL)
+		f.Printf("asking backend for %s %s\n", req.Method, req.URL)
 	}
 
 }
@@ -783,28 +763,26 @@ func (f *FProxy) responseHandler(resp *http.Response) error {
 	xerr := f.responseHandler2(resp)
 	tx.Done()
 	if xerr != nil {
-		fmt.Printf("proxy directory part #2 error: %s ", xerr)
+		f.Printf("proxy directory part #2 error: %s ", xerr)
 		for _, t := range f.Timings {
 			dur := t.start.Sub(t.end) / time.Millisecond
-			fmt.Printf("%s=%d ", t.name, dur)
+			f.Printf("%s=%d ", t.name, dur)
 		}
-		fmt.Println()
+		f.Printf("\n")
 	}
 	return xerr
 }
 func (f *FProxy) responseHandler2(resp *http.Response) (err error) {
-	if *debug {
-		fmt.Printf("proxy response handler started\n")
-	}
+	f.Debugf("proxy response handler started\n")
 	f.AddContext()
 	f.proxyResponse = resp
 	f.headers_out = headersToString(f.req.Header)
 	f.headers_received = headersToString(resp.Header)
 	if *printHeaders {
-		fmt.Printf("Headers from browser: %s\n", f.headers_in)
-		fmt.Printf("Headers to backend: %s\n", f.headers_to_backend)
-		fmt.Printf("Headers from backend (%d): %s\n", resp.StatusCode, f.headers_received)
-		fmt.Printf("Headers to browser (%s): %s\n", f.req.URL, f.headers_out)
+		f.Printf("Headers from browser: %s\n", f.headers_in)
+		f.Printf("Headers to backend: %s\n", f.headers_to_backend)
+		f.Printf("Headers from backend (%d): %s\n", resp.StatusCode, f.headers_received)
+		f.Printf("Headers to browser (%s): %s\n", f.req.URL, f.headers_out)
 	}
 	// we are leaking file descriptors.
 	// it's the incoming TCP Connection which doesn't get closed ;(
@@ -823,16 +801,12 @@ func (f *FProxy) responseHandler2(resp *http.Response) (err error) {
 	host := resp.Request.Host
 	ph, ps, err := net.SplitHostPort(resp.Request.URL.Host)
 	if err != nil && *debug {
-		fmt.Printf("Weird response url: %s\n", resp.Request.URL.Host)
+		f.Printf("Weird response url: %s\n", resp.Request.URL.Host)
 	}
-	if *debug {
-		fmt.Printf("Response target: %s %s\n", resp.Request.Method, resp.Request.URL)
-	}
+	f.Debugf("Response target: %s %s\n", resp.Request.Method, resp.Request.URL)
 	port, err := strconv.Atoi(ps)
 	if err != nil {
-		if *debug {
-			fmt.Printf("Weird port part in response url: %s (%s)\n", resp.Request.URL.Host, ps)
-		}
+		f.Debugf("Weird port part in response url: %s (%s)\n", resp.Request.URL.Host, ps)
 		port = 80
 	}
 	if host == "" {
@@ -853,15 +827,11 @@ func (f *FProxy) responseHandler2(resp *http.Response) (err error) {
 	}
 	if *enBasicAuth {
 		if f.loginProxy {
-			if *debug {
-				fmt.Printf("Login-Response from \"%s:%d\": %03d\n", host, port, resp.StatusCode)
-			}
+			f.Debugf("Login-Response from \"%s:%d\": %03d\n", host, port, resp.StatusCode)
 			return nil
 		}
 	}
-	if *debug {
-		fmt.Printf("Response from \"%s:%d\": %03d\n", host, port, resp.StatusCode)
-	}
+	f.Debugf("Response from \"%s:%d\": %03d\n", host, port, resp.StatusCode)
 	// this is a bit unexpected:
 	// if our proxy is configured to authenticate, this shouldn't really happen.
 	// it's here in case legacy applications insist on doing their own authentication.
@@ -874,29 +844,25 @@ func (f *FProxy) responseHandler2(resp *http.Response) (err error) {
 	//
 	if resp.StatusCode == 401 {
 		if f.hf.def.WebBackendAuthenticatesOnly {
-			if *debug {
-				fmt.Printf("Passing 401 to client application (%v)\n", f.req.URL)
-			}
+			f.Debugf("Passing 401 to client application (%v)\n", f.req.URL)
 			return
 		}
 		if f.hf.def.NeedAuth {
-			fmt.Printf("Statuscode: 401 found in response to %v AND we got needauth=true in config [user #%s, %s]!\n", f.req.URL, f.unsigneduser.ID, f.unsigneduser.Email)
+			f.Printf("Statuscode: 401 found in response to %v AND we got needauth=true in config [user #%s, %s]!\n", f.req.URL, f.unsigneduser.ID, f.unsigneduser.Email)
 			resp.StatusCode = 501
 			return nil
 		} else {
 			if f.hf.def.AllowAuthorizationFromClient || f.needsBasicAuth() {
-				if *debug {
-					fmt.Printf("Passing 401 to client application (%v)\n", f.req.URL)
-				}
+				f.Debugf("Passing 401 to client application (%v)\n", f.req.URL)
 				return
 			}
-			fmt.Printf("Statuscode: 401 found in response to %v. needauth:true missing in config?\n", f.req.URL)
+			f.Printf("Statuscode: 401 found in response to %v. needauth:true missing in config?\n", f.req.URL)
 		}
 		resp.StatusCode = http.StatusTemporaryRedirect
 		// the http backend send a 401. Send the browser to sso.yacloud.eu (with current path)...
 		target := webloginGetRedirectTarget(f)
 		if *debug_redirect {
-			fmt.Printf("due to 401: redirecting to: \"%s\"\n", target)
+			f.Printf("due to 401: redirecting to: \"%s\"\n", target)
 		}
 		resp.Header["Location"] = []string{target}
 		f.SetStatus(resp.StatusCode) // for the logs...
@@ -913,20 +879,18 @@ func (f *FProxy) responseHandler2(resp *http.Response) (err error) {
 		}
 		newLocation := newLocations[0]
 		if *debug_redirect {
-			fmt.Printf("Redirect To: %s (rewriteredirecthost=%v)\n", newLocation, f.hf.def.RewriteRedirectHost)
+			f.Printf("Redirect To: %s (rewriteredirecthost=%v)\n", newLocation, f.hf.def.RewriteRedirectHost)
 		}
 		if f.hf.def.RewriteRedirectHost {
 			verynewLocation := f.FixRedirect(newLocation)
 			if *debug_redirect {
-				fmt.Printf("backend redirected to %s - we redirect client to %s instead\n", newLocation, verynewLocation)
+				f.Printf("backend redirected to %s - we redirect client to %s instead\n", newLocation, verynewLocation)
 			}
 			resp.Header.Set("Location", verynewLocation)
 		}
 	}
 	if resp.StatusCode >= 400 {
-		if *debug {
-			fmt.Printf("Statuscode: %d\n", resp.StatusCode)
-		}
+		f.Debugf("Statuscode: %d\n", resp.StatusCode)
 	}
 	if (resp.StatusCode >= 500) && (f.hf.def.ErrorPage500 != "") {
 		f.createErrorPage(resp)
@@ -969,9 +933,7 @@ func normalizeStatusCode(code int) string {
 
 // request has been made, we log the response
 func (f *FProxy) LogResponse() {
-	if *debug {
-		fmt.Printf("Responded to forwarding %s to %s: %d\n", f.hf.def.TargetService, f.targetHost, f.statusCode)
-	}
+	f.Debugf("Responded to forwarding %s to %s: %d\n", f.hf.def.TargetService, f.targetHost, f.statusCode)
 	reqCounter.With(prometheus.Labels{
 		"name":          f.hf.def.ConfigName,
 		"targetservice": f.hf.def.TargetService,
@@ -1026,7 +988,7 @@ func (f *FProxy) LogResponse() {
 		})
 
 		if err != nil {
-			fmt.Printf("successfull backend call: failed to update usage stats %s\n", utils.ErrorString(err))
+			f.Printf("successfull backend call: failed to update usage stats %s\n", utils.ErrorString(err))
 		}
 
 	}
@@ -1035,14 +997,12 @@ func addHeaders(f *FProxy, req *http.Request) {
 	for _, header := range f.hf.def.Header {
 		hs := strings.SplitN(header, "=", 2)
 		if len(hs) < 2 {
-			fmt.Printf("Invalid header definition: \"%s\"\n", header)
+			f.Printf("Invalid header definition: \"%s\"\n", header)
 			continue
 		}
 		key := hs[0]
 		value := hs[1]
-		if *debug {
-			fmt.Printf("   Adding Header: %s:%s\n", key, value)
-		}
+		f.Debugf("   Adding Header: %s:%s\n", key, value)
 		req.Header.Set(key, value)
 	}
 }
@@ -1097,7 +1057,7 @@ func headersToString(header http.Header) string {
 
 func (f *FProxy) createErrorPage(resp *http.Response) (err error) {
 
-	fmt.Printf("Statuscode %d intercepted whilst serving %s\n", resp.StatusCode, f.req.URL.String())
+	f.Printf("Statuscode %d intercepted whilst serving %s\n", resp.StatusCode, f.req.URL.String())
 	s := "An error was encountered. Sorry about that."
 	body := ioutil.NopCloser(strings.NewReader(s))
 	resp.StatusCode = 200
@@ -1120,7 +1080,7 @@ func (f *FProxy) doBasicAuth() bool {
 	if gotit {
 		a, xerr := f.authenticateUser(u, p)
 		if xerr != nil {
-			fmt.Printf("Failed to authenticate: %s\n", utils.ErrorString(xerr))
+			f.Printf("Failed to authenticate: %s\n", utils.ErrorString(xerr))
 		}
 		if a != nil {
 			// auth ok
@@ -1129,9 +1089,9 @@ func (f *FProxy) doBasicAuth() bool {
 		}
 		if *debug { // NOT A DEBUG IF CLAUSE
 			if a != nil {
-				fmt.Printf("BasicAuthed() user #%s(%s)\n", f.unsigneduser.ID, f.unsigneduser.Email)
+				f.Printf("BasicAuthed() user #%s(%s)\n", f.unsigneduser.ID, f.unsigneduser.Email)
 			} else {
-				fmt.Printf("Failed to verify unknown user's identity with basicauth\n")
+				f.Printf("Failed to verify unknown user's identity with basicauth\n")
 			}
 		}
 	}
@@ -1325,14 +1285,12 @@ func (f *FProxy) currentUser() string {
 // add the context and requestids stuff (calling rpcinterceptor)
 func (f *FProxy) AddContext() {
 	if f.unsigneduser == nil || f.ctx != nil {
-		if *debug {
-			fmt.Printf("[debug] no context - no user for request %s\n", f.req.URL.String())
-		}
+		f.Debugf("no context - no user for request %s\n", f.req.URL.String())
 		return
 	}
 	err := f.rebuildContextFromScratch(f.authResult)
 	if err != nil {
-		fmt.Printf("no context available for user %s (%s)\n", f.unsigneduser, err)
+		f.Printf("no context available for user %s (%s)\n", f.unsigneduser, err)
 	}
 
 }
@@ -1340,7 +1298,7 @@ func (f *FProxy) AddContext() {
 func AddUserIDHeaders(f *FProxy, req *http.Request) {
 	ms, err := f.createUserHeaders()
 	if err != nil {
-		fmt.Printf("Unable to insert user headers: %s\n", utils.ErrorString(err))
+		f.Printf("Unable to insert user headers: %s\n", utils.ErrorString(err))
 		return
 	}
 	for k, v := range ms {

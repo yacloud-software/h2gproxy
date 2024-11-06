@@ -8,6 +8,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
 	pb "golang.conradwood.net/apis/h2gproxy"
 	rpb "golang.conradwood.net/apis/registry"
 	"golang.conradwood.net/go-easyops/client"
@@ -15,12 +22,6 @@ import (
 	"golang.conradwood.net/go-easyops/prometheus"
 	"golang.conradwood.net/go-easyops/utils"
 	"golang.conradwood.net/h2gproxy/shared"
-	"net/http"
-	"net/url"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 )
 
 const (
@@ -225,10 +226,11 @@ func main_handler(w http.ResponseWriter, r *http.Request, isTLS bool, port int) 
 	//Debug: List open file descriptors for debug purpose only. Disabled by default.
 	PrintOpenFDs()
 	r.Close = true
-	f := NewProxy(w, r, hf, isTLS, port)
+	f := NewFProxy(w, r, hf, isTLS, port)
 	if f == nil {
 		return
 	}
+	StartRequest(f)
 
 	f.Errorurl = errorurl
 	f.execute()

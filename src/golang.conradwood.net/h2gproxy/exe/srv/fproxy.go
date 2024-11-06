@@ -33,8 +33,10 @@ import (
 )
 
 var (
-	always_http   = flag.Bool("redirect_http_only", false, "if true rewrite all redirects to use http instead of https")
-	cookie_domain = flag.Bool("set_cookie_domain", true, "if true set a cookie domain for authentication")
+	always_http    = flag.Bool("redirect_http_only", false, "if true rewrite all redirects to use http instead of https")
+	cookie_domain  = flag.Bool("set_cookie_domain", true, "if true set a cookie domain for authentication")
+	debugf_counter = 0
+	debugf_lock    sync.Mutex
 )
 
 type FProxy struct {
@@ -82,6 +84,40 @@ type FProxy struct {
 	logreq               httplogger.HTTPRequest // to log start/end and updates for this request
 	parsedrequest        *parsed_request
 	browserconfig        *h2gproxy.BrowserConfig
+	print_counter        int
+}
+
+func NewFProxy(w http.ResponseWriter, r *http.Request, h *HTTPForwarder, tls bool, port int) *FProxy {
+
+	// create new fproxy
+	res := &FProxy{
+		port:       port,
+		statusCode: 200,
+		Started:    time.Now(),
+	}
+	debugf_lock.Lock()
+	debugf_counter++
+	if debugf_counter > 99 {
+		debugf_counter = 1
+	}
+	res.print_counter = debugf_counter
+	debugf_lock.Unlock()
+
+	// we do this as soon as we can to get accurate reading
+	res.hf = h
+	res.writer = w
+	res.req = r
+	res.scheme = r.URL.Scheme
+	if res.scheme == "" {
+		if tls {
+			res.scheme = "https"
+		} else {
+			res.scheme = "http"
+		}
+	}
+	res.loginProxy = false
+	res.logreq = httplogger.DefaultHTTPLogger().RequestStarted(res.FullURL(), res.PeerIP())
+	return res
 }
 
 func (f *FProxy) Api() uint32 {
@@ -97,7 +133,7 @@ func (f *FProxy) GetUser() *apb.User {
 func (f *FProxy) SetUser(a *apb.SignedUser) {
 	if a == nil {
 		if f.signeduser != nil {
-			fmt.Printf("[fproxy] cleared user\n")
+			f.Printf("[fproxy] cleared user\n")
 		}
 		if f.md != nil {
 			f.md.UserID = ""
@@ -119,7 +155,7 @@ func (f *FProxy) SetUser(a *apb.SignedUser) {
 		f.md.User = u
 		f.md.SignedUser = a
 	}
-	//fmt.Printf("[fproxy] set user\n")
+	//f.Printf("[fproxy] set user\n")
 
 }
 
@@ -134,7 +170,7 @@ func (f *FProxy) GoodRequest() {
 			ff.antidos_notified = true
 			return
 		}
-		fmt.Printf("ANTIDOS: could not report ip \"%s\" to anti-dos system (as good): %s\n", ip, utils.ErrorString(err))
+		f.Printf("ANTIDOS: could not report ip \"%s\" to anti-dos system (as good): %s\n", ip, utils.ErrorString(err))
 	}(f)
 
 }
@@ -166,7 +202,7 @@ func (f *FProxy) AntiDOS(format string, args ...interface{}) {
 		f.antidos_notified = true
 		return
 	}
-	fmt.Printf("ANTIDOS: could not report ip \"%s\" to anti-dos system (as bad): %s\n", ip, utils.ErrorString(err))
+	f.Printf("ANTIDOS: could not report ip \"%s\" to anti-dos system (as bad): %s\n", ip, utils.ErrorString(err))
 }
 
 // similiar to RequestValues(), but only query parameters, thus can be used if released
@@ -224,14 +260,14 @@ func (f *FProxy) H2GParameters() []*h2gproxy.Parameter {
 // return the request body
 func (f *FProxy) RequestBody() []byte {
 	if f.response_released {
-		fmt.Printf("Response was released here:\n%s\n----------------\n-----------\n", f.response_stack)
+		f.Printf("Response was released here:\n%s\n----------------\n-----------\n", f.response_stack)
 		panic("requestbody() cannot be called after release")
 	}
 	if f.body_read {
 		return f.body
 	}
 	body, err := ioutil.ReadAll(f.req.Body)
-	//	fmt.Printf("BODY: \"%s\"\n", string(body))
+	//	f.Printf("BODY: \"%s\"\n", string(body))
 	if f.ProcessError(err, 500, "unable to parse browser login request") {
 		return nil
 	}
@@ -270,9 +306,11 @@ func (f *FProxy) ReleaseResponse() {
 
 // internal function
 func (f *FProxy) write_headers() {
-	if !f.body_read {
-		fmt.Printf("writing headers before body was read\n")
-	}
+	/*
+		if !f.body_read {
+			f.Printf("writing headers before body was read\n")
+		}
+	*/
 	if f.response_released || f.response_headers_written {
 		return
 	}
@@ -299,7 +337,7 @@ func (f *FProxy) write_headers() {
 
 	f.writer.WriteHeader(f.statusCode)
 	if *debug {
-		fmt.Printf("[fproxy] headers written\n")
+		f.Printf("[fproxy] headers written\n")
 	}
 	f.response_headers_written = true
 }
@@ -308,7 +346,7 @@ func (f *FProxy) SetStatus(code int) {
 		return
 	}
 	if f.response_headers_written {
-		fmt.Printf("[%s] WARNING attempt to set http code to %d (previously %d) after headers were written\n", f.String(), code, f.statusCode)
+		f.Printf("[%s] WARNING attempt to set http code to %d (previously %d) after headers were written\n", f.String(), code, f.statusCode)
 
 	}
 	f.statusCode = code
@@ -316,11 +354,11 @@ func (f *FProxy) SetStatus(code int) {
 
 func (f *FProxy) RedirectTo(url string, forceget bool) {
 	if *debug || *debug_redirect {
-		fmt.Printf("Redirecting to \"%s\"\n", url)
+		f.Printf("Redirecting to \"%s\"\n", url)
 	}
 	if *always_http && strings.HasPrefix(url, "https://") {
 		url = "http://" + url[7:]
-		fmt.Printf("(http downgrade): Redirecting to \"%s\"\n", url)
+		f.Printf("(http downgrade): Redirecting to \"%s\"\n", url)
 	}
 	f.SetHeader("Location", url)
 	if forceget {
@@ -372,7 +410,7 @@ func (f *FProxy) GetHeader(key string) string {
 
 func (f *FProxy) SetHeader(key, value string) {
 	if f.response_headers_written {
-		fmt.Printf("late set header %s=%s\n", key, value)
+		f.Printf("late set header %s=%s\n", key, value)
 	}
 	if f.response_headers == nil {
 		f.response_headers = make(map[string]string)
@@ -397,11 +435,11 @@ func (f *FProxy) GetContentType() string {
 // writes headers too
 func (f *FProxy) Write(buf []byte) error {
 	if !f.body_read {
-		fmt.Printf("writing before body was read\n")
+		f.Printf("writing before body was read\n")
 	}
 	/*
 		if *debug {
-			fmt.Printf("[fproxy] Writing %d bytes\n", len(buf))
+			f.Printf("[fproxy] Writing %d bytes\n", len(buf))
 		}
 	*/
 	if f.response_released {
@@ -457,6 +495,7 @@ func (f *FProxy) Close() {
 	if f.response_released {
 		return
 	}
+	f.Debugf("closed, status code %d\n", f.statusCode)
 	f.write_headers()
 }
 func (f *FProxy) String() string {
@@ -490,7 +529,7 @@ func (f *FProxy) createUserHeaders() (map[string]string, error) {
 		res["REMOTE_USERID"] = f.unsigneduser.ID
 		suser, err := utils.Marshal(f.unsigneduser)
 		if err != nil {
-			fmt.Printf("Failed to marshal user: %s\n", utils.ErrorString(err))
+			f.Printf("Failed to marshal user: %s\n", utils.ErrorString(err))
 			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_NONVALID, err)
 			return nil, err
 		}
@@ -498,7 +537,7 @@ func (f *FProxy) createUserHeaders() (map[string]string, error) {
 
 		suser, err = utils.Marshal(f.signeduser)
 		if err != nil {
-			fmt.Printf("Failed to marshal signed user: %s\n", utils.ErrorString(err))
+			f.Printf("Failed to marshal signed user: %s\n", utils.ErrorString(err))
 			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_NONVALID, err)
 			return nil, err
 		}
@@ -579,7 +618,7 @@ func (f *FProxy) authenticateUser(user, pw string) (*apb.SignedUser, error) {
 	//ctx := createBootstrapContext()
 	cr, err := authproxy.SignedGetByPassword(ctx, &apb.AuthenticatePasswordRequest{Email: user, Password: pw})
 	if err != nil {
-		fmt.Printf("Failed to authenticate user %s: %s (from %s, accessing %s)\n", user, utils.ErrorString(err), f.PeerIP(), f.String())
+		f.Printf("Failed to authenticate user %s: %s (from %s, accessing %s)\n", user, utils.ErrorString(err), f.PeerIP(), f.String())
 		return nil, err
 	}
 	if !cr.Valid {
@@ -591,11 +630,11 @@ func (f *FProxy) authenticateUser(user, pw string) (*apb.SignedUser, error) {
 		return nil, fmt.Errorf("invalid user-signature")
 	}
 	if !u.Active {
-		fmt.Printf("not active\n")
+		f.Printf("not active\n")
 		return nil, fmt.Errorf("Not active")
 	}
 	if *debug {
-		fmt.Printf("Authenticated user %s %s (%s): \n", u.FirstName, u.LastName, u.Email)
+		f.Printf("Authenticated user %s %s (%s): \n", u.FirstName, u.LastName, u.Email)
 	}
 	return cr.User, nil
 }
@@ -618,15 +657,15 @@ func (f *FProxy) authenticateByUserIDAndToken(user, pw string) (*apb.SignedUser,
 		return nil, fmt.Errorf("invalid user-signature")
 	}
 	if !u.Active {
-		fmt.Printf("not active\n")
+		f.Printf("not active\n")
 		return nil, fmt.Errorf("Not active")
 	}
 	if u.ID != userid {
-		fmt.Printf("Userid mismatch (\"%s\"!=\"%s\")\n", userid, u.ID)
+		f.Printf("Userid mismatch (\"%s\"!=\"%s\")\n", userid, u.ID)
 		return nil, fmt.Errorf("wrong userid")
 	}
 	if *debug {
-		fmt.Printf("Authenticated user %s %s (%s): \n", u.FirstName, u.LastName, u.Email)
+		f.Printf("Authenticated user %s %s (%s): \n", u.FirstName, u.LastName, u.Email)
 	}
 	return cr.User, nil
 
@@ -637,7 +676,7 @@ func verify_user(f *FProxy) {
 		return
 	}
 	if f.unsigneduser.EmailVerified == false {
-		fmt.Printf("[verifyuser] User email is not verified. not accepting user\n")
+		f.Printf("[verifyuser] User email is not verified. not accepting user\n")
 		f.SetUser(nil)
 	}
 }
@@ -651,17 +690,23 @@ func (f *FProxy) Debugf(format string, args ...interface{}) {
 	if !*debug {
 		return
 	}
+	f.Printf(format, args...)
+}
+func (f *FProxy) Printf(format string, args ...interface{}) {
+	debugf_lock.Lock()
+	defer debugf_lock.Unlock()
 	user := ""
 	if f.unsigneduser != nil {
-		user = "/" + f.unsigneduser.Abbrev
+		user = f.unsigneduser.Abbrev + " "
 	}
 
 	cfgname := "nocfg"
 	if f.hf != nil && f.hf.def != nil && f.hf.def.ConfigName != "" {
 		cfgname = f.hf.def.ConfigName
 	}
-	s := fmt.Sprintf("%s %s", user, cfgname)
-	fmt.Printf("[debug "+s+"] "+format, args...)
+	prefix := fmt.Sprintf("[%03d debug %s%s] ", f.print_counter, user, cfgname)
+	txt := fmt.Sprintf(format, args...)
+	fmt.Print(prefix + txt)
 }
 
 func (f *FProxy) GetRequestID() string {
@@ -683,7 +728,7 @@ func (f *FProxy) GetRequestID() string {
 func (f *FProxy) SetAndLogFailure(code int32, be_err error) {
 	var err error
 	f.SetStatus(int(code))
-	fmt.Printf("Failed forwarding \"%s\" to \"%s\": code=%d for user %s\n", f.hf.def.TargetService, f.targetHost, code, f.currentUser())
+	f.Printf("Failed forwarding \"%s\" to \"%s\": code=%d for user %s\n", f.hf.def.TargetService, f.targetHost, code, f.currentUser())
 	reqCounter.With(prometheus.Labels{
 		"name":          f.hf.def.ConfigName,
 		"targetservice": f.hf.def.TargetService,
@@ -700,7 +745,7 @@ func (f *FProxy) SetAndLogFailure(code int32, be_err error) {
 	f.AddContext()
 
 	if *debug {
-		fmt.Printf("using context %v to log call\n", f.BootstrapContext())
+		f.Printf("using context %v to log call\n", f.BootstrapContext())
 	}
 	if *logusage {
 		if usageStatsClient == nil {
@@ -713,31 +758,23 @@ func (f *FProxy) SetAndLogFailure(code int32, be_err error) {
 		})
 
 		if err != nil {
-			fmt.Printf("failed backend call: failed to update usage stats %s\n", utils.ErrorString(err))
+			f.Printf("failed backend call: failed to update usage stats %s\n", utils.ErrorString(err))
 		}
 	}
 }
 
 // returns a context suitable for calling backends
 func (f *FProxy) UserContext() context.Context {
-	if f.ctx != nil {
-		return f.ctx
-	}
-
-	a, err := json_auth(f) // always check if we got auth stuff
-	if err != nil {
-		fmt.Printf("failed to jsonauth for usercontext: %s\n", err)
+	if f.authResult == nil {
 		return createBootstrapContext()
 	}
 
-	nctx, err := createContext(f, a)
+	nctx, err := createContext(f, f.authResult)
 	if err != nil {
-		fmt.Printf("failed to create user context: %s\n", errors.ErrorString(err))
+		f.Printf("failed to create user context: %s\n", errors.ErrorString(err))
 		return createBootstrapContext()
 	}
-
-	f.ctx = nctx
-	return f.ctx
+	return nctx
 }
 
 // returns a context suitable for calling things like "auth"
@@ -755,7 +792,7 @@ func (f *FProxy) TargetService() string {
 func (f *FProxy) ByteRanges() []*h2g.ByteRange {
 	bs, err := parseByteRange(f.GetHeader("range"))
 	if err != nil {
-		fmt.Printf("WARNING - invaliad byte range: \"%s\"\n", err)
+		f.Printf("WARNING - invaliad byte range: \"%s\"\n", err)
 		return nil
 	}
 	return bs
@@ -793,7 +830,7 @@ func (f *FProxy) ProcessError(err error, code int, msg string) bool {
 		f.WriteString("-- full errormessage:<br/>")
 		f.WriteString(utils.ErrorString(err))
 	}
-	fmt.Printf("Error %s on %s (reported \"%s\" to user)\n", err, f.req.URL.Path, msg)
+	f.Printf("Error %s on %s (reported \"%s\" to user)\n", err, f.req.URL.Path, msg)
 	return true
 }
 

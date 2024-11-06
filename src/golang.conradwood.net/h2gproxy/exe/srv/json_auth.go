@@ -6,14 +6,15 @@ package srv
 // cookie (if used by webbrowser)
 
 import (
-	"fmt"
 	"golang.conradwood.net/apis/antidos"
 	apb "golang.conradwood.net/apis/auth"
 	"golang.conradwood.net/go-easyops/common"
+
 	//	"golang.conradwood.net/go-easyops/tokens"
-	"golang.conradwood.net/go-easyops/utils"
 	"net/url"
 	"strings"
+
+	"golang.conradwood.net/go-easyops/utils"
 )
 
 type authResult struct {
@@ -78,7 +79,7 @@ func (a *authResult) UserFromParameter() bool {
 	}
 	params, err := url.ParseQuery(a.f.req.URL.RawQuery)
 	if err != nil {
-		fmt.Printf("Failed to parse form: %s\n", err)
+		a.f.Printf("Failed to parse form: %s\n", err)
 		return false
 	}
 	for k, v := range params {
@@ -89,11 +90,11 @@ func (a *authResult) UserFromParameter() bool {
 		for _, tok := range v {
 			user, err := TokenToUser(tok)
 			if err != nil {
-				fmt.Printf("Failed to resolve apikey: %s\n", utils.ErrorString(err))
+				a.f.Printf("Failed to resolve apikey: %s\n", utils.ErrorString(err))
 				return false
 			}
 			if user == nil {
-				fmt.Printf("no user for apikey\n")
+				a.f.Printf("no user for apikey\n")
 				return false
 			}
 			a.signedUser = user
@@ -142,7 +143,7 @@ func (a *authResult) UserFromBearer() bool {
 		return true
 	}
 	if *debug && err != nil {
-		fmt.Printf("error resolving token to user: %s\n", err)
+		a.f.Printf("error resolving token to user: %s\n", err)
 	}
 
 	return true
@@ -181,7 +182,7 @@ func (a *authResult) UserFromWeblogin() *apb.SignedUser {
 	}
 	sess, u, c, err := WebloginCheck(wls)
 	if err != nil {
-		fmt.Printf("Weblogin failed: %s\n", err)
+		a.f.Printf("Weblogin failed: %s\n", err)
 		return nil
 	}
 	if sess != nil {
@@ -202,7 +203,7 @@ func (a *authResult) UserFromBasicAuth() {
 	}
 	u, p, gotit := a.f.req.BasicAuth()
 	if *debug {
-		fmt.Printf("[jsonauth] Basicauth u=\"%s\" p(len)=\"%d\" (%v)\n", u, len(p), gotit)
+		a.f.Printf("[jsonauth] Basicauth u=\"%s\" p(len)=\"%d\" (%v)\n", u, len(p), gotit)
 	}
 	if !gotit {
 		return
@@ -214,11 +215,11 @@ func (a *authResult) UserFromBasicAuth() {
 	}
 	us, err := a.f.authenticateUser(u, p)
 	if err != nil {
-		fmt.Printf("[jsonauth] failed to authenticate user %s: %s\n", u, err)
+		a.f.Printf("[jsonauth] failed to authenticate user %s: %s\n", u, err)
 		return
 	}
 	if us == nil {
-		fmt.Printf("[jsonauth] no user, but basic auth\n")
+		a.f.Printf("[jsonauth] no user, but basic auth\n")
 		return
 	}
 	a.signedUser = us
