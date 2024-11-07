@@ -20,6 +20,7 @@ import (
 
 	"golang.conradwood.net/apis/h2gproxy"
 	"golang.conradwood.net/go-easyops/auth"
+	"golang.conradwood.net/go-easyops/errors"
 	"golang.conradwood.net/go-easyops/utils"
 	"golang.conradwood.net/h2gproxy/grpchelpers"
 	"golang.conradwood.net/h2gproxy/shared"
@@ -60,7 +61,7 @@ func (s *Streamer) Stream() {
 	s.run_watchdog = false
 	close(s.chan_watchdog)
 	if err != nil {
-		fmt.Printf("stream failed: %s\n", err)
+		fmt.Printf("stream failed: %s\n", errors.ErrorString(err))
 		st := shared.ConvertErrorToCode(err)
 		if st == 401 {
 			// trigger authentication
