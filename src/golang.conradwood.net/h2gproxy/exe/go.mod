@@ -1,8 +1,6 @@
 module golang.conradwood.net/h2gproxy
 
-go 1.22.7
-
-toolchain go1.23.3
+go 1.22.2
 
 require (
 	github.com/dustin/go-humanize v1.0.1

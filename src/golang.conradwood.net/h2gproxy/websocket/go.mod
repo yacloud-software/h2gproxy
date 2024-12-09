@@ -1,8 +1,6 @@
 module golang.conradwood.net/h2gproxy/websocket
 
-go 1.22.7
-
-toolchain go1.23.3
+go 1.22.2
 
 require golang.conradwood.net/apis/h2gproxy v1.1.3340
 
