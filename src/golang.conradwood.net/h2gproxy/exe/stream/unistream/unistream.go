@@ -27,10 +27,6 @@ import (
 	"golang.conradwood.net/h2gproxy/stream"
 )
 
-const (
-	MAX_IDLE_TIME = time.Duration(120) * time.Second // if no packet processed for this time, abort connection
-)
-
 /*
 one streamer is responsible for exactly one http request
 */
@@ -43,10 +39,12 @@ type Streamer struct {
 	reqdetails          stream.RequestDetails
 	size                uint64
 	last_packet_handled time.Time
+	max_idle_time       time.Duration
 }
 
 func Stream(reqdetails stream.RequestDetails) {
 	streamer := &Streamer{
+		max_idle_time: reqdetails.MaxIdleTime(),
 		reqdetails:    reqdetails,
 		chan_watchdog: make(chan bool),
 	}
@@ -194,8 +192,7 @@ func (s *Streamer) stream_watchdog(cf context.CancelFunc) {
 		if !suc {
 			fmt.Printf("Watchdog requested to stop\n")
 		}
-
-		if time.Since(s.last_packet_handled) > MAX_IDLE_TIME {
+		if time.Since(s.last_packet_handled) > s.max_idle_time {
 			s.abort = true
 			fmt.Printf("Watchdog: cancelling\n")
 			cf()

@@ -2,6 +2,7 @@ package stream
 
 import (
 	"context"
+	"time"
 
 	"golang.conradwood.net/apis/auth"
 	"golang.conradwood.net/apis/h2gproxy"
@@ -29,6 +30,7 @@ type RequestDetails interface {
 	H2GHeaders() []*h2gproxy.Header
 	H2GParameters() []*h2gproxy.Parameter
 	ByteRanges() []*h2gproxy.ByteRange
-	TriggerAuthentication() // send response that after a 401 the request needs to be retried with authentication
-	NeedsAuth() bool        // true if request must be authenticated prior to calling a backend
+	TriggerAuthentication()     // send response that after a 401 the request needs to be retried with authentication
+	NeedsAuth() bool            // true if request must be authenticated prior to calling a backend
+	MaxIdleTime() time.Duration // if no packets received for this time, abort connection
 }

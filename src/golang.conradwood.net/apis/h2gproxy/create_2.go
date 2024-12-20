@@ -4,6 +4,7 @@
 */
 
 /* geninfo:
+   rendererv : 2
    filename  : golang.conradwood.net/apis/h2gproxy/h2gproxy.proto
    gopackage : golang.conradwood.net/apis/h2gproxy
    importname: ai_1

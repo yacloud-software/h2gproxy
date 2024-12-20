@@ -32,6 +32,10 @@ import (
 	"golang.yacloud.eu/apis/session"
 )
 
+const (
+	DEFAULT_MAX_IDLE_TIME = time.Duration(30) * time.Second
+)
+
 var (
 	always_http    = flag.Bool("redirect_http_only", false, "if true rewrite all redirects to use http instead of https")
 	cookie_domain  = flag.Bool("set_cookie_domain", true, "if true set a cookie domain for authentication")
@@ -786,6 +790,13 @@ func (f *FProxy) BootstrapContext() context.Context {
 		return f.ctx
 	}
 	return createBootstrapContext()
+}
+
+func (f *FProxy) MaxIdleTime() time.Duration {
+	if f.hf.def.MaxIdleTime == 0 {
+		return DEFAULT_MAX_IDLE_TIME
+	}
+	return time.Duration(f.hf.def.MaxIdleTime) * time.Second
 }
 
 func (f *FProxy) TargetService() string {
