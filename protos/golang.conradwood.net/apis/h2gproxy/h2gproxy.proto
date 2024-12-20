@@ -302,6 +302,7 @@ message AddConfigHTTPRequest {
   bool SessionRequired=38;
   // if true, will serve with local certificate only
   bool LocalTLSCertificateOnly=39;
+  uint32 MaxIdleTime=40; // in seconds, how long the connection may be idle (=no packets sent/received) before it is forcibly closed. default: 30s
 }
 // definition on how INBOUND request urls are rewritten and redirected
 message RedirectRewrite {
