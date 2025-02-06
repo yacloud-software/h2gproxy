@@ -18,7 +18,7 @@ require (
 	golang.org/x/net v0.34.0
 	golang.yacloud.eu/apis/session v1.1.3631
 	golang.yacloud.eu/apis/sessionmanager v1.1.3309
-	google.golang.org/grpc v1.69.2
+	google.golang.org/grpc v1.70.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -41,16 +41,16 @@ require (
 	golang.conradwood.net/apis/goeasyops v1.1.3631 // indirect
 	golang.conradwood.net/apis/grafanadata v1.1.3625 // indirect
 	golang.conradwood.net/apis/objectstore v1.1.3625 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	golang.yacloud.eu/apis/autodeployer2 v1.1.3625 // indirect
 	golang.yacloud.eu/apis/faultindicator v1.1.3625 // indirect
 	golang.yacloud.eu/apis/fscache v1.1.3625 // indirect
 	golang.yacloud.eu/apis/unixipc v1.1.3625 // indirect
 	golang.yacloud.eu/apis/urlcacher v1.1.3625 // indirect
 	golang.yacloud.eu/unixipc v0.1.31725 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241015192408-796eee8c2d53 // indirect
-	google.golang.org/protobuf v1.36.1 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241202173237-19429a94021a // indirect
+	google.golang.org/protobuf v1.36.4 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
