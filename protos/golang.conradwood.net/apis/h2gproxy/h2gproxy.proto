@@ -303,6 +303,8 @@ message AddConfigHTTPRequest {
   // if true, will serve with local certificate only
   bool LocalTLSCertificateOnly=39;
   uint32 MaxIdleTime=40; // in seconds, how long the connection may be idle (=no packets sent/received) before it is forcibly closed. default: 30s
+  // if this matches, add those authtags to the context
+  repeated string AddAuthTags=41; 
 }
 // definition on how INBOUND request urls are rewritten and redirected
 message RedirectRewrite {
