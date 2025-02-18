@@ -79,6 +79,9 @@ func createCancellableContext(f *FProxy, a *authResult) (context.Context, contex
 	cb.WithRequestID(f.GetRequestID())
 	cb.WithCallingService(authremote.GetLocalServiceAccount())
 	cb.WithCreatorService(authremote.GetLocalServiceAccount())
+	for _, a := range f.hf.def.AddAuthTags {
+		cb.WithAuthTag(a)
+	}
 	f.addContextFlags(cb)
 
 	octx, cnc := cb.Context()
@@ -158,4 +161,9 @@ func (f *FProxy) addContextFlags(cb shared.ContextBuilder) {
 		}
 		cb.EnableExperiment(ex)
 	}
+
+	for _, a := range f.hf.def.AddAuthTags {
+		cb.WithAuthTag(a)
+	}
+
 }
