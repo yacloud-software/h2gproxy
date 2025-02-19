@@ -138,30 +138,34 @@ func (f *FProxy) addContextFlags(cb shared.ContextBuilder) {
 		// body/form no longer available
 		return
 	}
-	if f.GetUser() == nil {
-		return
-	}
-	vals := f.RequestValues()
-	if vals["ge_debug"] == "true" {
-		if *debugctx {
-			fmt.Printf("[context] setting debug to true\n")
+
+	if f.GetUser() != nil {
+		vals := f.RequestValues()
+		if vals["ge_debug"] == "true" {
+			if *debugctx {
+				fmt.Printf("[context] setting debug to true\n")
+			}
+			cb.WithDebug()
 		}
-		cb.WithDebug()
-	}
-	if vals["ge_trace"] == "true" {
-		if *debugctx {
-			fmt.Printf("[context] setting trace to true\n")
+		if vals["ge_trace"] == "true" {
+			if *debugctx {
+				fmt.Printf("[context] setting trace to true\n")
+			}
+			cb.WithTrace()
 		}
-		cb.WithTrace()
-	}
-	ex := vals["ge_experiment"]
-	if ex != "" {
-		if *debugctx {
-			fmt.Printf("[context] enabling experiment \"%s\"\n", ex)
+
+		ex := vals["ge_experiment"]
+		if ex != "" {
+			if *debugctx {
+				fmt.Printf("[context] enabling experiment \"%s\"\n", ex)
+			}
+			cb.EnableExperiment(ex)
 		}
-		cb.EnableExperiment(ex)
 	}
 
+	if *debugctx {
+		fmt.Printf("[context] adding %d authtags\n", len(f.hf.def.AddAuthTags))
+	}
 	for _, a := range f.hf.def.AddAuthTags {
 		cb.WithAuthTag(a)
 	}

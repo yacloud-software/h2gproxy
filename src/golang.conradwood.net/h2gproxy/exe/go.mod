@@ -1,6 +1,8 @@
 module golang.conradwood.net/h2gproxy
 
-go 1.22.2
+go 1.22
+
+toolchain go1.23.3
 
 require (
 	github.com/dustin/go-humanize v1.0.1
@@ -14,7 +16,7 @@ require (
 	golang.conradwood.net/apis/rpcinterceptor v1.1.3659
 	golang.conradwood.net/apis/usagestats v1.1.3659
 	golang.conradwood.net/apis/weblogin v1.1.3659
-	golang.conradwood.net/go-easyops v0.1.34209
+	golang.conradwood.net/go-easyops v0.1.34215
 	golang.org/x/net v0.34.0
 	golang.yacloud.eu/apis/session v1.1.3659
 	golang.yacloud.eu/apis/sessionmanager v1.1.3659
