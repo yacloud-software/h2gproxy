@@ -364,7 +364,7 @@ service H2GProxyService {
   rpc GetKnownHosts(common.Void) returns (HostList);
   // implemented for probers
   rpc BiStreamHTTP(stream StreamDataRequest) returns (stream StreamDataResponse);
-  // implemented for probers
+  // implemented for probers, this is the "download" api. backends implementing a "download" api, must implement this too
   rpc StreamHTTP(StreamRequest) returns (stream StreamDataResponse);
   // implemented for probers
   rpc ServeHTML(ServeRequest) returns (ServeResponse);
