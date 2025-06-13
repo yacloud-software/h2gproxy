@@ -25,7 +25,7 @@ require (
 	golang.conradwood.net/apis/grafanadata v1.1.3625 // indirect
 	golang.conradwood.net/apis/objectstore v1.1.3625 // indirect
 	golang.conradwood.net/apis/registry v1.1.3625 // indirect
-	golang.conradwood.net/go-easyops v0.1.35681 // indirect
+	golang.conradwood.net/go-easyops v0.1.36000 // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
