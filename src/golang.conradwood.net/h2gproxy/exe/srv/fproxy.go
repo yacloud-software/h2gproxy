@@ -178,7 +178,7 @@ func (f *FProxy) GoodRequest() {
 	}(f)
 
 }
-func (f *FProxy) AntiDOS(format string, args ...interface{}) {
+func (f *FProxy) AntiDOS(format string, args ...interface{}) { // call antidos IPFailure()
 	if f.antidos_notified == true {
 		return
 	}

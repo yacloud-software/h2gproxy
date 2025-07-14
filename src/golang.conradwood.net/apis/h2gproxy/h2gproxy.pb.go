@@ -1969,7 +1969,7 @@ type H2GProxyServiceClient interface {
 	GetKnownHosts(ctx context.Context, in *common.Void, opts ...grpc.CallOption) (*HostList, error)
 	// implemented for probers
 	BiStreamHTTP(ctx context.Context, opts ...grpc.CallOption) (H2GProxyService_BiStreamHTTPClient, error)
-	// implemented for probers
+	// implemented for probers, this is the "download" api. backends implementing a "download" api, must implement this too
 	StreamHTTP(ctx context.Context, in *StreamRequest, opts ...grpc.CallOption) (H2GProxyService_StreamHTTPClient, error)
 	// implemented for probers
 	ServeHTML(ctx context.Context, in *ServeRequest, opts ...grpc.CallOption) (*ServeResponse, error)
@@ -2170,7 +2170,7 @@ type H2GProxyServiceServer interface {
 	GetKnownHosts(context.Context, *common.Void) (*HostList, error)
 	// implemented for probers
 	BiStreamHTTP(H2GProxyService_BiStreamHTTPServer) error
-	// implemented for probers
+	// implemented for probers, this is the "download" api. backends implementing a "download" api, must implement this too
 	StreamHTTP(*StreamRequest, H2GProxyService_StreamHTTPServer) error
 	// implemented for probers
 	ServeHTML(context.Context, *ServeRequest) (*ServeResponse, error)

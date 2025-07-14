@@ -141,7 +141,7 @@ retry:
 	/******************** backend returned an error ******************/
 	if g.f.unsigneduser == nil { // if not authenticated and error, tell antidos about it
 		if antidos_err(err) {
-			g.f.AntiDOS("backend serving returned error (%s) and no unsigneduser", err)
+			g.f.AntiDOS("backend serving returned error (%s) and no unsigneduser", err) // only if error != 404
 		}
 	}
 	g.f.err = err
