@@ -1,6 +1,7 @@
 package tcpproxy
 
 import (
+	"crypto/tls"
 	"errors"
 	"flag"
 	"fmt"
@@ -95,13 +96,24 @@ func (tf *TCPForwarder) startPortAcceptLoop() error {
 	go tf.acceptLoop()
 	go func() {
 		for {
-			listener, err := net.Listen("tcp", fmt.Sprintf(":%d", tf.Port))
+			var err error
+			var listener net.Listener
+			adr := fmt.Sprintf(":%d", tf.Port)
+			name := "tcp"
+			if tf.config.EnableTLS {
+				name = "tcp-tls"
+				config := &tls.Config{Certificates: shared.AllCerts()}
+				listener, err = tls.Listen("tcp", adr, config)
+			} else {
+				listener, err = net.Listen("tcp", adr)
+			}
 			if err != nil {
 				s := fmt.Sprintf("Failed to listen on port %d with intent to forward to %s: %s", tf.Port, tf.Path, err)
 				fmt.Println(s)
 				time.Sleep(5 * time.Second)
 				continue
 			}
+			tf.Printf("%s listener on port %d\n", name, tf.Port)
 			tf.listener = listener
 			break
 		}
@@ -130,27 +142,27 @@ func (tf *TCPForwarder) acceptLoop() {
 		go tf.forward(conn)
 	}
 	tf.active = false
-	tcp_Printf("Accept() on port %d stopped.\n", tf.Port)
+	tf.Printf("Accept() on port %d stopped.\n", tf.Port)
 }
 
 // got an incoming connection, lookup target, forward and copy
 // datastreams
 func (tf *TCPForwarder) forward(incoming net.Conn) {
-	if *debug_tcp {
-		tcp_Printf("Got connection: %s\n", incoming.RemoteAddr())
-	}
+	tf.Debugf("Got connection: %s\n", incoming.RemoteAddr())
 	defer decNumberOfConnections()
 	defer incoming.Close()
 	// set KeepAlive to detect broken connections
-	tcp, ok := incoming.(*net.TCPConn)
-	if !ok {
-		tcp_Printf("Bad connection type: %v\n", incoming)
-		return
+	maybe_tcp, ok := incoming.(*net.TCPConn)
+	if ok {
+		if tf.config.KeepAliveSeconds > 0 {
+			maybe_tcp.SetKeepAlive(true)
+			maybe_tcp.SetKeepAlivePeriod(time.Second * time.Duration(tf.config.KeepAliveSeconds))
+		}
+	} else {
+		//		tf.Printf("Bad connection type: %+v\n", incoming)
+		//tf.Printf("(type=%s)\n", reflect.TypeOf(incoming))
 	}
-	if tf.config.KeepAliveSeconds > 0 {
-		tcp.SetKeepAlive(true)
-		tcp.SetKeepAlivePeriod(time.Second * time.Duration(tf.config.KeepAliveSeconds))
-	}
+
 	// lookup address
 	con, err := client.DialTCPWrapper(tf.Path)
 	if err != nil {
@@ -173,18 +185,16 @@ func (tf *TCPForwarder) forward(incoming net.Conn) {
 	sess := newTCPProxySession(tf, incoming, con)
 	defer con.Close()
 	defer sess.Closed()
-	if *debug_tcp {
-		tcp_Printf("Forwarding to %s\n", con.RemoteAddr())
-	}
+	tf.Debugf("Forwarding to %s\n", con.RemoteAddr())
 	connectCounter.With(prometheus.Labels{
 		"statuscode": "200",
 		"target":     tf.Path,
 		"targethost": con.RemoteAddr().String()}).Inc()
 
 	if tf.config.AddHeaderToTCP {
-		err := tf.send_header(con, tcp)
+		err := tf.send_header(con, incoming)
 		if err != nil {
-			fmt.Printf("Failed to send header: %s\n", err)
+			tf.Printf("Failed to send header: %s\n", err)
 			return
 		}
 	}
@@ -217,16 +227,15 @@ func (tf *TCPForwarder) forward(incoming net.Conn) {
 		case terminator <- "remote peer (user) closed connection":
 		//
 		default:
-			fmt.Printf("Remote peer closed connection AFTER connection was stopped\n")
+			tf.Printf("Remote peer closed connection AFTER connection was stopped\n")
 		}
 	}()
 	end := <-terminator
-	if *debug_tcp {
-		tcp_Printf("Connection %s from %s terminated (%s). Bytes in: %d, Bytes out: %d\n",
-			tf.Path, incoming.RemoteAddr(), end,
-			src.total, target.total,
-		)
-	}
+	tf.Debugf("Connection %s from %s terminated (%s). Bytes in: %d, Bytes out: %d\n",
+		tf.Path, incoming.RemoteAddr(), end,
+		src.total, target.total,
+	)
+
 }
 
 func (tf *TCPForwarder) Stop() error {
@@ -235,7 +244,7 @@ func (tf *TCPForwarder) Stop() error {
 		tf.listener.Close()
 		i := 30
 		for tf.active {
-			tcp_Printf("Waiting for shutdown %d...\n", i)
+			tf.Printf("Waiting for shutdown %d...\n", i)
 			time.Sleep(1 * time.Second)
 			i--
 			if i == 0 {
@@ -247,7 +256,7 @@ func (tf *TCPForwarder) Stop() error {
 }
 
 func (tf *TCPForwarder) Start() error {
-	tcp_Printf("Forwarding %d to %s\n", tf.Port, tf.Path)
+	tf.Printf("Forwarding %d to %s\n", tf.Port, tf.Path)
 	err := tf.startPortAcceptLoop()
 	if err != nil {
 		return err
@@ -271,7 +280,7 @@ func (tf *TCPForwarder) create_connection_id() string {
 }
 
 // send a header down this tcp connection
-func (tf *TCPForwarder) send_header(nc net.Conn, incoming *net.TCPConn) error {
+func (tf *TCPForwarder) send_header(nc net.Conn, incoming net.Conn) error {
 	addr := incoming.RemoteAddr().String()
 	ip, rport, _, err := iphelper.ParseEndpoint(addr)
 	if err != nil {
@@ -281,10 +290,10 @@ func (tf *TCPForwarder) send_header(nc net.Conn, incoming *net.TCPConn) error {
 		ConnectionID: tf.create_connection_id(),
 		RemoteIP:     ip,
 		RemotePort:   rport,
+		WithTLS:      tf.config.EnableTLS,
 	}
-	if *debug_tcp {
-		fmt.Printf("[tcp] Sending header %v\n", header)
-	}
+	tf.Debugf("[tcp] Sending header %v\n", header)
+
 	ms, err := utils.Marshal(header)
 	if err != nil {
 		return err
@@ -300,6 +309,17 @@ func (tf *TCPForwarder) send_header(nc net.Conn, incoming *net.TCPConn) error {
 		return fmt.Errorf("odd write, wanted to write %d bytes, but wrote %d", len(msb), nb)
 	}
 	return nil
+}
+func (tf *TCPForwarder) Debugf(format string, args ...interface{}) {
+	if !*debug_tcp {
+		return
+	}
+	tf.Printf(format, args...)
+}
+func (tf *TCPForwarder) Printf(format string, args ...interface{}) {
+	prefix := fmt.Sprintf("[tcp :%d] ", tf.Port)
+	txt := fmt.Sprintf(format, args...)
+	fmt.Print(prefix + txt)
 }
 
 /**********************************
@@ -319,5 +339,5 @@ func decNumberOfConnections() {
 }
 
 func tcp_Printf(format string, args ...interface{}) {
-	fmt.Printf("[tcp]"+format, args...)
+	fmt.Printf("[tcp] "+format, args...)
 }
