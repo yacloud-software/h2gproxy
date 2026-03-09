@@ -336,7 +336,9 @@ message TCPProxy {
   string Target=2;
   uint32 KeepAliveSeconds=3;
   bool AddHeaderToTCP=5; // if true, send a TCPStart proto down the connection
-  bool WrapInTLS=6;
+  bool EnableTLS=6; // expect and accept TLS negotiation
+  string TLSSubject=7; // name of the tls certificate to use
+
 }
 // defines the syntax of the config file
 message ConfigFile {
@@ -374,10 +376,6 @@ service H2GProxyService {
   // switch prober backend on or off (useful if a running h2gproxy needs to be probed)
   // this rpc is limited to root users
   rpc ConfigureProber(ConfigureProberRequest) returns (common.Void);
-  // we can get some meta information about proxied tcp connections here
-  rpc GetTCPMeta(TCPMetaRequest) returns (TCPSession);
-  // list of currently proxied tcp requests
-  rpc GetTCPSessions(common.Void) returns (TCPSessionList);
 }
 message TCPSession {
   // the port an external client connects to. This is what h2gproxy listens on
