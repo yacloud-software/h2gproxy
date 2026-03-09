@@ -26,7 +26,6 @@ var (
 	certmap            = make(map[string]*tls.Certificate)
 	certs              []tls.Certificate
 	certLock           sync.Mutex
-	got_certs_once     = false
 	single_cert        = flag.String("cert_host", "", "if set, only retrieve and service this certificate")
 	debug              = utils.DebugFlag("certmanager")
 	certs_starting_up  sync.Mutex // locked until certs retrieved
@@ -138,8 +137,7 @@ func cert_refresh() error {
 
 // do we have a certificate for this host?
 func HaveCert(name string) bool {
-	certs_starting_up.Lock()
-	certs_starting_up.Unlock()
+	WaitForCerts()
 	for k, _ := range certmap {
 		if k == name {
 			return true
@@ -150,6 +148,7 @@ func HaveCert(name string) bool {
 }
 
 func GetCert(hostname string, timeout time.Duration) (*tls.Certificate, error) {
+	WaitForCerts()
 	c := certmap[hostname]
 	if c != nil {
 		return c, nil
@@ -232,8 +231,18 @@ func request(name string) {
 	}
 }
 func AllCerts() []tls.Certificate {
+	WaitForCerts()
 	return certs
 }
 func CertMap() map[string]*tls.Certificate {
+	WaitForCerts()
 	return certmap
+}
+
+func WaitForCerts() {
+	if certs_are_ready {
+		return
+	}
+	certs_starting_up.Lock()
+	certs_starting_up.Unlock()
 }

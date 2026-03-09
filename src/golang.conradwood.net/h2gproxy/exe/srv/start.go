@@ -77,7 +77,7 @@ func main() {
 	// oddly does not apply actions if doing so
 	server.SetHealth(common.Health_STARTING)
 	fmt.Printf("Starting h2gproxy server...\n")
-	start_group.Add(3) // waiting for certificates and config and serverstartup callback
+	start_group.Add(2) // waiting for certificates and config and serverstartup callback
 	go wait_for_start()
 	var err error
 	if !*testcfg {
@@ -167,6 +167,7 @@ func startup() {
 func wait_for_start() {
 	fmt.Printf("Waiting for h2gproxy server completion...\n")
 	start_group.Wait()
+	shared.WaitForCerts()
 	fmt.Printf("Setting server to healthy...\n")
 	server.SetHealth(common.Health_READY)
 
