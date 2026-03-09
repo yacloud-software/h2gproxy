@@ -20,7 +20,7 @@ var (
 )
 
 // this is an io.Reader and a net.Conn
-type hreader struct {
+type Hreader struct {
 	is_conn          bool
 	orig_reader      io.Reader
 	orig_conn        net.Conn
@@ -32,17 +32,17 @@ type hreader struct {
 }
 
 // wrap a net.Conn
-func NewConn(l net.Conn) *hreader {
+func NewConn(l net.Conn) *Hreader {
 	l.LocalAddr() // test to see if nil
-	return &hreader{is_conn: true, orig_conn: l, scan_for_header: true}
+	return &Hreader{is_conn: true, orig_conn: l, scan_for_header: true}
 }
 
-func NewReader(r io.Reader) *hreader {
-	return &hreader{orig_reader: r, scan_for_header: true}
+func NewReader(r io.Reader) *Hreader {
+	return &Hreader{orig_reader: r, scan_for_header: true}
 }
 
 // block until we got header.
-func (h *hreader) ReadHeader() (*h2g.TCPStart, error) {
+func (h *Hreader) ReadHeader() (*h2g.TCPStart, error) {
 	if h.tcpstart != nil {
 		return h.tcpstart, nil
 	}
@@ -66,7 +66,7 @@ func (h *hreader) ReadHeader() (*h2g.TCPStart, error) {
 }
 
 // return header including start and end byte
-func (h *hreader) read_until_header_end_byte() ([]byte, error) {
+func (h *Hreader) read_until_header_end_byte() ([]byte, error) {
 	buf := make([]byte, 8192)
 	var res []byte
 	for {
@@ -104,12 +104,12 @@ func (h *hreader) read_until_header_end_byte() ([]byte, error) {
 	return res, nil
 }
 
-func (h *hreader) inject_for_read(buf []byte) {
+func (h *Hreader) inject_for_read(buf []byte) {
 	h.bytes_for_reader = append(h.bytes_for_reader, buf...)
 }
 
 // might return nil though
-func (h *hreader) GetHeader() *h2g.TCPStart {
+func (h *Hreader) GetHeader() *h2g.TCPStart {
 	if h.tcpstart != nil {
 		return h.tcpstart
 	}
@@ -119,7 +119,7 @@ func (h *hreader) GetHeader() *h2g.TCPStart {
 	return h.tcpstart
 }
 
-func (h *hreader) Read(buf []byte) (int, error) {
+func (h *Hreader) Read(buf []byte) (int, error) {
 	if len(h.bytes_for_reader) > 0 {
 		for i := 0; i < len(buf); i++ {
 			if i >= len(h.bytes_for_reader) {
@@ -135,7 +135,7 @@ func (h *hreader) Read(buf []byte) (int, error) {
 }
 
 // return bytes to send to reader
-func (h *hreader) read_header() error {
+func (h *Hreader) read_header() error {
 	mbuf := make([]byte, 8192)
 	first_round := true
 	var xbuf []byte
@@ -189,7 +189,7 @@ func (h *hreader) read_header() error {
 	}
 }
 
-func (h *hreader) read_from_orig(buf []byte) (int, error) {
+func (h *Hreader) read_from_orig(buf []byte) (int, error) {
 	var n int
 	var err error
 	if h.is_conn {
@@ -206,7 +206,7 @@ func (h *hreader) read_from_orig(buf []byte) (int, error) {
 
 }
 
-func (h *hreader) Debugf(format string, args ...any) {
+func (h *Hreader) Debugf(format string, args ...any) {
 	if !debug.BoolValue() {
 		return
 	}

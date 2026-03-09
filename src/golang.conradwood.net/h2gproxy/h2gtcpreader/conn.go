@@ -5,15 +5,15 @@ import (
 	"time"
 )
 
-func (hr *hreader) Close() error {
+func (hr *Hreader) Close() error {
 	hr.Debugf("closing\n")
 	return hr.orig_conn.Close()
 }
 
-func (hr *hreader) oRead(b []byte) (int, error) {
+func (hr *Hreader) oRead(b []byte) (int, error) {
 	return hr.orig_conn.Read(b)
 }
-func (hr *hreader) Write(b []byte) (int, error) {
+func (hr *Hreader) Write(b []byte) (int, error) {
 	n, err := hr.orig_conn.Write(b)
 	if err == nil {
 		hr.Debugf("written %d bytes, no error\n", n)
@@ -22,21 +22,21 @@ func (hr *hreader) Write(b []byte) (int, error) {
 	}
 	return n, err
 }
-func (hr *hreader) LocalAddr() net.Addr {
+func (hr *Hreader) LocalAddr() net.Addr {
 	return hr.orig_conn.LocalAddr()
 }
 
-func (hr *hreader) RemoteAddr() net.Addr {
+func (hr *Hreader) RemoteAddr() net.Addr {
 	return hr.orig_conn.RemoteAddr()
 }
-func (hr *hreader) SetDeadline(t time.Time) error {
+func (hr *Hreader) SetDeadline(t time.Time) error {
 	return hr.orig_conn.SetDeadline(t)
 }
 
 // SetReadDeadline sets the deadline for future Read calls
 // and any currently-blocked Read call.
 // A zero value for t means Read will not time out.
-func (hr *hreader) SetReadDeadline(t time.Time) error {
+func (hr *Hreader) SetReadDeadline(t time.Time) error {
 	return hr.orig_conn.SetReadDeadline(t)
 }
 
@@ -45,6 +45,6 @@ func (hr *hreader) SetReadDeadline(t time.Time) error {
 // Even if write times out, it may return n > 0, indicating that
 // some of the data was successfully written.
 // A zero value for t means Write will not time out.
-func (hr *hreader) SetWriteDeadline(t time.Time) error {
+func (hr *Hreader) SetWriteDeadline(t time.Time) error {
 	return hr.orig_conn.SetWriteDeadline(t)
 }
