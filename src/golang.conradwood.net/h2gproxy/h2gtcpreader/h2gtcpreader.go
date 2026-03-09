@@ -41,6 +41,11 @@ func NewReader(r io.Reader) *Hreader {
 	return &Hreader{orig_reader: r, scan_for_header: true}
 }
 
+// might return nil. you *must* call ReadHeader before this
+func (h *Hreader) GetHeader() *h2g.TCPStart {
+	return h.tcpstart
+}
+
 // block until we got header.
 func (h *Hreader) ReadHeader() (*h2g.TCPStart, error) {
 	if h.tcpstart != nil {
@@ -106,17 +111,6 @@ func (h *Hreader) read_until_header_end_byte() ([]byte, error) {
 
 func (h *Hreader) inject_for_read(buf []byte) {
 	h.bytes_for_reader = append(h.bytes_for_reader, buf...)
-}
-
-// might return nil though
-func (h *Hreader) GetHeader() *h2g.TCPStart {
-	if h.tcpstart != nil {
-		return h.tcpstart
-	}
-	res := &h2g.TCPStart{}
-	utils.Unmarshal(string(h.headerbuf), res)
-	h.tcpstart = res
-	return h.tcpstart
 }
 
 func (h *Hreader) Read(buf []byte) (int, error) {
