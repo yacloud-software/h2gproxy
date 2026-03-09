@@ -49,7 +49,8 @@ message TCPStart {
   string RemoteIP=2; // the peer's IP address
   uint32 RemotePort=3; // the peer's Port
   string LocalIP=4; // the IP it connected to
-  uint32 LocalPort=5; // the  port it connected to 
+  uint32 LocalPort=5; // the  port it connected to
+  bool WithTLS=6; // if encrypted
 }
 /*******************************************************
 gRPC Proxies must serve this
