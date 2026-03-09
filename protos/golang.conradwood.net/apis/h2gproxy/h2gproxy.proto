@@ -336,6 +336,7 @@ message TCPProxy {
   string Target=2;
   uint32 KeepAliveSeconds=3;
   bool AddHeaderToTCP=5; // if true, send a TCPStart proto down the connection
+  bool WrapInTLS=6;
 }
 // defines the syntax of the config file
 message ConfigFile {
