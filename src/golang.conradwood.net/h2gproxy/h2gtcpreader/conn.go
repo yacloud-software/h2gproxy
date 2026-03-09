@@ -6,14 +6,21 @@ import (
 )
 
 func (hr *hreader) Close() error {
+	hr.Debugf("closing\n")
 	return hr.orig_conn.Close()
 }
 
-func (hr *hreader) oRead(b []byte) (n int, err error) {
+func (hr *hreader) oRead(b []byte) (int, error) {
 	return hr.orig_conn.Read(b)
 }
-func (hr *hreader) Write(b []byte) (n int, err error) {
-	return hr.orig_conn.Write(b)
+func (hr *hreader) Write(b []byte) (int, error) {
+	n, err := hr.orig_conn.Write(b)
+	if err == nil {
+		hr.Debugf("written %d bytes, no error\n", n)
+	} else {
+		hr.Debugf("written %d bytes, error=%s\n", n, err)
+	}
+	return n, err
 }
 func (hr *hreader) LocalAddr() net.Addr {
 	return hr.orig_conn.LocalAddr()
