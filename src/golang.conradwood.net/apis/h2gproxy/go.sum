@@ -56,8 +56,8 @@ golang.conradwood.net/apis/auth v1.1.4424 h1:E8rmP3HJ4HOiuvvANrcAIuBv78pGPkeU8bF
 golang.conradwood.net/apis/auth v1.1.4424/go.mod h1:PJxA/Lup4vRlwNIzqwARNSXw8D56TzR9T+sWnTOKMhg=
 golang.conradwood.net/apis/autodeployer v1.1.4424 h1:oByPLLTI+UrSNdaPEYLASFPF7Bsr0BZebHx0ctIJ41M=
 golang.conradwood.net/apis/autodeployer v1.1.4424/go.mod h1:VIw/6MQhYvjQ69V9Mkm2qdMSS6vX7jVyqQ4ceJW4nzI=
-golang.conradwood.net/apis/common v1.1.4457 h1:+6fzh7PQHnpfUUQnnX1l9Y9iMMAkNuVni3NHOcPQIz4=
-golang.conradwood.net/apis/common v1.1.4457/go.mod h1:709A2B66q+Wofu7SDCbpAvEqLuV9/tKeLiUgUYrgQuU=
+golang.conradwood.net/apis/common v1.1.4459 h1:+XzZtT/eY2DNVuvnjIp29ezSnv9fD9YwgEt+NgIQRps=
+golang.conradwood.net/apis/common v1.1.4459/go.mod h1:mW/Qfb0oYWMy+23gNY+s6mA7GvzFuXA15/5S/yG0ssc=
 golang.conradwood.net/apis/deploymonkey v1.1.4424 h1:80snFemREd+qXwNVXbkBrQpI+5+v6yFNA7Qt9NQt4+c=
 golang.conradwood.net/apis/deploymonkey v1.1.4424/go.mod h1:qdmW0uiOzJjmwlfK40aVT3cbhgIEJeaNna2dfhdgQ9k=
 golang.conradwood.net/apis/goeasyops v1.1.4424 h1:jIPpL23IOw3cr/2fF+k1++h0drS26jfGALECMF98DTM=

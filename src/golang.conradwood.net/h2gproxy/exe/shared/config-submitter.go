@@ -120,7 +120,7 @@ func Submit(ctx context.Context, lb lbps, fname string, def Httpdef) (*pb.Config
 			KeepAliveSeconds:  tcpdef.KeepAliveSeconds,
 			AddHeaderToTCP:    tcpdef.AddHeaderToTCP,
 			EnableTLS:         tcpdef.EnableTLS,
-			TLSSubject:        tcpdef.TLSSubject,
+			EntryPoint:        tcpdef.EntryPoint,
 		}
 
 		_, err := lb.AddConfigTCP(ctx, addreq)

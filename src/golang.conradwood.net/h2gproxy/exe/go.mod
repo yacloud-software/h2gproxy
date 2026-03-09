@@ -7,7 +7,7 @@ require (
 	golang.conradwood.net/apis/antidos v1.1.4457
 	golang.conradwood.net/apis/auth v1.1.4457
 	golang.conradwood.net/apis/certmanager v1.1.4457
-	golang.conradwood.net/apis/common v1.1.4457
+	golang.conradwood.net/apis/common v1.1.4459
 	golang.conradwood.net/apis/goeasyops v1.1.4457
 	golang.conradwood.net/apis/h2gproxy v1.1.4424
 	golang.conradwood.net/apis/registry v1.1.4457
