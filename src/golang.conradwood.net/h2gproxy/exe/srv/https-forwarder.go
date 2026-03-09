@@ -51,7 +51,6 @@ func StartHTTPSServer() error {
 	cf := true
 	for _, port := range portsFromString(*httpsport) {
 		adr := fmt.Sprintf(":%d", port)
-		fmt.Printf("Starting https server on port %s\n", adr)
 		er := startHTTPS(loginTarget, adr, port)
 		if er == nil {
 			fmt.Printf("HTTPS server started.\n")
@@ -68,6 +67,9 @@ func StartHTTPSServer() error {
 
 // silly function to check startup of https
 func startHTTPS(r *HTTPForwarder, adr string, port int) error {
+	shared.WaitForCerts()
+	fmt.Printf("Starting https server on port %s\n", adr)
+
 	go func() {
 		//		httpsMux := http.NewServeMux()
 		f := &https_req_handler{port: port}
