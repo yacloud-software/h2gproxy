@@ -7,6 +7,19 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const (
+	// some errors might occur before we
+	// can actually hit our backend
+	INTERNAL_ERROR_NO_TARGET           = 601
+	INTERNAL_ERROR_NO_LOGIN_BACKEND    = 602
+	INTERNAL_ERROR_BUG                 = 603
+	INTERNAL_ERROR_CONFIG_ERROR        = 604
+	INTERNAL_ACCESS_DENIED_EXTERNAL    = 605
+	INTERNAL_ACCESS_DENIED_GROUP       = 403
+	INTERNAL_ACCESS_DENIED_NONVALID    = 607
+	INTERNAL_ACCESS_DENIED_EMAILVERIFY = 608
+)
+
 type HTTPError struct {
 	ErrorCode           int
 	ErrorString         string

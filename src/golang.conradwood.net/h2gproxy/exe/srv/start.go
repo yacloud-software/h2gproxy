@@ -25,6 +25,7 @@ import (
 	"golang.conradwood.net/h2gproxy/probe"
 	proxynone "golang.conradwood.net/h2gproxy/proxies/none"
 	"golang.conradwood.net/h2gproxy/shared"
+	"golang.conradwood.net/h2gproxy/tcpproxy"
 	"google.golang.org/grpc"
 )
 
@@ -57,7 +58,7 @@ var (
 
 type Config struct {
 	id             string
-	tcpforwarders  []*TCPForwarder
+	tcpforwarders  []*tcpproxy.TCPForwarder
 	httpforwarders []*HTTPForwarder
 }
 
@@ -189,7 +190,7 @@ func apply(cfg *Config) error {
 		}
 	}
 	for _, tf := range cfg.tcpforwarders {
-		tf.Forward()
+		tf.Start()
 	}
 
 	// deal with special target "weblogin":
@@ -292,11 +293,11 @@ func (*H2gproxyServer) AddConfigTCP(c context.Context, cr *pb.AddConfigTCPReques
 	if cfg == nil {
 		return nil, errors.New(fmt.Sprintf("No such config: %s\n", cr.ConfigID))
 	}
-	tf := TCPForwarder{Port: int(cr.SourcePort),
-		Path:   cr.TargetServicePath,
-		config: cr,
+	tf, err := tcpproxy.NewTCPForwarder(cr)
+	if err != nil {
+		return nil, err
 	}
-	cfg.tcpforwarders = append(cfg.tcpforwarders, &tf)
+	cfg.tcpforwarders = append(cfg.tcpforwarders, tf)
 	return &pb.AddConfigResponse{}, nil
 }
 

@@ -7,8 +7,8 @@ require (
 	golang.conradwood.net/apis/antidos v1.1.4451
 	golang.conradwood.net/apis/auth v1.1.4451
 	golang.conradwood.net/apis/certmanager v1.1.4451
-	golang.conradwood.net/apis/common v1.1.4451
-	golang.conradwood.net/apis/framework v1.1.4451
+	golang.conradwood.net/apis/common v1.1.4455
+	golang.conradwood.net/apis/goeasyops v1.1.4451
 	golang.conradwood.net/apis/h2gproxy v1.1.4424
 	golang.conradwood.net/apis/registry v1.1.4451
 	golang.conradwood.net/apis/rpcinterceptor v1.1.4451
@@ -39,7 +39,6 @@ require (
 	golang.conradwood.net/apis/deploymonkey v1.1.4451 // indirect
 	golang.conradwood.net/apis/errorlogger v1.1.4451 // indirect
 	golang.conradwood.net/apis/getestservice v1.1.4451 // indirect
-	golang.conradwood.net/apis/goeasyops v1.1.4451 // indirect
 	golang.conradwood.net/apis/grafanadata v1.1.4451 // indirect
 	golang.conradwood.net/apis/objectstore v1.1.4451 // indirect
 	golang.org/x/sys v0.41.0 // indirect

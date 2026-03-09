@@ -1,18 +1,20 @@
-package srv
+package tcpproxy
 
 import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
+	"net"
+	"sync"
+	"time"
+
 	h2g "golang.conradwood.net/apis/h2gproxy"
 	"golang.conradwood.net/go-easyops/client"
 	"golang.conradwood.net/go-easyops/prometheus"
 	"golang.conradwood.net/go-easyops/utils"
 	"golang.conradwood.net/h2gproxy/iphelper"
-	"io"
-	"net"
-	"sync"
-	"time"
+	"golang.conradwood.net/h2gproxy/shared"
 )
 
 var (
@@ -83,18 +85,7 @@ type TCPForwarder struct {
 }
 
 func init() {
-	err := prometheus.Register(byteCounter)
-	if err != nil {
-		tcp_Printf("Failed to register byteCounter: %s\n", err)
-	}
-	err = prometheus.Register(connectCounter)
-	if err != nil {
-		tcp_Printf("Failed to register connectCounter: %s\n", err)
-	}
-	err = prometheus.Register(currentConnections)
-	if err != nil {
-		tcp_Printf("Failed to register currentConnectionsCounter: %s\n", err)
-	}
+	prometheus.MustRegister(byteCounter, connectCounter, currentConnections)
 
 }
 func (tf *TCPForwarder) startPortAcceptLoop() error {
@@ -166,7 +157,7 @@ func (tf *TCPForwarder) forward(incoming net.Conn) {
 		tf.lock.Lock()
 		defer tf.lock.Unlock()
 		connectCounter.With(prometheus.Labels{
-			"statuscode": fmt.Sprintf("%d", INTERNAL_ERROR_NO_TARGET),
+			"statuscode": fmt.Sprintf("%d", shared.INTERNAL_ERROR_NO_TARGET),
 			"target":     tf.Path,
 			"targethost": ""}).Inc()
 
@@ -255,7 +246,7 @@ func (tf *TCPForwarder) Stop() error {
 	return nil
 }
 
-func (tf *TCPForwarder) Forward() error {
+func (tf *TCPForwarder) Start() error {
 	tcp_Printf("Forwarding %d to %s\n", tf.Port, tf.Path)
 	err := tf.startPortAcceptLoop()
 	if err != nil {

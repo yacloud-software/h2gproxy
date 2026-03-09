@@ -4,17 +4,17 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"os"
+
 	"golang.conradwood.net/apis/common"
 	pb "golang.conradwood.net/apis/h2gproxy"
 	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/utils"
 	"golang.conradwood.net/h2gproxy/shared"
-	"os"
 )
 
 // static variables for flag parser
 var (
-	cons       = flag.Bool("tcp_connections", false, "show tcp connections")
 	prober_on  = flag.Bool("prober_on", false, "switch probers on")
 	prober_off = flag.Bool("prober_off", false, "switch probers on")
 	showHosts  = flag.Bool("show_hosts", false, "show known hosts")
@@ -29,10 +29,6 @@ func main() {
 	flag.Parse()
 	lbc = pb.GetH2GProxyServiceClient()
 	ctx := authremote.Context()
-	if *cons {
-		showConnections()
-		os.Exit(0)
-	}
 	if *prober_on {
 		configProber(ctx, true)
 	}
@@ -87,15 +83,4 @@ func configProber(ctx context.Context, status bool) {
 	_, err := lbc.ConfigureProber(ctx, req)
 	utils.Bail("failed to configure prober", err)
 
-}
-func showConnections() {
-	ctx := authremote.Context()
-	fmt.Printf("Showing tcp connections...\n")
-	tsl, err := lbc.GetTCPSessions(ctx, &common.Void{})
-	utils.Bail("failed to get sessions", err)
-	for _, s := range tsl.Sessions {
-		fmt.Printf("Session : %s:%d - %s:%d <=> %s:%d - %s:%d\n",
-			s.PeerHost, s.PeerPort, "h2gproxy", s.InboundPort,
-			"h2gproxy", s.ProxyOutboundPort, s.ProxyTargetHost, s.ProxyTargetPort)
-	}
 }

@@ -21,6 +21,7 @@ import (
 	"golang.conradwood.net/go-easyops/auth"
 	"golang.conradwood.net/go-easyops/errors"
 	"golang.conradwood.net/go-easyops/prometheus"
+	"golang.conradwood.net/h2gproxy/shared"
 	"golang.conradwood.net/h2gproxy/stream/unistream"
 
 	//	"golang.conradwood.net/go-easyops/tokens"
@@ -35,19 +36,6 @@ import (
 	"time"
 
 	"golang.conradwood.net/go-easyops/utils"
-)
-
-const (
-	// some errors might occur before we
-	// can actually hit our backend
-	INTERNAL_ERROR_NO_TARGET           = 601
-	INTERNAL_ERROR_NO_LOGIN_BACKEND    = 602
-	INTERNAL_ERROR_BUG                 = 603
-	INTERNAL_ERROR_CONFIG_ERROR        = 604
-	INTERNAL_ACCESS_DENIED_EXTERNAL    = 605
-	INTERNAL_ACCESS_DENIED_GROUP       = 403
-	INTERNAL_ACCESS_DENIED_NONVALID    = 607
-	INTERNAL_ACCESS_DENIED_EMAILVERIFY = 608
 )
 
 var (
@@ -245,7 +233,7 @@ func (hf *HTTPForwarder) didHTTPSUpgrade(w http.ResponseWriter, r *http.Request)
 		}
 	}
 	// only upgrade those for which we actually have a certificate
-	if !HaveCert(r.Host) || !*http_upgrade {
+	if !shared.HaveCert(r.Host) || !*http_upgrade {
 		return false
 	}
 	u := fmt.Sprintf("%s", r.URL)
@@ -347,7 +335,7 @@ func (f *FProxy) execute_raw() {
 
 	f.clientReqHost = f.req.Host
 	label_hostname := f.clientReqHost
-	if !HaveCert(label_hostname) {
+	if !shared.HaveCert(label_hostname) {
 		// since all sorts of spammers contact us with dodgy hostnames, we limit it to onces we know
 		// we actually don't keep a list of "onces we know", we use the list of https certificates instead
 		label_hostname = "unknown_host"
@@ -535,7 +523,7 @@ func (f *FProxy) director2(req *http.Request) {
 			f.Printf("access to %s from %s denied (only allowed from RFC1918 addresses)\n", path, f.remoteHost)
 			req.URL = f.Errorurl
 			req.Host = *DefaultHost
-			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_EXTERNAL, errors.Errorf("need RFC1918 address"))
+			f.SetAndLogFailure(shared.INTERNAL_ACCESS_DENIED_EXTERNAL, errors.Errorf("need RFC1918 address"))
 			return
 		}
 	}
@@ -550,7 +538,7 @@ func (f *FProxy) director2(req *http.Request) {
 			f.Printf("Failed to lookup targetservice %s for path %s: %s\n", f.hf.def.TargetService, path, err)
 			req.URL = f.Errorurl
 			req.Host = *DefaultHost
-			f.SetAndLogFailure(INTERNAL_ERROR_NO_TARGET, err)
+			f.SetAndLogFailure(shared.INTERNAL_ERROR_NO_TARGET, err)
 			return
 		}
 		dest_host = f.hf.lastHost
@@ -584,7 +572,7 @@ func (f *FProxy) director2(req *http.Request) {
 				f.Printf("Failed to lookup loginservice %s for path %s: %s\n", f.hf.def.TargetService, path, err)
 				req.URL = f.Errorurl
 				req.Host = *DefaultHost
-				f.SetAndLogFailure(INTERNAL_ERROR_NO_LOGIN_BACKEND, err)
+				f.SetAndLogFailure(shared.INTERNAL_ERROR_NO_LOGIN_BACKEND, err)
 				return
 			}
 			// set the stuff the weblogin thing needs:
@@ -608,7 +596,7 @@ func (f *FProxy) director2(req *http.Request) {
 			f.Printf("User %v email is not (yet) verified (path=%s)\n", f.unsigneduser, path)
 			req.URL = f.Errorurl
 			req.Host = *DefaultHost
-			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_EMAILVERIFY, errors.Errorf("user email not verified"))
+			f.SetAndLogFailure(shared.INTERNAL_ACCESS_DENIED_EMAILVERIFY, errors.Errorf("user email not verified"))
 			return
 		}
 	}
@@ -621,7 +609,7 @@ func (f *FProxy) director2(req *http.Request) {
 			f.Printf("User %v is not in any of the groups for path %s\n", f.unsigneduser, path)
 			req.URL = f.Errorurl
 			req.Host = *DefaultHost
-			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_GROUP, errors.Errorf("internal_access_denied_group"))
+			f.SetAndLogFailure(shared.INTERNAL_ACCESS_DENIED_GROUP, errors.Errorf("internal_access_denied_group"))
 			return
 		}
 	}
@@ -641,7 +629,7 @@ func (f *FProxy) director2(req *http.Request) {
 		f.Printf("Should not happen (path=%s,urlpath=%s)!!\n", path, f.hf.def.URLPath)
 		req.URL = f.Errorurl
 		req.Host = *DefaultHost
-		f.SetAndLogFailure(INTERNAL_ERROR_BUG, errors.Errorf("internal error: urlpath is off"))
+		f.SetAndLogFailure(shared.INTERNAL_ERROR_BUG, errors.Errorf("internal error: urlpath is off"))
 		return
 	}
 	// strip out the urlpath (the stuff we matched on)
@@ -683,7 +671,7 @@ func (f *FProxy) director2(req *http.Request) {
 		f.Printf("WTF?? %s encountered url parse error: %s\n", us, err)
 		req.Host = *DefaultHost
 		req.URL = f.Errorurl
-		f.SetAndLogFailure(INTERNAL_ERROR_CONFIG_ERROR, err)
+		f.SetAndLogFailure(shared.INTERNAL_ERROR_CONFIG_ERROR, err)
 		return
 	}
 

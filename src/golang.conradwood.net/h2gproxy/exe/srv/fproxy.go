@@ -534,7 +534,7 @@ func (f *FProxy) createUserHeaders() (map[string]string, error) {
 		suser, err := utils.Marshal(f.unsigneduser)
 		if err != nil {
 			f.Printf("Failed to marshal user: %s\n", utils.ErrorString(err))
-			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_NONVALID, err)
+			f.SetAndLogFailure(shared.INTERNAL_ACCESS_DENIED_NONVALID, err)
 			return nil, err
 		}
 		res["X-SIGNEDUSER"] = suser
@@ -542,7 +542,7 @@ func (f *FProxy) createUserHeaders() (map[string]string, error) {
 		suser, err = utils.Marshal(f.signeduser)
 		if err != nil {
 			f.Printf("Failed to marshal signed user: %s\n", utils.ErrorString(err))
-			f.SetAndLogFailure(INTERNAL_ACCESS_DENIED_NONVALID, err)
+			f.SetAndLogFailure(shared.INTERNAL_ACCESS_DENIED_NONVALID, err)
 			return nil, err
 		}
 		res["X-USERWITHSIGNATURE"] = suser

@@ -4,12 +4,13 @@ package shared
 
 import (
 	"fmt"
+	"io/ioutil"
+	"strings"
+
 	pb "golang.conradwood.net/apis/h2gproxy"
 	"golang.conradwood.net/go-easyops/utils"
 	"golang.org/x/net/context"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"strings"
 )
 
 var (
@@ -118,6 +119,8 @@ func Submit(ctx context.Context, lb lbps, fname string, def Httpdef) (*pb.Config
 			TargetServicePath: tcpdef.Target,
 			KeepAliveSeconds:  tcpdef.KeepAliveSeconds,
 			AddHeaderToTCP:    tcpdef.AddHeaderToTCP,
+			EnableTLS:         tcpdef.EnableTLS,
+			TLSSubject:        tcpdef.TLSSubject,
 		}
 
 		_, err := lb.AddConfigTCP(ctx, addreq)

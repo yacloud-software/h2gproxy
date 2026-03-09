@@ -2,11 +2,13 @@ package srv
 
 import (
 	"context"
-	"golang.conradwood.net/apis/common"
-	pb "golang.conradwood.net/apis/h2gproxy"
 	"sort"
 	"strings"
 	"sync"
+
+	"golang.conradwood.net/apis/common"
+	pb "golang.conradwood.net/apis/h2gproxy"
+	"golang.conradwood.net/h2gproxy/shared"
 )
 
 const (
@@ -28,7 +30,7 @@ func (*H2gproxyServer) GetKnownHosts(ctx context.Context, req *common.Void) (*pb
 	hostlock.Unlock()
 	// now do slow stuff
 	for _, h := range res.Hosts {
-		h.GotCertificate = HaveCert(h.Hostname)
+		h.GotCertificate = shared.HaveCert(h.Hostname)
 	}
 	sort.Slice(res.Hosts, func(i, j int) bool {
 		return res.Hosts[i].Hostname < res.Hosts[j].Hostname
