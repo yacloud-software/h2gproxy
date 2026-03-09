@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 
-	fw "golang.conradwood.net/apis/framework"
+	"golang.conradwood.net/apis/goeasyops"
 	h2g "golang.conradwood.net/apis/h2gproxy"
 	ic "golang.conradwood.net/apis/rpcinterceptor"
 	"golang.conradwood.net/go-easyops/auth"
@@ -401,15 +401,31 @@ func get_public_error_message(err error) string {
 		return ""
 	}
 	for _, a := range st.Details() {
-		fmd, ok := a.(*fw.FrameworkMessageDetail)
-		if !ok {
-			continue
+		fmd, ok := a.(*goeasyops.GRPCError)
+		if ok {
+			if *debug_rpc {
+				fmt.Printf("Error-Message: %#v\n", fmd)
+			}
+			//return fmd.Message
+			return fmt.Sprintf("%s", st.Message())
 		}
-		if *debug_rpc {
-			fmt.Printf("Error-Message: %#v\n", fmd)
+
+		fmdl, ok := a.(*goeasyops.GRPCErrorList)
+		fmd = nil
+		if ok {
+			for _, xfmd := range fmdl.Errors {
+				if *debug_rpc {
+					fmt.Printf("Error-Message: %#v\n", xfmd)
+				}
+				//return fmd.Message
+				if fmd == nil {
+					fmd = xfmd
+				}
+			}
 		}
-		//return fmd.Message
-		return fmt.Sprintf("%s", st.Message())
+		if fmd != nil {
+			return fmd.UserMessage
+		}
 
 	}
 	return ""
