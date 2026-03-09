@@ -291,6 +291,7 @@ func (tf *TCPForwarder) send_header(nc net.Conn, incoming net.Conn) error {
 		RemoteIP:     ip,
 		RemotePort:   rport,
 		WithTLS:      tf.config.EnableTLS,
+		EntryPoint:   tf.config.EntryPoint,
 	}
 	tf.Debugf("[tcp] Sending header %v\n", header)
 
