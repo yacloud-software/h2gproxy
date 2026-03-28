@@ -56,8 +56,8 @@ golang.conradwood.net/apis/auth v1.1.4424 h1:E8rmP3HJ4HOiuvvANrcAIuBv78pGPkeU8bF
 golang.conradwood.net/apis/auth v1.1.4424/go.mod h1:PJxA/Lup4vRlwNIzqwARNSXw8D56TzR9T+sWnTOKMhg=
 golang.conradwood.net/apis/autodeployer v1.1.4424 h1:oByPLLTI+UrSNdaPEYLASFPF7Bsr0BZebHx0ctIJ41M=
 golang.conradwood.net/apis/autodeployer v1.1.4424/go.mod h1:VIw/6MQhYvjQ69V9Mkm2qdMSS6vX7jVyqQ4ceJW4nzI=
-golang.conradwood.net/apis/common v1.1.4459 h1:+XzZtT/eY2DNVuvnjIp29ezSnv9fD9YwgEt+NgIQRps=
-golang.conradwood.net/apis/common v1.1.4459/go.mod h1:mW/Qfb0oYWMy+23gNY+s6mA7GvzFuXA15/5S/yG0ssc=
+golang.conradwood.net/apis/common v1.1.4507 h1:5NvAbMvFGfTawlG6k8KuQ/O7VEBuomg4Gc54lV4sMck=
+golang.conradwood.net/apis/common v1.1.4507/go.mod h1:Dzqia/dW+1eNh0tvbFsE25l7JZrgY3GrSIgXmNrG3XM=
 golang.conradwood.net/apis/deploymonkey v1.1.4424 h1:80snFemREd+qXwNVXbkBrQpI+5+v6yFNA7Qt9NQt4+c=
 golang.conradwood.net/apis/deploymonkey v1.1.4424/go.mod h1:qdmW0uiOzJjmwlfK40aVT3cbhgIEJeaNna2dfhdgQ9k=
 golang.conradwood.net/apis/goeasyops v1.1.4424 h1:jIPpL23IOw3cr/2fF+k1++h0drS26jfGALECMF98DTM=
@@ -68,8 +68,8 @@ golang.conradwood.net/apis/objectstore v1.1.4424 h1:1n4VTDgaLV/w5MIdVdFIr8wQCRQO
 golang.conradwood.net/apis/objectstore v1.1.4424/go.mod h1:LySPpv69qxYELW8x9k8LG73GbEQPreq9sQUzvjmSp0o=
 golang.conradwood.net/apis/registry v1.1.4424 h1:+HB1z3l8s0F+AmHTeAVkauCszU/pQiZRutNsISOlPrk=
 golang.conradwood.net/apis/registry v1.1.4424/go.mod h1:l7bBABt9U/OFEwVafE0+wGgvyYoTSTMcPsnF6ANolyg=
-golang.conradwood.net/go-easyops v0.1.39643 h1:lFfE2C1R+37ciG/PrElT3XKdzKzeqkWd/y65HbLxkUc=
-golang.conradwood.net/go-easyops v0.1.39643/go.mod h1:Utq0igryjXDGTGpVgBaojRC3lpWa2/GlU5pLnUNO58k=
+golang.conradwood.net/go-easyops v0.1.39925 h1:5wnj3L+/5k5YK8lv6p7kJH5zgmUBqtFZUNreswnFMmk=
+golang.conradwood.net/go-easyops v0.1.39925/go.mod h1:Utq0igryjXDGTGpVgBaojRC3lpWa2/GlU5pLnUNO58k=
 golang.org/x/net v0.51.0 h1:94R/GTO7mt3/4wIKpcR5gkGmRLOuE/2hNGeWq/GBIFo=
 golang.org/x/net v0.51.0/go.mod h1:aamm+2QF5ogm02fjy5Bb7CQ0WMt1/WVM7FtyaTLlA9Y=
 golang.org/x/sys v0.41.0 h1:Ivj+2Cp/ylzLiEU89QhWblYnOE9zerudt9Ftecq2C6k=

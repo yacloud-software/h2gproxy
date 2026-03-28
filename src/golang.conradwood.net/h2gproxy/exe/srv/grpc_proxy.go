@@ -355,6 +355,14 @@ func (g *GRPCProxy) grpcproxy(a *authResult) (context.Context, error) {
 
 	g.f.customHeaders(nil)
 	g.f.SetHeader("X-LB-RequestID", reqid)
+	for _, header := range resp.Headers {
+		v := header.Values
+		if len(v) == 0 {
+			continue
+		}
+		value := v[0]
+		g.f.SetHeader(header.Name, value)
+	}
 
 	g.f.SetStatus(code)
 	g.f.Write(resp.Body)

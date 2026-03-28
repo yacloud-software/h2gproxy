@@ -7,14 +7,14 @@ require (
 	golang.conradwood.net/apis/antidos v1.1.4457
 	golang.conradwood.net/apis/auth v1.1.4457
 	golang.conradwood.net/apis/certmanager v1.1.4457
-	golang.conradwood.net/apis/common v1.1.4459
+	golang.conradwood.net/apis/common v1.1.4507
 	golang.conradwood.net/apis/goeasyops v1.1.4457
 	golang.conradwood.net/apis/h2gproxy v1.1.4424
 	golang.conradwood.net/apis/registry v1.1.4457
 	golang.conradwood.net/apis/rpcinterceptor v1.1.4457
 	golang.conradwood.net/apis/usagestats v1.1.4457
 	golang.conradwood.net/apis/weblogin v1.1.4457
-	golang.conradwood.net/go-easyops v0.1.39643
+	golang.conradwood.net/go-easyops v0.1.39925
 	golang.org/x/net v0.51.0
 	golang.yacloud.eu/apis/session v1.1.4457
 	golang.yacloud.eu/apis/sessionmanager v1.1.4457
