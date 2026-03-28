@@ -191,6 +191,7 @@ message ServeResponse {
   bytes Body = 6;              // the response to be served to the client
   bool RedirectToSlash = 7;// if true (in response from backend, h2gproxy will issue a redirect to the browser to the url+"/"
   ByteRange ByteRange=8; // if the backend supports partial content, it must provide the range of the content it returns here
+  repeated Header Headers=9; // any headers to send back to browser from backend
 }
 
 // also check config-submitter.go !!!
