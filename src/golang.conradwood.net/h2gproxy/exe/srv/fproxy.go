@@ -559,13 +559,15 @@ func (f *FProxy) CookieDomain() string {
 		return ""
 	}
 	cr := f.clientReqHost
-	i := strings.Index(cr, ".")
-	if i == -1 {
-		return ""
+	if strings.Count(cr, ".") > 1 {
+		i := strings.Index(cr, ".")
+		if i == -1 {
+			return ""
+		}
+		cr = cr[i:]
 	}
-	cr = cr[i:]
 	// may include a port
-	i = strings.Index(cr, ":")
+	i := strings.Index(cr, ":")
 	if i != -1 {
 		cr = cr[:i]
 	}
