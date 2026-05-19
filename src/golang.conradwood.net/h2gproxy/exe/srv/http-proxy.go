@@ -68,7 +68,7 @@ var (
 		},
 		[]string{"proto", "targetservice", "targethost", "name"},
 	)
-	reqHostCounter = prometheus.NewCounterVec(
+	reqHostCounter = prometheus.NewCounterVec( // not registered
 		prometheus.CounterOpts{
 			Name: "h2gproxy_incoming_http_byhost",
 			Help: "V=1 UNIT=ops http requests received by hostname",
@@ -310,7 +310,7 @@ func (hf *HTTPForwarder) TooBusy() bool {
 }
 
 func init() {
-	prometheus.MustRegister(reqHostCounter, timsummary, reqCounter, reqCounterIn, statusCounter, inFlightGauge, reqUserCounter, maxReqCounter, limitGauge)
+	prometheus.MustRegister(timsummary, reqCounter, reqCounterIn, statusCounter, inFlightGauge, reqUserCounter, maxReqCounter, limitGauge)
 }
 
 func getUserIdentifier(user *apb.User) string {
