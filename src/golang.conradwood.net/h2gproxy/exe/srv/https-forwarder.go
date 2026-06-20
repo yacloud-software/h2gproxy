@@ -87,7 +87,7 @@ func startHTTPS(r *HTTPForwarder, adr string, port int) error {
 		// we load all the certs into the server
 		tlsConfig.Certificates = shared.AllCerts()
 		// and then specify which one to serve for which host
-		tlsConfig.NameToCertificate = shared.CertMap()
+		//	tlsConfig.NameToCertificate = shared.CertMap()
 		tlsConfig.GetCertificate = getcert
 		// and then start the server
 		r.server.ListenAndServeTLS("", "")

@@ -6,13 +6,11 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"flag"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	"golang.conradwood.net/apis/certmanager"
-	"golang.conradwood.net/apis/common"
 	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/cache"
 	"golang.conradwood.net/go-easyops/errors"
@@ -46,7 +44,7 @@ func cert_refresher() {
 		time.Sleep(t)
 		err := cert_refresh()
 		if err != nil {
-			fmt.Printf("Failed to refresh certs: %s\n", utils.ErrorString(err))
+			debug.Printf("Failed to refresh certs: %s\n", utils.ErrorString(err))
 		} else {
 			t = time.Duration(600) * time.Second
 			if !certs_are_ready {
@@ -67,13 +65,14 @@ func cert_refresh() error {
 	last_cert_refresh = time.Now()
 	certLock.Lock()
 	defer certLock.Unlock()
-	fmt.Printf("[certs] refreshing...\n")
+	debug.Debugf("refreshing...\n")
 	ctx := authremote.Context()
 	var certlist *certmanager.CertNameList
 	//var certlist string
 	var err error
 	if *single_cert == "" {
-		certlist, err = certmanager.GetCertManagerClient().ListPublicCertificates(ctx, &common.Void{})
+		cf := &certmanager.CertFilter{IncludeExpired: false}
+		certlist, err = certmanager.GetCertManagerClient().ListPublicCertificates(ctx, cf)
 		if err != nil {
 			return err
 		}
@@ -82,36 +81,44 @@ func cert_refresh() error {
 			&certmanager.CertInfo{Hostname: *single_cert},
 		}}
 	}
+	debug.Printf("Retrieving %d certificates\n", len(certlist.Certificates))
 	newcerts := make(map[string]*tls.Certificate)
+	tp := &utils.ProgressReporter{}
+	tp.SetTotal(uint64(len(certlist.Certificates)))
 	for _, c := range certlist.Certificates {
+		tp.Add(1)
+		if debug.BoolValue() {
+			tp.Print()
+		}
 		debug.Debugf("cert: %s\n", c.Hostname)
 		//		ctx := createBootstrapContext()
 		ctx := authremote.Context()
 		pcr := &certmanager.PublicCertRequest{Hostname: c.Hostname}
 		cert, err := certmanager.GetCertManagerClient().GetPublicCertificate(ctx, pcr)
 		if err != nil {
-			fmt.Printf("[certs] Failed to load cert %s: %s\n", pcr.Hostname, err)
+			debug.Printf("certificate: %v\n", c)
+			debug.Printf("Failed to load cert %s: %s\n", pcr.Hostname, errors.ErrorString(err))
 			continue
 		}
 		// TODO - change this to use cert.TLS* instead
 		tc, err := tls.X509KeyPair([]byte(cert.Cert.PemCertificate), []byte(cert.Cert.PemPrivateKey))
 		if err != nil {
-			fmt.Printf("[certs] Failed to parse cert %s: %s\n", pcr.Hostname, err)
+			debug.Printf("Failed to parse cert %s: %s\n", pcr.Hostname, err)
 			continue
 		}
 		// add the ca:
 		block, _ := pem.Decode([]byte(cert.Cert.PemCA))
 		if block == nil {
-			fmt.Printf("[certs] certificate %s has no CA certificate\n", cert.Cert.Host)
+			debug.Printf("certificate %s has no CA certificate\n", cert.Cert.Host)
 		} else {
 			xcert, xerr := x509.ParseCertificate(block.Bytes)
 			if xerr != nil {
-				fmt.Printf("[certs] Cannot parse certificate %s: %s\n", cert.Cert.Host, err)
+				debug.Printf("Cannot parse certificate %s: %s\n", cert.Cert.Host, err)
 				return err
 			}
 			now := time.Now()
 			if now.After(xcert.NotAfter) {
-				fmt.Printf("[certs] certificate for \"%s\" expired on %v\n", c.Hostname, xcert.NotAfter)
+				debug.Printf("certificate for \"%s\" expired on %v\n", c.Hostname, xcert.NotAfter)
 				continue
 			}
 
@@ -131,7 +138,7 @@ func cert_refresh() error {
 	}
 	certs = newcertlist
 	certmap = newcerts
-	fmt.Printf("[certs] %d Certs loaded\n", len(certs))
+	debug.Printf("%d Certs loaded\n", len(certs))
 	return nil
 }
 
@@ -159,7 +166,7 @@ func GetCert(hostname string, timeout time.Duration) (*tls.Certificate, error) {
 	if c != nil {
 		return c, nil
 	}
-	//	fmt.Printf("servername: \"%s\"\n", hostname)
+	//	debug.Printf("servername: \"%s\"\n", hostname)
 	return nil, errors.Errorf("no such certificate: %s", hostname)
 
 }
@@ -185,7 +192,7 @@ func request(name string) {
 	if idx != -1 {
 		name = name[:idx]
 	}
-	fmt.Printf("Requesting \"%s\"\n", name)
+	debug.Printf("Requesting \"%s\"\n", name)
 	ctx := authremote.Context()
 	pcr := &certmanager.PublicCertRequest{Hostname: name}
 	// does certmanager have the cert (and we don't?)
@@ -193,7 +200,7 @@ func request(name string) {
 	if err == nil {
 		err = cert_refresh()
 		if err != nil {
-			fmt.Printf("failed to refresh certificates: %s\n", err)
+			debug.Printf("failed to refresh certificates: %s\n", err)
 		}
 		return
 
@@ -202,7 +209,7 @@ func request(name string) {
 	_, err = certmanager.GetCertManagerClient().RequestPublicCertificate(ctx, pcr)
 	if err != nil {
 		failed_certs_cache.Put(name, "foo")
-		fmt.Printf("[certs] failed to request cert \"%s\" on the fly: %s\n", pcr.Hostname, err)
+		debug.Printf("failed to request cert \"%s\" on the fly: %s\n", pcr.Hostname, err)
 		return
 	}
 	started := time.Now()
@@ -210,7 +217,7 @@ func request(name string) {
 	i := 0
 	for {
 		if time.Since(started) > time.Duration(3)*time.Minute {
-			fmt.Printf("[certs] timeout for cert \"%s\"\n", pcr.Hostname)
+			debug.Printf("timeout for cert \"%s\"\n", pcr.Hostname)
 			break
 		}
 		time.Sleep(t)
@@ -227,7 +234,7 @@ func request(name string) {
 	}
 	err = cert_refresh()
 	if err != nil {
-		fmt.Printf("failed to refresh certificates: %s\n", err)
+		debug.Printf("failed to refresh certificates: %s\n", err)
 	}
 }
 func AllCerts() []tls.Certificate {
