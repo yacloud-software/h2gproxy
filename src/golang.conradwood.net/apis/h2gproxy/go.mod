@@ -1,6 +1,6 @@
 module golang.conradwood.net/apis/h2gproxy
 
-go 1.25.0
+go 1.23.3
 
 require (
 	github.com/golang/protobuf v1.5.4
