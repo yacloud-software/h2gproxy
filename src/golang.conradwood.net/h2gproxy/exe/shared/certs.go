@@ -106,28 +106,32 @@ func cert_refresh() error {
 			debug.Printf("Failed to parse cert %s: %s\n", pcr.Hostname, err)
 			continue
 		}
-		// add the ca:
-		block, _ := pem.Decode([]byte(cert.Cert.PemCA))
-		if block == nil {
-			debug.Printf("certificate %s has no CA certificate\n", cert.Cert.Host)
-		} else {
-			xcert, xerr := x509.ParseCertificate(block.Bytes)
-			if xerr != nil {
-				debug.Printf("Cannot parse certificate %s: %s\n", cert.Cert.Host, err)
-				return err
-			}
-			now := time.Now()
-			if now.After(xcert.NotAfter) {
-				debug.Printf("certificate for \"%s\" expired on %v\n", c.Hostname, xcert.NotAfter)
-				continue
-			}
+		// add the ca and intermediates
+		nb := []byte(cert.Cert.PemCA)
+		for len(nb) != 0 {
+			block, rb := pem.Decode(nb)
+			nb = rb
+			if block == nil {
+				debug.Printf("certificate %s has no CA certificate\n", cert.Cert.Host)
+			} else {
+				xcert, xerr := x509.ParseCertificate(block.Bytes)
+				if xerr != nil {
+					debug.Printf("Cannot parse certificate %s: %s\n", cert.Cert.Host, err)
+					return err
+				}
+				now := time.Now()
+				if now.After(xcert.NotAfter) {
+					debug.Printf("certificate for \"%s\" expired on %v\n", c.Hostname, xcert.NotAfter)
+					continue
+				}
 
-			b := &bytes.Buffer{}
-			err = pem.Encode(b, block)
-			if err != nil {
-				return err
+				b := &bytes.Buffer{}
+				err = pem.Encode(b, block)
+				if err != nil {
+					return err
+				}
+				tc.Certificate = append(tc.Certificate, block.Bytes)
 			}
-			tc.Certificate = append(tc.Certificate, block.Bytes)
 		}
 		newcerts[c.Hostname] = &tc
 

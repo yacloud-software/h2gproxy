@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	TEST_HOST = "l.conradwood.net"
-	//TEST_HOST = "www.carbonsaver.co.uk"
+	//	TEST_HOST = "l.conradwood.net"
+	TEST_HOST = "www.carbonsaver.co.uk"
 )
 
 func TestChain(t *testing.T) {
