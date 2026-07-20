@@ -102,7 +102,10 @@ func (tf *TCPForwarder) startPortAcceptLoop() error {
 			name := "tcp"
 			if tf.config.EnableTLS {
 				name = "tcp-tls"
-				config := &tls.Config{Certificates: shared.AllCerts()}
+				config := &tls.Config{
+					Certificates:   shared.AllCerts(),
+					GetCertificate: getcert,
+				}
 				listener, err = tls.Listen("tcp", adr, config)
 			} else {
 				listener, err = net.Listen("tcp", adr)
@@ -119,6 +122,9 @@ func (tf *TCPForwarder) startPortAcceptLoop() error {
 		}
 	}()
 	return nil
+}
+func getcert(chi *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	return shared.GetCert(chi.ServerName, time.Duration(3)*time.Second)
 }
 
 func (tf *TCPForwarder) acceptLoop() {
