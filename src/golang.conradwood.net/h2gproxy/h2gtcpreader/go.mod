@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	golang.conradwood.net/apis/h2gproxy v1.1.4612
-	golang.conradwood.net/go-easyops v0.1.40404
+	golang.conradwood.net/go-easyops v0.1.40652
 )
 
 require (
