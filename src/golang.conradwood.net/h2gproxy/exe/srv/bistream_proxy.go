@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	pb "golang.conradwood.net/apis/h2gproxy"
+	"golang.conradwood.net/go-easyops/errors"
 	"golang.conradwood.net/h2gproxy/grpchelpers"
 
 	//"golang.conradwood.net/go-easyops/utils"
@@ -13,7 +14,8 @@ import (
 func BiStreamProxy(f *FProxy) {
 	err := bistream_proxy_exe(f)
 	if err != nil {
-		f.Debugf("bistream proxy failed: %s\n", err)
+		f.SetError(err)
+		f.Debugf("bistream proxy failed: %s\n", errors.ErrorStringWithStackTrace(err))
 	}
 }
 
@@ -43,7 +45,7 @@ func bistream_proxy_exe(f *FProxy) error {
 
 	stream, err := svc.OpenStream(ctx, "StreamBiHTTP", true, true)
 	if err != nil {
-		return err
+		return errors.Wrap(err)
 	}
 	defer stream.Finish()
 	f.Debugf("bistream proxy allocated new stream (%s)\n", stream)
@@ -57,18 +59,19 @@ func bistream_proxy_exe(f *FProxy) error {
 	}
 	err = stream.SendMsg(start)
 	if err != nil {
-		return err
+		f.Debugf("bistream proxy unable to send first message\n")
+		return errors.Wrap(err)
 	}
 
 	// set up the streamer:
 	fss := NewByteStreamSender(
 		func(key, filename string) error {
 			msg := &pb.BiStreamRequest{Data: &pb.StreamData{Key: key, Filename: filename}}
-			return stream.SendMsg(msg)
+			return errors.Wrap(stream.SendMsg(msg))
 		},
 		func(b []byte) error {
 			msg := &pb.BiStreamRequest{Data: &pb.StreamData{Data: b}}
-			return stream.SendMsg(msg)
+			return errors.Wrap(stream.SendMsg(msg))
 		},
 	)
 
@@ -84,7 +87,7 @@ func bistream_proxy_exe(f *FProxy) error {
 	fss.SendBytes("raw_body", "raw_body_file", f.RequestBody())
 	err = stream.CloseSend()
 	if err != nil {
-		return err
+		return errors.Wrap(err)
 	}
 
 	// receive the response stream from backend
@@ -96,7 +99,7 @@ func bistream_proxy_exe(f *FProxy) error {
 			if err == io.EOF {
 				break
 			}
-			return err
+			return errors.Wrap(err)
 		}
 		if msg.HTTPResponse != nil {
 			resp := msg.HTTPResponse
