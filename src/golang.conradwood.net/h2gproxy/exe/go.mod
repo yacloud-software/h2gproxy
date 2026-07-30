@@ -5,10 +5,10 @@ go 1.25.0
 require (
 	github.com/dustin/go-humanize v1.0.1
 	golang.conradwood.net/apis/antidos v1.1.4612
-	golang.conradwood.net/apis/auth v1.1.4661
+	golang.conradwood.net/apis/auth v1.1.4671
 	golang.conradwood.net/apis/certmanager v1.1.4612
-	golang.conradwood.net/apis/common v1.1.4661
-	golang.conradwood.net/apis/goeasyops v1.1.4661
+	golang.conradwood.net/apis/common v1.1.4671
+	golang.conradwood.net/apis/goeasyops v1.1.4671
 	golang.conradwood.net/apis/h2gproxy v1.1.4424
 	golang.conradwood.net/apis/registry v1.1.4612
 	golang.conradwood.net/apis/rpcinterceptor v1.1.4612
@@ -16,7 +16,7 @@ require (
 	golang.conradwood.net/apis/weblogin v1.1.4612
 	golang.conradwood.net/go-easyops v0.1.40733
 	golang.org/x/net v0.56.0
-	golang.yacloud.eu/apis/session v1.1.4661
+	golang.yacloud.eu/apis/session v1.1.4671
 	golang.yacloud.eu/apis/sessionmanager v1.1.4612
 	google.golang.org/grpc v1.82.0
 	gopkg.in/yaml.v2 v2.4.0
