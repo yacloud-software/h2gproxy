@@ -145,6 +145,7 @@ message StreamRequest {
   string Query=9; //foo=bar
   uint32 Port=10; // port this request came in on
   repeated ByteRange ByteRanges=11; // client requested one or more partial contents. streaming clients may return answers to multi-byte ranges
+  string SessionToken=12;
 }
 // stream backends send this to H2GProxy
 message StreamResponse {
