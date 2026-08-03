@@ -59,6 +59,12 @@ func bistream_proxy_exe(f *FProxy) error {
 		UserAgent: f.req.UserAgent(),
 		SourceIP:  fixIP(f.PeerIP()),
 	}
+	sess, err := f.GetSessionToken()
+	if err != nil {
+		return err
+	}
+	sreq.SessionToken = sess
+
 	if f.req.URL != nil {
 		sreq.Query = f.req.URL.RawQuery
 	}
