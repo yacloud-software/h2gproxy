@@ -2,6 +2,7 @@ package srv
 
 import (
 	"fmt"
+	"strings"
 
 	pb "golang.conradwood.net/apis/h2gproxy"
 	"golang.conradwood.net/go-easyops/errors"
@@ -51,7 +52,28 @@ func bistream_proxy_exe(f *FProxy) error {
 	f.Debugf("bistream proxy allocated new stream (%s)\n", stream)
 
 	// stream the request to backend
-	start := &pb.BiStreamRequest{HTTPRequest: &pb.StreamRequest{Path: f.RequestedPath()}}
+	sreq := &pb.StreamRequest{
+		Host:      strings.ToLower(f.clientReqHost),
+		Path:      f.RequestedPath(),
+		Method:    f.req.Method,
+		UserAgent: f.req.UserAgent(),
+		SourceIP:  fixIP(f.PeerIP()),
+	}
+	if f.req.URL != nil {
+		sreq.Query = f.req.URL.RawQuery
+	}
+	for name, values := range f.req.Header {
+		nh := &pb.Header{Name: name, Values: values}
+		sreq.Headers = append(sreq.Headers, nh)
+	}
+
+	brs, err := parseByteRange(f.GetHeader("range"))
+	if err != nil {
+		return err
+	}
+	sreq.ByteRanges = brs
+
+	start := &pb.BiStreamRequest{HTTPRequest: sreq}
 
 	for k, v := range form.RequestValues() {
 		p := &pb.Parameter{Name: k, Value: v}
